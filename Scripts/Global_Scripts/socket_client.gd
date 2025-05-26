@@ -2,7 +2,8 @@ extends Node
 
 var socket = WebsocketsConnection.socket
 var socket_data = WebsocketsConnection.socket_data
-
+var ping = 0
+var prev_data = {}
 var connection_status = ""
 
 func _process(_delta: float) -> void:
@@ -29,3 +30,25 @@ func received_data():
 			socket_data = JSON.parse_string(raw)
 
 		return socket_data
+
+func send_ping():
+	var ping_sent_time = Time.get_ticks_msec()
+	var data = {
+		"Socket_Name": "ping",
+		"timestamp": ping_sent_time
+	}
+	send_data(data)
+	
+func output_ping():
+	var connection = WebsocketsConnection.socket_connection_status
+	var data = received_data()
+	
+	if connection == "Connected" and data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
+		prev_data = data
+		
+		var sent_time = data.get("timestamp", 0)
+		var current_time = Time.get_ticks_msec()
+		ping = current_time - sent_time
+		
+	elif connection != "Connected":
+		ping = 1000

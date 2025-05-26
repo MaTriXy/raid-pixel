@@ -25,16 +25,22 @@ func send_post_request(route: String, data: Dictionary) -> Dictionary:
 	isFetching = true
 	
 	if err != OK:
+		isFetching = false
 		print("Failed to send request")
 		return {}
 
 	# Wait for the request to complete
 	var result = await httpRequest.request_completed
-
+	isFetching = false
+	
+	var response_code = result[1]
+	
+	if response_code != 200:
+		print("Server responded with code: ", response_code)
+		return {}
+	
 	var response_text = result[3].get_string_from_utf8()
 	var response_json = JSON.parse_string(response_text)
-	isFetching = false
-
 	return response_json
 
 func get_request(route: String) -> Dictionary:

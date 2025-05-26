@@ -46,7 +46,7 @@ func login_as_guest():
 	
 	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [string_generator(2)] })
 	
-	if createGuestAccount["status"] == "Success":
+	if createGuestAccount.has("status") and createGuestAccount["status"] == "Success":
 		PlayerGlobalScript.player_UUID = createGuestAccount["login_token"]
 		PlayerGlobalScript.player_account_type = createGuestAccount["player_type"]
 		PlayerGlobalScript.player_username = createGuestAccount["username"]

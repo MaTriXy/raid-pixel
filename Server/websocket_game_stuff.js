@@ -106,6 +106,18 @@ module.exports = (wss)=>{
                     }
                 )
             }
+
+            //for receiving ping
+            else if(socket_name === "ping"){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "timestamp": parsed_message.timestamp
+                    }
+                )
+                
+            }
         });
 
         ws.on('close', async () => {

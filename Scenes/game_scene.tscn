@@ -1089,9 +1089,9 @@ metadata/_edit_use_anchors_ = true
 
 [node name="Time" type="RichTextLabel" parent="UI"]
 custom_minimum_size = Vector2(350, 0)
-offset_left = 376.0
+offset_left = 1186.0
 offset_top = 13.0
-offset_right = 726.0
+offset_right = 1536.0
 offset_bottom = 38.0
 theme_override_fonts/normal_font = ExtResource("3_6h5vk")
 theme_override_font_sizes/normal_font_size = 20

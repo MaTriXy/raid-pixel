@@ -9,6 +9,10 @@ extends Global_Message
 @onready var player_profile = $"Profile"
 @onready var http_request = $"HTTPRequest"
 @onready var current_player_scene_button = $"Show Players button"
+@onready var fps_counter = $"FPS Counter"
+@onready var ping_timer = $"Ping Timer"
+@onready var ping_label = $"Signal Strength/Signal Label"
+@onready var ping_render = $"Signal Strength"
 
 #setting modal contents
 @onready var logout_btn = $"Setting Modal/Panel/Log out Button"
@@ -53,6 +57,7 @@ extends Global_Message
 var prev_count = ""
 var prev_coordinates = Vector2.ZERO
 var prev_diamond = 0
+var prev_FPS = 0
 
 var profile_base64: String
 
@@ -61,6 +66,10 @@ var player_profile_class = PlayerProfile.new()
 var game_data_class = GameData.new()
 
 func _ready() -> void:
+	ping_timer.wait_time = 2.0
+	ping_timer.timeout.connect(SocketClient.send_ping)
+	ping_timer.start()
+	
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
 	global_message_modal.visible = false
@@ -251,8 +260,32 @@ func _process(_delta: float) -> void:
 	if prev_coordinates != Vector2(PlayerGlobalScript.player_pos_X, PlayerGlobalScript.player_pos_Y):
 		prev_coordinates = Vector2(PlayerGlobalScript.player_pos_X, PlayerGlobalScript.player_pos_Y)
 		coordinate_label.text = "Player posX: " + str("%.2f" % PlayerGlobalScript.player_pos_X) + "\nPlayer posY: " + str("%.2f" % PlayerGlobalScript.player_pos_Y)
+		
+	if str(prev_FPS) != fps_counter.text:
+		fps_counter.text = "FPS: " + str(Engine.get_frames_per_second())
+		prev_FPS = Engine.get_frames_per_second()
 	
 	message_render_display()
+	
+	SocketClient.output_ping()
+	var color = "green"
+	var frame = 0
+	
+	if SocketClient.ping > 80:
+		frame = 2
+		color = "red"
+		
+	elif SocketClient.ping <= 80 and SocketClient.ping >= 30:
+		frame = 1 
+		color = "yellow"
+		
+	else:
+		frame = 0
+		color = "green"
+		
+	ping_render.frame = frame
+	ping_label.add_theme_color_override("default_color", color)
+	ping_label.text = str(SocketClient.ping) + "ms"
 	
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("global_message"): #pressing enter
