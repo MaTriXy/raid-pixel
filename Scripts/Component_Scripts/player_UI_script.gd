@@ -13,6 +13,7 @@ extends Global_Message
 @onready var ping_timer = $"Ping Timer"
 @onready var ping_label = $"Signal Strength/Signal Label"
 @onready var ping_render = $"Signal Strength"
+@onready var playerCount_timer = $"Player Count Timer"
 
 #setting modal contents
 @onready var logout_btn = $"Setting Modal/Panel/Log out Button"
@@ -70,6 +71,10 @@ func _ready() -> void:
 	ping_timer.timeout.connect(SocketClient.send_ping)
 	ping_timer.start()
 	
+	playerCount_timer.wait_time = 2.0
+	playerCount_timer.timeout.connect(renderCount)
+	playerCount_timer.start()
+	
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
 	global_message_modal.visible = false
@@ -122,9 +127,10 @@ func _ready() -> void:
 	if data["status"] == "Finished":
 		in_game_name_input.text = data["inGameName"]
 		description_input.text = data["description"]
-		
-		var count = await game_data_class.get_player_count()
-		playerCount.text = "Active player/s: %s" % [count]
+	
+func renderCount():
+	var count = await game_data_class.get_player_count()
+	playerCount.text = "Active player/s: %s" % [count]
 		
 func log_out_action():
 	game_data_class.player_logout(validation_modal, loading_modal, PlayerGlobalScript.player_game_id, PlayerGlobalScript.player_username)
@@ -248,11 +254,6 @@ func upgrade_account():
 func _process(_delta: float) -> void:
 	player_profile_class.render_player_profile_data(player_in_game_name_label, player_gameID_label, player_description_label)
 	
-	var count = gameData.renderPlayerCount()
-	if prev_count != count:
-		prev_count = count
-		playerCount.text = "Active player/s: %s" % [count]
-		
 	if prev_diamond != PlayerGlobalScript.player_diamond:
 		prev_diamond = PlayerGlobalScript.player_diamond
 		diamond_count_label.text = str(PlayerGlobalScript.player_diamond)

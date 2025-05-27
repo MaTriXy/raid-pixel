@@ -44,7 +44,7 @@ func _process(_delta: float) -> void:
 func login_as_guest():
 	validation_modal.visible = true
 	
-	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [string_generator(2)] })
+	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [string_generator(4)] })
 	
 	if createGuestAccount.has("status") and createGuestAccount["status"] == "Success":
 		PlayerGlobalScript.player_UUID = createGuestAccount["login_token"]

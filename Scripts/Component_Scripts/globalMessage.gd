@@ -1,5 +1,5 @@
 class_name Global_Message
-extends Control
+extends Node
 
 @onready var global_message_input = $"Global Messages/LineEdit"
 @onready var message_label = $"Global Messages/Display Messages/HBoxContainer/Message label"

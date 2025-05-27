@@ -2,7 +2,6 @@ class_name GameData
 extends Node
 
 var prev_data: Dictionary
-var getPlayerCount = "Fetching..."
 	
 func player_logout(validation_modal: Control, loading_modal: Control, gameID: String, username: String):
 	if FileAccess.file_exists("user://login_data.json"):
@@ -11,10 +10,14 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.isLoggedOut = true
 	validation_modal.visible = true
 	
+	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/account_logout", { "username": username })
+	
+	if result and result.has("status") and result["status"] == "success":
+		print("Account logged out")
+	
 	SocketClient.send_data({
 		"Socket_Name": "Player_Logout",
-		"GameID": gameID,
-		"Player_username": username
+		"GameID": gameID
 	})
 
 	WebsocketsConnection.socket_connection_status = ""
@@ -34,21 +37,6 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")
-		
-func renderPlayerCount():
-	var data = SocketClient.received_data()
-	var connection_status = WebsocketsConnection.socket_connection_status
-
-	if connection_status == "Connected":
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "PlayerCount":
-			prev_data = data
-			
-			if data.has("Count"):
-				getPlayerCount = str(int(data.get("Count")))
-			else:
-				getPlayerCount = "Failed to get count"
-	
-	return getPlayerCount
 	
 func get_player_count():
 	var result = await ServerFetch.get_request(ServerFetch.backend_url + "gameData/getPlayerCount")

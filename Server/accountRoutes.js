@@ -5,6 +5,7 @@ const playerInfoModel = require("./playerInformationMongooseSchema");
 const sanitize = require("sanitize-html");
 const bcrypt = require("bcryptjs")
 const { v4: uuidv4 } = require('uuid');
+const gameDataModel = require("./gameDataMongooseSchema");
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 
@@ -18,6 +19,47 @@ async function setOnline(username){
         console.log(err)
     }
 }
+
+async function modifyPlayerCount(count){
+    try{
+        await gameDataModel.findOneAndUpdate(
+            {}, 
+            { $inc: { playerCount: count }},
+            { new: true, upsert: true }
+        );
+
+        //clamp to zero when it become negative
+        await gameDataModel.findOneAndUpdate(
+            {}, 
+            { $max: { playerCount: 0 }},
+            { new: true }
+        );
+    }
+    catch(err){
+        console.log(err)
+    }
+}
+
+route.post("/account_logout", async (req, res)=>{
+    try{
+        const findAcc = await accountModel.findOneAndUpdate(
+            { username: sanitize(req.body.username), account_type: "Player" },
+            { $set: { isOnline: false }}, 
+            { new: true } )
+        
+        let status = "failed";
+
+        if(findAcc){
+            await modifyPlayerCount(-1);
+            status = "success"
+        }
+
+        res.status(200).json({ status: status })
+    }
+    catch(err){
+        console.log(err);
+    }
+})
 
 route.post("/validateAccount", async (req, res)=>{
     try{
@@ -41,6 +83,7 @@ route.post("/validateAccount", async (req, res)=>{
 
                 if(!isOnline){
                     setOnline(username)
+                    await modifyPlayerCount(1)
                 }
             }
         }
@@ -172,6 +215,8 @@ route.post("/createGuestAccount", async (req, res)=>{
             player_account_type = createAcc.account_type;
 
             await playerInfoModel.create({ username: sanitize(req.body.username), inGameName: inGameName[Math.floor(Math.random() * inGameName.length)], diamond: 1000, profile: "https://i.imgur.com/ajVzRmV.png", description: "No description yet", profile_hash: "ajVzRmV" })
+
+            await modifyPlayerCount(1)
         }
         res.status(200).json({ status: status, username: username, login_token: login_token, player_type: player_account_type })
     }
@@ -218,6 +263,7 @@ route.post("/auth_auto_login", async (req, res)=>{
 
             if(client_token_result.status == "Accepted"){
                 setOnline(username)
+                await modifyPlayerCount(1)
             }
         }
         else{
