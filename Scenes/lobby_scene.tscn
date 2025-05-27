@@ -3029,7 +3029,7 @@ position = Vector2(1106, 93)
 ySort = NodePath("..")
 
 [node name="Main Player" parent="Y Sort" instance=ExtResource("4_44aa0")]
-position = Vector2(1018, 45)
+position = Vector2(1020, 45)
 
 [node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("loading_modal", "ready_panel", "go_to_scene_button")]
 z_index = 1

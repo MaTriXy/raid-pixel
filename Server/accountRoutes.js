@@ -40,27 +40,6 @@ async function modifyPlayerCount(count){
     }
 }
 
-route.post("/account_logout", async (req, res)=>{
-    try{
-        const findAcc = await accountModel.findOneAndUpdate(
-            { username: sanitize(req.body.username), account_type: "Player" },
-            { $set: { isOnline: false }}, 
-            { new: true } )
-        
-        let status = "failed";
-
-        if(findAcc){
-            await modifyPlayerCount(-1);
-            status = "success"
-        }
-
-        res.status(200).json({ status: status })
-    }
-    catch(err){
-        console.log(err);
-    }
-})
-
 route.post("/validateAccount", async (req, res)=>{
     try{
         const findAcc = await accountModel.findOne({ username: sanitize(req.body.username) })

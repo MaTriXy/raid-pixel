@@ -4,10 +4,10 @@ var socket = WebsocketsConnection.socket
 var socket_data = WebsocketsConnection.socket_data
 var ping = 0
 var prev_data = {}
-var connection_status = ""
+var gameID = ""
 
 func _process(_delta: float) -> void:
-	if PlayerGlobalScript.player_game_id and connection_status !=  WebsocketsConnection.socket_connection_status:
+	if PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
 		send_data(
 			{
 				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disonnected",
@@ -16,7 +16,7 @@ func _process(_delta: float) -> void:
 			}
 		)
 		
-		connection_status = WebsocketsConnection.socket_connection_status
+		gameID = PlayerGlobalScript.player_game_id
 
 func send_data(data):
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:

@@ -10,14 +10,10 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.isLoggedOut = true
 	validation_modal.visible = true
 	
-	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/account_logout", { "username": username })
-	
-	if result and result.has("status") and result["status"] == "success":
-		print("Account logged out")
-	
 	SocketClient.send_data({
 		"Socket_Name": "Player_Logout",
-		"GameID": gameID
+		"GameID": gameID,
+		"Player_username": username
 	})
 
 	WebsocketsConnection.socket_connection_status = ""
