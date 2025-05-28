@@ -31,6 +31,10 @@ func _process(_delta):
 		WebSocketPeer.STATE_OPEN:
 			socket_connection_status = "Connected";
 			
+			if PlayerGlobalScript.player_username:
+				if not PlayerGlobalScript.player_game_id:
+					PlayerGlobalScript.player_game_id = "GameID_%s" % [PlayerInfoStuff.string_generator(2)]
+			
 		#for connecting
 		WebSocketPeer.STATE_CONNECTING:
 			socket_connection_status = "Connecting to server";
@@ -49,6 +53,9 @@ func _process(_delta):
 			var code = socket.get_close_code()
 			print("WebSocket closed with code: %d. Clean: %s" % [code, code != -1])
 			set_process(false) # Stop processing.
+			
+			await get_tree().create_timer(1.0).timeout
+			PlayerGlobalScript.player_game_id = ""
 	
 func established_connection():
 	# Initiate connection to the given URL.

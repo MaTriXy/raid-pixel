@@ -18,16 +18,18 @@ func _ready() -> void:
 	add_child(timer)
 		
 func send_connection():
-	if PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
-		send_data(
-			{
-				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
-				"Player_GameID": PlayerGlobalScript.player_game_id,
-				"Player_username": PlayerGlobalScript.player_username,
-			}
-		)
-		
-		gameID = PlayerGlobalScript.player_game_id
+	if isConnected():
+		if PlayerGlobalScript.spawn_player_code and PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
+			send_data(
+				{
+					"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
+					"Player_GameID": PlayerGlobalScript.player_game_id,
+					"Player_username": PlayerGlobalScript.player_username,
+					"Spawn_Code": PlayerGlobalScript.spawn_player_code
+				}
+			)
+			
+			gameID = PlayerGlobalScript.player_game_id
 
 func send_data(data):
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:

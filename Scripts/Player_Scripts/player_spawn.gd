@@ -5,19 +5,23 @@ extends Node
 var joined_Player = preload("res://Sprite_Nodes/joined_player.tscn")
 @export var ySort: Control
 var prev_data: Dictionary
+var spawn_code: String
 
 #store player here
 var stored_players = {}
 
 func _ready() -> void:
 	spawner_animation.play("spawner_spawn")
+	
+	await get_tree().process_frame
+	spawn_code = PlayerGlobalScript.spawn_player_code
 
 func _process(_delta: float) -> void:
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
-	if connection_status == "Connected":
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn" and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
+	if connection_status == "Connected":		
+		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn_%s" % [spawn_code] and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 			prev_data = data
 			
 			var player = joined_Player.instantiate()

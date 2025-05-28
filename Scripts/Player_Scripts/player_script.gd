@@ -88,7 +88,7 @@ func play_anim(anim_name):
 
 func send_player_data():
 	var current_state = {
-			"Socket_Name": "Player_Spawn",
+			"Socket_Name": "Player_Spawn_%s" % [PlayerGlobalScript.spawn_player_code],
 			"Player_username": PlayerGlobalScript.player_username,
 			"Player_inGameName": PlayerGlobalScript.player_in_game_name,
 			"Player_GameID": PlayerGlobalScript.player_game_id,
@@ -100,6 +100,7 @@ func send_player_data():
 			"player_type": PlayerGlobalScript.player_type,
 			"isAttacking": isAttacking
 		}
+	
 	if isMoving or isAttacking or prev_state != current_state:
 		SocketClient.send_data(current_state)
 		prev_state = current_state.duplicate()

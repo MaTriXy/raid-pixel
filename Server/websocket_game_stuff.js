@@ -44,8 +44,10 @@ module.exports = (wss)=>{
                         "Player_GameID": parsed_message.Player_GameID,
                     }
                 )
+                console.log(parsed_message)
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
+                ws.Spawn_Code = parsed_message.Spawn_Code;
             }
 
             //for player logout
@@ -60,6 +62,7 @@ module.exports = (wss)=>{
                 setTimeout(() => {
                     ws.GameID = ""
                     ws.username = ""
+                    ws.Spawn_Code = ""
                 }, 1000);
             }
 
@@ -101,6 +104,7 @@ module.exports = (wss)=>{
 
                 ws.GameID = ""
                 ws.username = ""
+                ws.Spawn_Code = ""
             }
         });
 

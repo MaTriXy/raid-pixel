@@ -27,6 +27,10 @@ var world_rect: Rect2
 
 func _ready() -> void:
 	PlayerGlobalScript.current_scene = scene_name
+	PlayerGlobalScript.spawn_player_code = scene_name
+	
+	#clean dictionary for changing scenes.
+	GetPlayerInfo.active_player_dic.clear()
 	
 	if scene_particle:
 		scene_particle.emitting = true

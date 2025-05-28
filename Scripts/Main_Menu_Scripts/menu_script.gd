@@ -44,14 +44,12 @@ func _process(_delta: float) -> void:
 func login_as_guest():
 	validation_modal.visible = true
 	
-	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [string_generator(4)] })
+	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [PlayerInfoStuff.string_generator(4)] })
 	
 	if createGuestAccount.has("status") and createGuestAccount["status"] == "Success":
 		PlayerGlobalScript.player_UUID = createGuestAccount["login_token"]
 		PlayerGlobalScript.player_account_type = createGuestAccount["player_type"]
 		PlayerGlobalScript.player_username = createGuestAccount["username"]
-
-		PlayerGlobalScript.player_game_id = "GameID_%s" % [string_generator(2)]
 		PlayerGlobalScript.isModalOpen = false
 		PlayerGlobalScript.current_modal_open = false
 		
@@ -61,23 +59,6 @@ func login_as_guest():
 		PlayerGlobalScript.isModalOpen = false
 		PlayerGlobalScript.current_modal_open = false
 		print("Guest account failed")
-	
-func string_generator(size: int):
-	var letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l",
-	"m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
-	var nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-	
-	var randomNum = RandomNumberGenerator.new()
-	var result : String = ""
-	
-	for i in range(size):
-		var char_index = randomNum.randi_range(0, len(letters) - 1)
-		var num_index = randomNum.randi_range(0, len(nums) - 1)
-		
-		var temp_name = "%s%s" % [letters[char_index], nums[num_index]]
-		result += temp_name
-	
-	return result
 
 func proceed_login():
 	var username_input_style = username_input.get_theme_stylebox("normal")
@@ -97,8 +78,6 @@ func proceed_login():
 				PlayerGlobalScript.player_account_type = account_validate_result["player_type"]
 				PlayerGlobalScript.player_UUID = account_validate_result["login_token"]
 				PlayerGlobalScript.player_username = account_validate_result["username"]
-		
-				PlayerGlobalScript.player_game_id = "GameID_%s" % [string_generator(2)]
 				PlayerGlobalScript.isModalOpen = false
 				PlayerGlobalScript.current_modal_open = false
 				
@@ -126,7 +105,7 @@ func auto_login():
 		
 		if typeof(parsed) == TYPE_DICTIONARY:
 			if parsed["expiration"] > current_unix:
-				var client_token = "Client_tokenID_%s" % [string_generator(5)]
+				var client_token = "Client_tokenID_%s" % [PlayerInfoStuff.string_generator(5)]
 				var account_validate_result = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/auth_auto_login", { "username": parsed["player_username"], "login_token": parsed["login_token"], "client_token": { "username": parsed["player_username"], "token": client_token }})
 		
 				if account_validate_result["status"] == "Success":
@@ -134,8 +113,6 @@ func auto_login():
 						PlayerGlobalScript.player_UUID = account_validate_result["UUID"]
 						PlayerGlobalScript.player_account_type = account_validate_result["player_type"]
 						PlayerGlobalScript.player_username = account_validate_result["username"]
-						
-						PlayerGlobalScript.player_game_id = "GameID_%s" % [string_generator(2)]
 					
 						PlayerGlobalScript.isModalOpen = false
 						PlayerGlobalScript.current_modal_open = false

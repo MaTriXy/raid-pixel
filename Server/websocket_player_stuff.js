@@ -6,8 +6,6 @@ module.exports = (wss)=>{
         ws.on('message', async (message) => {
             let parsed_message = JSON.parse(message);
             let socket_name = parsed_message.Socket_Name;
-            
-            //console.log(parsed_message)
 
             //Global Messages
             if(socket_name == "GlobalMessage"){
@@ -23,7 +21,7 @@ module.exports = (wss)=>{
             }
            
             //for spawn players
-            else if(socket_name === "Player_Spawn"){
+            else if(socket_name === "Player_Spawn_" + ws.Spawn_Code){
                 broadcastSocket(
                     wss,
                     {

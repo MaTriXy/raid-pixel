@@ -59,6 +59,7 @@ var prev_count = ""
 var prev_coordinates = Vector2.ZERO
 var prev_diamond = 0
 var prev_FPS = 0
+var prev_status: String
 
 var profile_base64: String
 
@@ -265,6 +266,12 @@ func _process(_delta: float) -> void:
 	if str(prev_FPS) != fps_counter.text:
 		fps_counter.text = "FPS: " + str(Engine.get_frames_per_second())
 		prev_FPS = Engine.get_frames_per_second()
+		
+	if WebsocketsConnection.socket_connection_status and prev_status != WebsocketsConnection.socket_connection_status:
+		prev_status = WebsocketsConnection.socket_connection_status
+		
+		if prev_status == "Disconnected":
+			append_connection_notify(PlayerGlobalScript.player_game_id, prev_status)
 	
 	message_render_display()
 	
