@@ -6,11 +6,22 @@ var ping = 0
 var prev_data = {}
 var gameID = ""
 
-func _process(_delta: float) -> void:
+func _ready() -> void:
+	var timer = Timer.new()
+	timer.name = "Socket_Timer"
+	
+	timer.wait_time = 0.1
+	timer.timeout.connect(send_connection)
+	timer.autostart = true
+	timer.one_shot = false
+		
+	add_child(timer)
+		
+func send_connection():
 	if PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
 		send_data(
 			{
-				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disonnected",
+				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
 				"Player_GameID": PlayerGlobalScript.player_game_id,
 				"Player_username": PlayerGlobalScript.player_username,
 			}
@@ -38,17 +49,19 @@ func send_ping():
 		"timestamp": ping_sent_time
 	}
 	send_data(data)
+
+func isConnected():
+	return WebsocketsConnection.socket_connection_status == "Connected"
 	
 func output_ping():
-	var connection = WebsocketsConnection.socket_connection_status
 	var data = received_data()
 	
-	if connection == "Connected" and data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
-		prev_data = data
+	if isConnected():
+		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
+			prev_data = data
+			var sent_time = data.get("timestamp", 0)
+			var current_time = Time.get_ticks_msec()
+			ping = current_time - sent_time
 		
-		var sent_time = data.get("timestamp", 0)
-		var current_time = Time.get_ticks_msec()
-		ping = current_time - sent_time
-		
-	elif connection != "Connected":
+	else:
 		ping = 1000
