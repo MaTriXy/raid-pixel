@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://d21kxxttmlvfc"]
+[gd_scene load_steps=21 format=3 uid="uid://d21kxxttmlvfc"]
 
 [ext_resource type="Script" uid="uid://h2r2qor8irl2" path="res://Scripts/Player_Scripts/joined_player_script.gd" id="1_5tsll"]
 [ext_resource type="FontFile" uid="uid://dp78nt8a4bjaq" path="res://Assets/Fonts/Pixelify_Sans/static/PixelifySans-Regular.ttf" id="2_6sl8t"]
@@ -169,12 +169,28 @@ tracks/0/keys = {
 "values": [10, 11, 12, 13]
 }
 
+[sub_resource type="Animation" id="Animation_so65a"]
+resource_name = "death_anim"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.5, 1),
+"transitions": PackedFloat32Array(1, 1, 1),
+"update": 1,
+"values": [27, 28, 29]
+}
+
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_0vxpe"]
 _data = {
 &"RESET": SubResource("Animation_0vxpe"),
 &"back_idle_anim": SubResource("Animation_m7d5h"),
 &"back_punch_anim": SubResource("Animation_cy1mu"),
 &"back_walk_anim": SubResource("Animation_ph1dw"),
+&"death_anim": SubResource("Animation_so65a"),
 &"front_idle_anim": SubResource("Animation_0obo4"),
 &"front_punch_anim": SubResource("Animation_cq1vd"),
 &"front_walk_anim": SubResource("Animation_2bxlq"),
@@ -262,8 +278,8 @@ texture_filter = 1
 position = Vector2(0, -15)
 texture = ExtResource("3_7pmfe")
 offset = Vector2(0, -50)
-hframes = 5
-vframes = 6
+hframes = 6
+vframes = 5
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Player Sprite"]
 libraries = {
@@ -281,3 +297,7 @@ disabled = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player Area"]
 position = Vector2(-1.875, -68.75)
 shape = SubResource("RectangleShape2D_so65a")
+
+[connection signal="animation_finished" from="Player Sprite/AnimationPlayer" to="." method="_on_animation_player_animation_finished"]
+[connection signal="area_entered" from="Player Area" to="." method="_on_player_area_area_entered"]
+[connection signal="area_exited" from="Player Area" to="." method="_on_player_area_area_exited"]

@@ -2,6 +2,7 @@ extends Node
 
 @onready var spawner_animation = $Sprite/AnimationPlayer
 
+@export var main_player: Node
 var joined_Player = preload("res://Sprite_Nodes/joined_player.tscn")
 @export var ySort: Control
 var prev_data: Dictionary
@@ -40,6 +41,7 @@ func _process(_delta: float) -> void:
 					}
 					
 					spawner_animation.play("spawner_spawn")
+					player.name = data.get("Player_GameID")
 					player.playerIGN = data.get("Player_inGameName")
 					player.player_type = data.get("player_type")
 					ySort.add_child(player)
@@ -54,7 +56,7 @@ func _process(_delta: float) -> void:
 					joined_player.player_type = data.get("player_type")
 					joined_player.isAttacking = data.get("isAttacking")
 				
-		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Disconnect" or data.get("Socket_Name") == "leave_lobby"):
+		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Disconnect" or data.get("Socket_Name") == "leave_lobby" or data.get("Socket_Name") == "player_death"):
 			prev_data = data
 
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
@@ -76,7 +78,10 @@ func _process(_delta: float) -> void:
 				var joined_player = joined_player_data["Player"]
 				
 				player_key_list.Player_IGN = data.get("Player_inGameName")
+				joined_Player.name = data.get("Player_GameID")
 				joined_player.playerIGN = data.get("Player_inGameName")
+				
+		#TODO: make for player attack
 		
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:

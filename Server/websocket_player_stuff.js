@@ -50,6 +50,17 @@ module.exports = (wss)=>{
                     }
                 )
             }
+
+            //for player death
+            else if(socket_name == "player_death"){
+                broadcastSocket(
+                    wss,
+                    {
+                        Socket_Name: socket_name,
+                        Player_GameID: parsed_message.Player_GameID
+                    }
+                )
+            }
         });
 
         ws.on('error', (err) => {

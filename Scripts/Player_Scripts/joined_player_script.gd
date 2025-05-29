@@ -5,12 +5,16 @@ extends CharacterBody2D
 @onready var player_ign = $"Player ign"
 @onready var player_health_bar = $"Health Bar"
 @onready var player_health_label = $"Health Bar/label"
+@onready var player_area = $"Player Area"
 var player_max_health = 100
 
 var direction_value = Vector2.ZERO
 var last_direction_value = Vector2.ZERO
 var isAttacking = false
 var isMoving = false
+var isDead = false
+
+var isMainPlayerInArea = false
 
 var playerIGN = ""
 
@@ -27,6 +31,8 @@ func _ready() -> void:
 	player_health_bar.texture_progress = player_enemy_asset if player_type.to_upper() == "ENEMY" else player_ally_asset
 	
 	player_anim.play("side_idle_anim")
+	player_area.name = $".".name
+	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
 
 func play_punch_animation():
 	var x = last_direction_value.x
@@ -48,9 +54,15 @@ func _process(_delta: float) -> void:
 		player_ign.text = playerIGN
 
 	if isAttacking:
-		play_punch_animation()
+		if not isDead:
+			play_punch_animation()
+			
 	else:
-		play_movement_animation()
+		if not isDead:
+			play_movement_animation()
+	
+	#TODO: make for player attack
+	#PlayerGlobalScript.isGettingAttack = isAttacking and isMainPlayerInArea
 		
 func play_movement_animation():
 	var x = direction_value.x
@@ -85,4 +97,24 @@ func play_anim(anim_name):
 
 func player_health_bar_status(status: float):
 	player_health_bar.value += status
-	player_health_label.text = int(player_health_bar.value)
+	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
+	
+	if player_health_bar.value <= 0.0:
+		isDead = true
+		player_anim.play("death_anim")
+
+func _on_animation_player_animation_finished(anim_name: StringName) -> void:
+	if anim_name == "death_anim":
+		SocketClient.send_data({
+			"Socket_Name": "player_death",
+			"Player_GameID": player_area.name
+		})
+
+func _on_player_area_area_entered(area: Area2D) -> void:
+	if area.name == "Main Player Area":
+		isMainPlayerInArea = true
+
+func _on_player_area_area_exited(area: Area2D) -> void:
+	if area.name == "Main Player Area":
+		isMainPlayerInArea = false
+		PlayerGlobalScript.isGettingAttack = false

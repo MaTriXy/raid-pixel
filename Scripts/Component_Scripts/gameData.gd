@@ -23,6 +23,7 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	WebsocketsConnection.disconnect_to_socket()
 
 	PlayerGlobalScript.isModalOpen = false
+	PlayerGlobalScript.isGettingAttack = false
 	PlayerGlobalScript.current_modal_open = false
 	PlayerGlobalScript.player_in_game_name = ""
 	PlayerGlobalScript.player_game_id = ""

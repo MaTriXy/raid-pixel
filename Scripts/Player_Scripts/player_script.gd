@@ -6,11 +6,13 @@ extends PlayerMovement
 @onready var player_camera = $"Camera2D"
 @onready var player_health_bar = $"Health Bar"
 @onready var player_health_label = $"Health Bar/label"
+@onready var player_area = $"Main Player Area"
 var player_max_health = 100
 
 var prev_state = {}
 var prev_ign = ""
 var prev_coordinates = Vector2.ZERO
+var isDead = false
 
 func _ready() -> void:
 	player_health_bar.value = 100
@@ -18,6 +20,8 @@ func _ready() -> void:
 	
 	await get_tree().process_frame
 	PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
+	player_area.name = PlayerGlobalScript.player_game_id
+	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
 		
 func play_punch_animation():
 	var x = last_direction_value.x
@@ -43,8 +47,10 @@ func _process(_delta: float) -> void:
 	
 	if isAttacking:
 		play_punch_animation()
+			
 	else:
-		move_player_animation()
+		if not isDead:
+			move_player_animation()
 	
 	player_sprite.visible = PlayerGlobalScript.main_player_spawned
 	
@@ -52,6 +58,7 @@ func _process(_delta: float) -> void:
 		prev_coordinates = Vector2($".".position.x, $".".position.y)
 		PlayerGlobalScript.player_pos_X = $".".position.x
 		PlayerGlobalScript.player_pos_Y = $".".position.y
+		
 	send_player_data()
 	
 func move_player_animation():
@@ -107,4 +114,14 @@ func send_player_data():
 
 func player_health_bar_status(status: float):
 	player_health_bar.value += status
-	player_health_label.text = int(player_health_bar.value)
+	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
+	
+	if player_health_bar.value <= 0.0:
+		isDead = true
+		PlayerGlobalScript.isModalOpen = true
+		PlayerGlobalScript.current_modal_open = true
+		play_anim("death_anim")
+
+func _on_animation_player_animation_finished(anim_name: StringName) -> void:
+	if anim_name == "death_anim":
+		$".".queue_free()
