@@ -101,7 +101,7 @@ func send_player_data():
 			"isAttacking": isAttacking
 		}
 	
-	if isMoving or isAttacking or prev_state != current_state:
+	if (isMoving or isAttacking or prev_state != current_state) and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
 		SocketClient.send_data(current_state)
 		prev_state = current_state.duplicate()
 

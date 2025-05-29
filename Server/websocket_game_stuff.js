@@ -44,10 +44,8 @@ module.exports = (wss)=>{
                         "Player_GameID": parsed_message.Player_GameID,
                     }
                 )
-                console.log(parsed_message)
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
-                ws.Spawn_Code = parsed_message.Spawn_Code;
             }
 
             //for player logout
@@ -76,6 +74,19 @@ module.exports = (wss)=>{
                         "Player_inGameName": parsed_message.Player_inGameName
                     }
                 )
+            }
+
+            //for player spawn code
+            else if(socket_name == "scene_code"){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "Spawn_Player_Code": parsed_message.Spawn_Player_Code
+                    }
+                )
+                ws.Spawn_Code = parsed_message.Spawn_Player_Code
+                console.log(parsed_message)
             }
 
             //for receiving ping

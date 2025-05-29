@@ -29,6 +29,11 @@ func _ready() -> void:
 	PlayerGlobalScript.current_scene = scene_name
 	PlayerGlobalScript.spawn_player_code = scene_name
 	
+	SocketClient.send_data({
+		"Socket_Name": "scene_code",
+		"Spawn_Player_Code": PlayerGlobalScript.spawn_player_code
+	})
+	
 	#clean dictionary for changing scenes.
 	GetPlayerInfo.active_player_dic.clear()
 	

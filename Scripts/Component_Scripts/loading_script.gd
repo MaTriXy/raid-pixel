@@ -57,5 +57,8 @@ func _process(delta: float):
 		# "done" loading :)
 		if progress_bar.value >= 99:
 			get_tree().change_scene_to_file(path)
+			
+			PlayerGlobalScript.current_modal_open = false
+			PlayerGlobalScript.isModalOpen = false
 
 	percentage_text.text = str(int(progress_bar.value)) + "%"

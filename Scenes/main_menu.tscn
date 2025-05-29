@@ -211,7 +211,7 @@ theme_override_fonts/font = ExtResource("3_1ehe0")
 theme_override_font_sizes/font_size = 20
 action_mode = 0
 button_mask = 3
-text = "Check out dev's Github Repo"
+text = "-> Check out dev's Github Repo"
 underline = 1
 uri = "https://github.com/JohnRendell/raid-pixel"
 

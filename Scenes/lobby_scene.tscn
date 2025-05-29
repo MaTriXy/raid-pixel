@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://d3fy2yoewjeff" path="res://Sprite_Nodes/spawner_obj.tscn" id="3_2ipua"]
 [ext_resource type="PackedScene" uid="uid://c3orji6prrgwp" path="res://Sprite_Nodes/main_player.tscn" id="4_44aa0"]
 [ext_resource type="PackedScene" uid="uid://1hn556jfmqmu" path="res://Interface_Scenes/Player_ui.tscn" id="5_44aa0"]
-[ext_resource type="Script" uid="uid://duoppo2u6sqpc" path="res://Scripts/Component_Scripts/player_door_script.gd" id="6_h23dp"]
+[ext_resource type="Script" uid="uid://duoppo2u6sqpc" path="res://Scripts/Lobby_scripts/player_door_script.gd" id="6_h23dp"]
 [ext_resource type="Texture2D" uid="uid://bdqk3x1hjfykg" path="res://Assets/Sprite_Animations/Player_vs_door_anim.png" id="6_s7ahk"]
 [ext_resource type="PackedScene" uid="uid://dno6galxv43l5" path="res://Interface_Scenes/Connection_Interface.tscn" id="7_lvc8g"]
 [ext_resource type="FontFile" uid="uid://dp78nt8a4bjaq" path="res://Assets/Fonts/Pixelify_Sans/static/PixelifySans-Regular.ttf" id="8_r1is2"]

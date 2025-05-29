@@ -19,13 +19,12 @@ func _ready() -> void:
 		
 func send_connection():
 	if isConnected():
-		if PlayerGlobalScript.spawn_player_code and PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
+		if PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
 			send_data(
 				{
 					"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
 					"Player_GameID": PlayerGlobalScript.player_game_id,
-					"Player_username": PlayerGlobalScript.player_username,
-					"Spawn_Code": PlayerGlobalScript.spawn_player_code
+					"Player_username": PlayerGlobalScript.player_username
 				}
 			)
 			

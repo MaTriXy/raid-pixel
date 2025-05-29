@@ -2,6 +2,21 @@
 
 [ext_resource type="Texture2D" uid="uid://bydvykx2kk0ih" path="res://Assets/Sprite_Animations/Core_Anim.png" id="1_1ugsk"]
 
+[sub_resource type="Animation" id="Animation_1ugsk"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath("Sprite2D:frame")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [0]
+}
+
 [sub_resource type="Animation" id="Animation_o2bmf"]
 resource_name = "core_anim"
 length = 3.0
@@ -19,21 +34,6 @@ tracks/0/keys = {
 "values": [0, 1, 2, 3, 4, 5]
 }
 
-[sub_resource type="Animation" id="Animation_1ugsk"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Sprite2D:frame")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 1,
-"values": [0]
-}
-
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_tqlut"]
 _data = {
 &"RESET": SubResource("Animation_1ugsk"),
@@ -41,14 +41,15 @@ _data = {
 }
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1ugsk"]
-size = Vector2(250, 51)
+size = Vector2(204, 15.5)
 
 [node name="Core" type="StaticBody2D"]
 z_index = 1
+scale = Vector2(2, 2)
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("1_1ugsk")
-offset = Vector2(0, -100)
+offset = Vector2(0, -123.225)
 hframes = 2
 vframes = 3
 
@@ -60,6 +61,8 @@ autoplay = "core_anim"
 speed_scale = 2.0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(3, 5.5)
+z_index = 1
+texture_filter = 1
+position = Vector2(0, 0.75)
 shape = SubResource("RectangleShape2D_1ugsk")
 disabled = true

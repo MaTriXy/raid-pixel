@@ -3,9 +3,9 @@ extends Node
 @onready var game_timer = $"Game Timer"
 @onready var game_label = $"Game Timer Label"
 
-@onready var game_info_panel = $"Game Mechanics Info Panel"
-@onready var game_info_anim = $"Game Mechanics Info Panel/AnimationPlayer"
-@onready var game_info_button = $"Game Mechanics Info Panel/Panel/Lets go button"
+@onready var game_info_panel = $"Game Info Mechanics Panel"
+@onready var game_info_anim = $"Game Info Mechanics Panel/AnimationPlayer"
+@onready var game_info_button = $"Game Info Mechanics Panel/Panel/Lets go button"
 
 func _ready() -> void:
 	game_timer.wait_time = 99
