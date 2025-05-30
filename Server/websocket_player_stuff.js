@@ -72,7 +72,6 @@ module.exports = (wss)=>{
                         Player_Health: parsed_message.Player_Health
                     }
                 )
-                console.log(parsed_message)
             }
         });
 

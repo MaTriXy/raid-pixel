@@ -17,6 +17,7 @@ var isDead = false
 var prev_health = 0
 
 func _ready() -> void:
+	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.player_health = 100
 	player_health_bar.value = PlayerGlobalScript.player_health
 	player_anim.play("side_idle_anim")
@@ -39,7 +40,7 @@ func play_punch_animation():
 		elif y >= 1:
 			play_anim("front_punch_anim")
 			
-func _input(event: InputEvent) -> void:
+func _input(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("punch") and PlayerGlobalScript.isModalOpen == false and can_attack:
 		can_attack = false
 		isAttacking = true
@@ -141,7 +142,8 @@ func player_health_bar_status(status: float):
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		$".".queue_free()
+		PlayerGlobalScript.isMainPlayerDead = true
+		queue_free()
 
 func _on_attack_timer_timeout() -> void:
 	can_attack = true

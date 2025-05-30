@@ -3024,10 +3024,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("main_player", "ySort") instance=ExtResource("3_2ipua")]
+[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("ySort") instance=ExtResource("3_2ipua")]
 position = Vector2(1106, 93)
-main_player = NodePath("../Main Player")
 ySort = NodePath("..")
+spawn_coords = Vector2(1020, 45)
 
 [node name="Main Player" parent="Y Sort" instance=ExtResource("4_44aa0")]
 position = Vector2(1020, 45)

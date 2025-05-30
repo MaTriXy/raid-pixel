@@ -40,3 +40,4 @@ var player_UUID: String
 var current_scene: String
 var spawn_player_code: String
 var player_health: int
+var isMainPlayerDead: bool

@@ -15,9 +15,6 @@ extends Global_Message
 @onready var ping_render = $"Signal Strength"
 @onready var playerCount_timer = $"Player Count Timer"
 
-#for player spawn
-@export var player_spawn_coords: Vector2
-
 #setting modal contents
 @onready var logout_btn = $"Setting Modal/Panel/Log out Button"
 @onready var surrender_btn = $"Setting Modal/Panel/Surrender Button"
