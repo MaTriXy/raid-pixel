@@ -25,14 +25,14 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 
 func _on_player_door_area_area_entered(area: Area2D) -> void:
 	if area.name:
-		if area.name == PlayerGlobalScript.player_game_id:
+		if area.name == "Main Player Area":
 			ready_panel.visible = true
 			
 		animation.play("door_anim")
 
 func _on_player_door_area_area_exited(area: Area2D) -> void:
 	if area.name:
-		if area.name == PlayerGlobalScript.player_game_id:
+		if area.name == "Main Player Area":
 			ready_panel.visible = false
 		
 		animation.play_backwards("door_anim")

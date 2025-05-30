@@ -6,21 +6,23 @@ extends PlayerMovement
 @onready var player_camera = $"Camera2D"
 @onready var player_health_bar = $"Health Bar"
 @onready var player_health_label = $"Health Bar/label"
-@onready var player_area = $"Main Player Area"
+@onready var attack_timer = $"Attack Timer"
 var player_max_health = 100
+var can_attack = true
 
 var prev_state = {}
 var prev_ign = ""
 var prev_coordinates = Vector2.ZERO
 var isDead = false
+var prev_health = 0
 
 func _ready() -> void:
-	player_health_bar.value = 100
+	PlayerGlobalScript.player_health = 100
+	player_health_bar.value = PlayerGlobalScript.player_health
 	player_anim.play("side_idle_anim")
 	
 	await get_tree().process_frame
 	PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
-	player_area.name = PlayerGlobalScript.player_game_id
 	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
 		
 func play_punch_animation():
@@ -36,30 +38,33 @@ func play_punch_animation():
 		
 		elif y >= 1:
 			play_anim("front_punch_anim")
-
+			
+func _input(event: InputEvent) -> void:
+	if Input.is_action_just_pressed("punch") and PlayerGlobalScript.isModalOpen == false and can_attack:
+		can_attack = false
+		isAttacking = true
+		play_punch_animation()
+		attack_timer.start(0.5)
 	
 func _process(_delta: float) -> void:
 	if prev_ign != PlayerGlobalScript.player_in_game_name:
 		prev_ign = PlayerGlobalScript.player_in_game_name
 		player_ign.text = PlayerGlobalScript.player_in_game_name
-		
-	isAttacking = Input.is_action_pressed("punch") and PlayerGlobalScript.isModalOpen == false
 	
-	if isAttacking:
-		play_punch_animation()
-			
-	else:
+	if not isAttacking:
 		if not isDead:
 			move_player_animation()
 	
 	player_sprite.visible = PlayerGlobalScript.main_player_spawned
-	
-	if prev_coordinates != Vector2($".".position.x, $".".position.y):
-		prev_coordinates = Vector2($".".position.x, $".".position.y)
-		PlayerGlobalScript.player_pos_X = $".".position.x
-		PlayerGlobalScript.player_pos_Y = $".".position.y
 		
 	send_player_data()
+	player_health_bar_status(PlayerGlobalScript.player_health)
+	
+	if prev_coordinates != Vector2($".".position.x, $".".position.y):
+		PlayerGlobalScript.player_pos_X = $".".position.x
+		PlayerGlobalScript.player_pos_Y = $".".position.y
+
+		prev_coordinates = Vector2($".".position.x, $".".position.y)
 	
 func move_player_animation():
 	var dir_value = direction_value
@@ -109,11 +114,13 @@ func send_player_data():
 		}
 	
 	if (isMoving or isAttacking or prev_state != current_state) and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
+
 		SocketClient.send_data(current_state)
 		prev_state = current_state.duplicate()
+		
 
 func player_health_bar_status(status: float):
-	player_health_bar.value += status
+	player_health_bar.value = status
 	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
 	
 	if player_health_bar.value <= 0.0:
@@ -121,7 +128,21 @@ func player_health_bar_status(status: float):
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		play_anim("death_anim")
+		
+	var attack_state = {
+		"Socket_Name": "player_health",
+		"Player_GameID": PlayerGlobalScript.player_game_id,
+		"Player_Health": player_health_bar.value
+	}
+	
+	if prev_health != player_health_bar.value:
+		SocketClient.send_data(attack_state)
+		prev_health = player_health_bar.value
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		$".".queue_free()
+
+func _on_attack_timer_timeout() -> void:
+	can_attack = true
+	isAttacking = false

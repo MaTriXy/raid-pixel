@@ -57,12 +57,11 @@ func _process(_delta: float) -> void:
 		if not isDead:
 			play_punch_animation()
 			
+			if isMainPlayerInArea:
+				PlayerGlobalScript.player_health -= 5
 	else:
 		if not isDead:
 			play_movement_animation()
-	
-	#TODO: make for player attack
-	#PlayerGlobalScript.isGettingAttack = isAttacking and isMainPlayerInArea
 		
 func play_movement_animation():
 	var x = direction_value.x
@@ -117,4 +116,3 @@ func _on_player_area_area_entered(area: Area2D) -> void:
 func _on_player_area_area_exited(area: Area2D) -> void:
 	if area.name == "Main Player Area":
 		isMainPlayerInArea = false
-		PlayerGlobalScript.isGettingAttack = false

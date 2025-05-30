@@ -86,7 +86,6 @@ module.exports = (wss)=>{
                     }
                 )
                 ws.Spawn_Code = parsed_message.Spawn_Player_Code
-                console.log(parsed_message)
             }
 
             //for receiving ping

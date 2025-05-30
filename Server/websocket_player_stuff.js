@@ -61,6 +61,19 @@ module.exports = (wss)=>{
                     }
                 )
             }
+
+            //for player health
+            else if(socket_name == "player_health"){
+                broadcastSocket(
+                    wss,
+                    {
+                        Socket_Name: socket_name,
+                        Player_GameID: parsed_message.Player_GameID,
+                        Player_Health: parsed_message.Player_Health
+                    }
+                )
+                console.log(parsed_message)
+            }
         });
 
         ws.on('error', (err) => {

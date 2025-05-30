@@ -81,8 +81,17 @@ func _process(_delta: float) -> void:
 				joined_Player.name = data.get("Player_GameID")
 				joined_player.playerIGN = data.get("Player_inGameName")
 				
-		#TODO: make for player attack
-		
+		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_health":
+			prev_data = data
+			
+			print(data)
+			
+			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")) and GetPlayerInfo.active_player_dic.has(data.get("Player_GameID")):
+				
+				var joined_player_data = stored_players[data.get("Player_GameID")]
+				var joined_player = joined_player_data["Player"]
+				
+				joined_player.player_health_bar_status(int(data.get("Player_Health")))
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "spawner_spawn":
