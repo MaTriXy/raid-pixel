@@ -17,6 +17,9 @@ func head_to_game():
 			"Socket_Name": "leave_lobby",
 			"Player_GameID": PlayerGlobalScript.player_game_id
 		})
+		PlayerGlobalScript.isModalOpen = true
+		PlayerGlobalScript.current_modal_open = true
+		
 		loading_modal.load("res://Scenes/game_scene.tscn")
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:

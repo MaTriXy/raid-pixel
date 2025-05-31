@@ -50,9 +50,9 @@ func _process(_delta: float) -> void:
 		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn_%s" % [spawn_code] and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 			prev_data = data
 			
-			var player = joined_Player.instantiate()
-			
-			if data.get("Player_inGameName"):
+			if data.has("Player_inGameName"):
+				var player = joined_Player.instantiate()
+				
 				if stored_players.has(data.get("Player_GameID")):
 					var joined_player_data = stored_players[data.get("Player_GameID")]
 					var joined_player = joined_player_data["Player"]
@@ -65,6 +65,21 @@ func _process(_delta: float) -> void:
 						joined_player.isMoving = data.get("isMoving")
 						joined_player.player_type = data.get("player_type")
 						joined_player.isAttacking = data.get("isAttacking")
+					else:
+						var newPlayer = joined_Player.instantiate()
+						newPlayer.position = Vector2(spawn_coords.x, spawn_coords.y)
+						newPlayer.name = data.get("Player_GameID")
+						newPlayer.playerIGN = data.get("Player_inGameName")
+						newPlayer.player_type = data.get("player_type")
+						
+						if newPlayer.get_parent() != ySort:
+							spawner_animation.play("spawner_spawn")
+							ySort.add_child(newPlayer)
+
+						stored_players[data.get("Player_GameID")] = {
+							"Player": newPlayer,
+							"Position": newPlayer.position,
+						}
 					
 				else:
 					GetPlayerInfo.active_player_dic[data.get("Player_GameID")] = {
