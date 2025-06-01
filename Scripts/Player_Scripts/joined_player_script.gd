@@ -57,7 +57,7 @@ func _process(_delta: float) -> void:
 		if not isDead:
 			play_punch_animation()
 			
-			if isMainPlayerInArea:
+			if isMainPlayerInArea and player_type.to_upper() == "ENEMY":
 				PlayerGlobalScript.player_health -= 5
 	else:
 		if not isDead:

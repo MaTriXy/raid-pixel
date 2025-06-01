@@ -26,6 +26,11 @@ async function run() {
         await mongoose.connection.db.admin().command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
         console.log("Database name: " + mongoose.connection.name)
+
+        mongoose.connection.on('connected', () => console.log('MongoDB connected'));
+        mongoose.connection.on('error', (err) => console.log('MongoDB connection error:', err));
+        mongoose.connection.on('disconnected', () => console.log('MongoDB disconnected'));
+
     }
     catch(err){
         console.log(err)
@@ -61,12 +66,6 @@ const PORT = process.env.PORT;
 expressServer.listen(PORT, async ()=>{
     console.log('Listening to port ' + PORT);
     reset_playerCount(require("./gameDataMongooseSchema"))
-
-    //for scene manager
-    const sceneManager = require("./sceneManagerServer")
-    await sceneManager.initializeScene();
-
-    sceneManager.startCycle();
 });
 
 async function reset_playerCount(gameDataModel){

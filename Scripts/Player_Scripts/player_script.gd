@@ -7,8 +7,8 @@ extends PlayerMovement
 @onready var player_health_bar = $"Health Bar"
 @onready var player_health_label = $"Health Bar/label"
 @onready var attack_timer = $"Attack Timer"
-var player_max_health = 100
 var can_attack = true
+var isDataSend = false
 
 var prev_state = {}
 var prev_ign = ""
@@ -19,12 +19,13 @@ var prev_health = 0
 func _ready() -> void:
 	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.player_health = 100
+	PlayerGlobalScript.player_max_health = 100
 	player_health_bar.value = PlayerGlobalScript.player_health
 	player_anim.play("side_idle_anim")
 	
 	await get_tree().process_frame
 	PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
-	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
+	player_health_label.text = str(player_health_bar.value) + "/" + str(PlayerGlobalScript.player_max_health)
 		
 func play_punch_animation():
 	var x = last_direction_value.x
@@ -44,6 +45,7 @@ func _input(_event: InputEvent) -> void:
 	if Input.is_action_just_pressed("punch") and PlayerGlobalScript.isModalOpen == false and can_attack:
 		can_attack = false
 		isAttacking = true
+		PlayerGlobalScript.isPlayerAttack = true
 		play_punch_animation()
 		attack_timer.start(0.5)
 	
@@ -114,15 +116,18 @@ func send_player_data():
 			"isAttacking": isAttacking
 		}
 	
-	if (isMoving or isAttacking or prev_state != current_state) and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
+	if (isMoving or isAttacking or prev_state != current_state or not isDataSend) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
 
 		SocketClient.send_data(current_state)
 		prev_state = current_state.duplicate()
-		
+		isDataSend = true
 
 func player_health_bar_status(status: float):
 	player_health_bar.value = status
-	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
+	player_health_label.text = str(player_health_bar.value) + "/" + str(PlayerGlobalScript.player_max_health)
+	
+	if PlayerGlobalScript.player_health <= 0:
+		PlayerGlobalScript.player_health = 0
 	
 	if player_health_bar.value <= 0.0:
 		isDead = true
@@ -148,3 +153,4 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 func _on_attack_timer_timeout() -> void:
 	can_attack = true
 	isAttacking = false
+	PlayerGlobalScript.isPlayerAttack = false

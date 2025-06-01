@@ -15,6 +15,10 @@ extends Global_Message
 @onready var ping_render = $"Signal Strength"
 @onready var playerCount_timer = $"Player Count Timer"
 
+#for player hp
+@onready var player_hp = $"Player Health Bar"
+@onready var player_hp_label = $"Player Health Bar/label"
+
 #setting modal contents
 @onready var logout_btn = $"Setting Modal/Panel/Log out Button"
 @onready var surrender_btn = $"Setting Modal/Panel/Surrender Button"
@@ -60,6 +64,7 @@ var prev_coordinates = Vector2.ZERO
 var prev_diamond = 0
 var prev_FPS = 0
 var prev_status: String
+var prev_health = 0
 
 var profile_base64: String
 
@@ -266,6 +271,12 @@ func _process(_delta: float) -> void:
 	if str(prev_FPS) != fps_counter.text:
 		fps_counter.text = "FPS: " + str(Engine.get_frames_per_second())
 		prev_FPS = Engine.get_frames_per_second()
+		
+	if prev_health != PlayerGlobalScript.player_health:
+		player_hp.value = PlayerGlobalScript.player_health
+		
+		player_hp_label.text = "%s/%s" % [str(PlayerGlobalScript.player_health), str(PlayerGlobalScript.player_max_health)]
+		prev_health = PlayerGlobalScript.player_health
 		
 	if WebsocketsConnection.socket_connection_status and prev_status != WebsocketsConnection.socket_connection_status:
 		prev_status = WebsocketsConnection.socket_connection_status

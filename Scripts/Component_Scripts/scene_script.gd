@@ -6,18 +6,6 @@ extends Node
 @export var tileMap: TileMapLayer
 @export var scene_name: String
 
-#for day and night cycle stuff
-@export var canvasModulate: CanvasModulate
-@export var night_color: Color
-@export var day_color: Color
-var time_max = 0
-var time = 0
-var isTimeLoaded = false
-
-#for time to render
-@export var time_render: RichTextLabel
-var prev_time = 0
-
 var max_scene_width_left: float
 var max_scene_width_right: float
 var max_scene_height_top: float
@@ -55,39 +43,10 @@ func _ready() -> void:
 		max_scene_height_bottom = world_rect.position.y + world_rect.size.y
 		max_scene_height_top = world_rect.position.y
 	
-	await get_tree().create_timer(1.0).timeout
-	var get_time = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/scene_cycle", { "scene_name": scene_name })
-	
-	if time_render:
-		time_render.text = "Fetching time..."
-	
-	if get_time.has("status") and get_time["status"] == "Success":
-		time = get_time["time"]
-		time_max = get_time["time_max"]
-		isTimeLoaded = true
-	else:
-		time = 0
-		time_max = 0
-		isTimeLoaded = true
-
-func day_night_cycle(delta):
-	time += delta
-	time = fmod(time, time_max)
-
-	var normalized_time = (sin((PI * time / time_max)) + 1.0) / 2.0
-	canvasModulate.color = night_color.lerp(day_color, normalized_time)
-	
-	if time != prev_time and isTimeLoaded:
-		time_render.text = "Time: %.2f" % [time]
-		prev_time = time
-	
-func _process(delta: float):
+func _process(_delta: float):
 	if tileMap and tileMap.tile_set and main_player:
 		wrap_around()
 		adjust_player_camera_limit()
-	
-	if time_render:
-		day_night_cycle(delta)
 	
 func adjust_player_camera_limit():
 	var playerCamera = main_player.player_camera

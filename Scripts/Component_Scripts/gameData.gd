@@ -33,6 +33,9 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.player_diamond = 0
 	PlayerGlobalScript.current_scene = ""
 	PlayerGlobalScript.spawn_player_code = ""
+	PlayerGlobalScript.player_health = 100
+	PlayerGlobalScript.player_max_health = 100
+	PlayerGlobalScript.isPlayerAttack = false
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")
