@@ -13,10 +13,6 @@ A 2D game for desktop and mobiles (Android) built with Godot and Express.
 - You **cannot** resell or repackage this game without following GPL terms.
 - Credit is required. Don’t remove my name or claim this as your original work.
 
-## Assets (art, audio, etc.) are licensed separately under CC BY-NC-SA 4.0:
-- No commercial use of the assets is allowed without my permission.
-- If unsure, open an issue or ask me directly.
-
 ## Note: 
 I want this to be a community-friendly project. Mod it, learn from it, just don’t exploit it.
 
