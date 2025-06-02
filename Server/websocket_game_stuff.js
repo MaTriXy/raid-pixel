@@ -88,6 +88,17 @@ module.exports = (wss)=>{
                 ws.Spawn_Code = parsed_message.Spawn_Player_Code
             }
 
+            //for core health
+            else if(socket_name === "core_health_" + ws.Spawn_Code){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "health": parsed_message.health
+                    }
+                )
+            }
+
             //for receiving ping
             else if(socket_name === "ping"){
                 broadcastSocket(
