@@ -94,7 +94,8 @@ module.exports = (wss)=>{
                     wss,
                     {
                         "Socket_Name": socket_name,
-                        "health": parsed_message.health
+                        "health": parsed_message.health,
+                        "Player_IGN": parsed_message.Player_IGN
                     }
                 )
             }

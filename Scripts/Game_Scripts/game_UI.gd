@@ -12,7 +12,7 @@ extends Node
 
 @export var core: StaticBody2D
 
-var prev_core_hp = 0
+var prev_data = {}
 
 func _ready() -> void:
 	game_timer.wait_time = 99
@@ -31,8 +31,18 @@ func _process(_delta: float) -> void:
 	var minutes = int(game_timer.time_left) / 60
 	game_label.text = "Battle time: %02d:%02d" % [minutes, seconds]
 	
-	if prev_core_hp != core.core_hp:
-		tex_core_hp.value = core.core_hp
-		
-		core_hp_label.text = "%s/%s" % [core.core_hp, core.core_max_hp]
-		prev_core_hp = core.core_hp
+	recieve_data()
+
+func recieve_data():
+	var data = SocketClient.received_data()
+	var connection_status = WebsocketsConnection.socket_connection_status
+	
+	if connection_status == "Connected":
+		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "core_health_%s" % [PlayerGlobalScript.spawn_player_code]:
+			prev_data = data
+			
+			if data.has("health"):
+				tex_core_hp.value = float(data.get("health"))
+				core.core_hp = int(tex_core_hp.value)
+				
+				core_hp_label.text = "%s/%s" % [core.core_hp, core.core_max_hp]
