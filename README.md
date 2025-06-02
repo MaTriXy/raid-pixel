@@ -1,18 +1,28 @@
 # Raid Pixel
 
-A 2D game for desktop and mobiles (Android) built with Godot and Express.
+Raid Pixel is a 2D desktop and mobile (Android) game built using Godot and Express.  
+Currently in early development, this project aims to be community-driven and open-source game with modding support.
 
-(On Development....)
 ---
+
 ## License
 
-## This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
+This project is licensed under the [GNU General Public License v3.0 (GPL-3.0)](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
-- You can **fork**, **learn from**, and **modify** this project.
-- You **must** keep your changes open-source under the same license.
-- You **cannot** resell or repackage this game without following GPL terms.
-- Credit is required. Don’t remove my name or claim this as your original work.
+- You are free to **fork**, **study**, and **modify** the project under GPL terms.
+- Any distributed modifications must also be licensed under GPL-3.0.
+- Redistribution of this game (modified or unmodified) must comply with GPL requirements.
+- While GPL does not require attribution, please respect the original author by crediting the project appropriately.
 
-## Note: 
-I want this to be a community-friendly project. Mod it, learn from it, just don’t exploit it.
+---
 
+## Community Note
+
+This project is intended to be community-friendly and encourages learning and modding.  
+Please do not exploit this work for commercial gain or remove original credits.
+
+---
+
+## Contributing
+
+Contributions and feedback are welcome! Please open issues or pull requests to collaborate.
