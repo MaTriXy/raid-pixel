@@ -35,7 +35,8 @@ module.exports = (wss)=>{
                     "player_type": parsed_message.player_type,
                     "isAttacking": parsed_message.isAttacking,
                     "isMoving": parsed_message.isMoving,
-                    "Player_username": parsed_message.Player_username
+                    "Player_username": parsed_message.Player_username,
+                    "isDead": parsed_message.isDead
                 }
 
                 broadcastSocket(wss, data_state)
@@ -52,7 +53,7 @@ module.exports = (wss)=>{
                     "Socket_Name": "populate_scene_" + ws.Spawn_Code,
                     "player_data": player_active
                 }
-
+                
                 if(prev_state != populate_state){
                     ws.send(JSON.stringify(populate_state));
 

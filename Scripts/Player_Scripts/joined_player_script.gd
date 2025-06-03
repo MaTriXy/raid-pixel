@@ -33,6 +33,8 @@ func _ready() -> void:
 	player_anim.play("side_idle_anim")
 	player_area.name = $".".name
 	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
+	
+	player_sprite.flip_h = last_direction_value.x < 0
 
 func play_punch_animation():
 	var x = last_direction_value.x
@@ -56,9 +58,10 @@ func _process(_delta: float) -> void:
 	if isAttacking:
 		if not isDead:
 			play_punch_animation()
-			
-			if isMainPlayerInArea and player_type.to_upper() == "ENEMY":
-				PlayerGlobalScript.player_health -= 5
+	
+		if isMainPlayerInArea:
+			PlayerGlobalScript.player_health -= 5
+		
 	else:
 		if not isDead:
 			play_movement_animation()
@@ -70,7 +73,7 @@ func play_movement_animation():
 	if isMoving:
 		if abs(x) > abs(y) or ((x < 0 and y < 0) or (x > 0 and y < 0) or (x < 0 and y > 0) or (x > 0 and y > 0)):
 			play_anim("side_walk_anim")
-			player_sprite.flip_h = x < 0
+			player_sprite.flip_h = last_direction_value.x < 0
 			
 		elif y <= -1:
 			play_anim("back_walk_anim")
@@ -95,12 +98,15 @@ func play_anim(anim_name):
 		player_anim.play(anim_name)
 
 func player_health_bar_status(status: float):
-	player_health_bar.value = status
-	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
-	
-	if player_health_bar.value <= 0.0:
+	if status <= 0.0:
 		isDead = true
 		player_anim.play("death_anim")
+		status = 0
+		
+	print("Player Join sprite: %s" % [str(status)])
+	
+	player_health_bar.value = status
+	player_health_label.text = "%s/%s" % [str(status), str(player_max_health)]
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":

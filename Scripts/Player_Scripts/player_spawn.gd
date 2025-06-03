@@ -104,8 +104,7 @@ func _process(_delta: float) -> void:
 			prev_data = data
 			
 			for populate_data in data.get("player_data"):
-				if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
-					if not stored_players.has(populate_data.get("Player_GameID")):
+				if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id and not stored_players.has(populate_data.get("Player_GameID")):
 						var newPlayer = joined_Player.instantiate()
 						newPlayer.name = populate_data.get("Player_GameID")
 						newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))
@@ -114,6 +113,7 @@ func _process(_delta: float) -> void:
 						newPlayer.playerIGN = populate_data.get("Player_inGameName")
 						newPlayer.player_type = populate_data.get("player_type")
 						
+						print(populate_data)
 						if newPlayer.get_parent() != ySort:
 							spawner_animation.play("spawner_spawn")
 							ySort.add_child(newPlayer)
@@ -130,7 +130,7 @@ func _process(_delta: float) -> void:
 				var joined_player_data = stored_players[data.get("Player_GameID")]
 				var joined_player = joined_player_data["Player"]
 				
-				if joined_player:
+				if is_instance_valid(joined_Player):
 					joined_player.queue_free()
 					stored_players.erase(data.get("Player_GameID"))
 					GetPlayerInfo.active_player_dic.erase(data.get("Player_GameID"))
@@ -157,12 +157,13 @@ func _process(_delta: float) -> void:
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_health":
 			prev_data = data
 			
-			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")) and GetPlayerInfo.active_player_dic.has(data.get("Player_GameID")):
+			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
 				var joined_player_data = stored_players[data.get("Player_GameID")]
 				var joined_player = joined_player_data["Player"]
-		
-				if joined_player:
-					joined_player.player_health_bar_status(int(data.get("Player_Health")))
+				
+				print("Player data sprite: %s" % [data.get("Player_Health")])
+				if is_instance_valid(joined_player):
+					joined_player.player_health_bar_status(float(data.get("Player_Health")))
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

@@ -113,7 +113,8 @@ func send_player_data():
 			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
 			"isMoving": isMoving,
 			"player_type": PlayerGlobalScript.player_type,
-			"isAttacking": isAttacking
+			"isAttacking": isAttacking,
+			"isDead": PlayerGlobalScript.isMainPlayerDead
 		}
 	
 	if (isMoving or isAttacking or prev_state != current_state or not isDataSend) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
@@ -123,31 +124,30 @@ func send_player_data():
 		isDataSend = true
 
 func player_health_bar_status(status: float):
-	player_health_bar.value = status
-	player_health_label.text = str(player_health_bar.value) + "/" + str(PlayerGlobalScript.player_max_health)
-	
-	if PlayerGlobalScript.player_health <= 0:
-		PlayerGlobalScript.player_health = 0
-	
-	if player_health_bar.value <= 0.0:
+	if  status <= 0.0:
 		isDead = true
+		PlayerGlobalScript.isMainPlayerDead = true
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		play_anim("death_anim")
 		
+		status = 0
+	
+	player_health_bar.value = status
+	player_health_label.text = str(status) + "/" + str(PlayerGlobalScript.player_max_health)
+	
 	var attack_state = {
 		"Socket_Name": "player_health",
 		"Player_GameID": PlayerGlobalScript.player_game_id,
-		"Player_Health": player_health_bar.value
+		"Player_Health": status
 	}
 	
-	if prev_health != player_health_bar.value:
+	if prev_health != status:
 		SocketClient.send_data(attack_state)
-		prev_health = player_health_bar.value
+		prev_health = status
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		PlayerGlobalScript.isMainPlayerDead = true
 		queue_free()
 
 func _on_attack_timer_timeout() -> void:
