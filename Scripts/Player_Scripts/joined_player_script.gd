@@ -60,7 +60,7 @@ func _process(_delta: float) -> void:
 			play_punch_animation()
 	
 		if isMainPlayerInArea:
-			PlayerGlobalScript.player_health -= 5
+			PlayerGlobalScript.player_health -= 5.0
 		
 	else:
 		if not isDead:
@@ -102,18 +102,12 @@ func player_health_bar_status(status: float):
 		isDead = true
 		player_anim.play("death_anim")
 		status = 0
-		
-	print("Player Join sprite: %s" % [str(status)])
 	
 	player_health_bar.value = status
 	player_health_label.text = "%s/%s" % [str(status), str(player_max_health)]
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		SocketClient.send_data({
-			"Socket_Name": "player_death",
-			"Player_GameID": player_area.name
-		})
 		
 		await get_tree().process_frame
 		queue_free()

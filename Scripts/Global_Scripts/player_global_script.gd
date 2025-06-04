@@ -39,7 +39,7 @@ var player_UUID: String
 #for player game stuff
 var current_scene: String
 var spawn_player_code: String
-var player_health: int
+var player_health: float
 var player_max_health: int
 var isMainPlayerDead: bool
 var isPlayerAttack: bool

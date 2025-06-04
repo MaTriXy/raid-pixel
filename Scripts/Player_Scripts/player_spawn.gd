@@ -13,7 +13,6 @@ var prev_death_status = false
 @onready var death_panel = $"UI/Death Screen Panel"
 @onready var respawn_button = $"UI/Death Screen Panel/Panel/Respawn Button"
 @export var spawn_coords: Vector2
-
 @onready var spawn_timer = $"UI/Death Screen Panel/Spawn Timer"
 
 #store player here
@@ -113,7 +112,6 @@ func _process(_delta: float) -> void:
 						newPlayer.playerIGN = populate_data.get("Player_inGameName")
 						newPlayer.player_type = populate_data.get("player_type")
 						
-						print(populate_data)
 						if newPlayer.get_parent() != ySort:
 							spawner_animation.play("spawner_spawn")
 							ySort.add_child(newPlayer)
@@ -139,6 +137,12 @@ func _process(_delta: float) -> void:
 			prev_data = data
 
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
+				var joined_player_data = stored_players[data.get("Player_GameID")]
+				var joined_player = joined_player_data["Player"]
+				
+				if is_instance_valid(joined_Player):
+					joined_player.queue_free()
+				
 				stored_players.erase(data.get("Player_GameID"))
 					
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ModifyProfile":
@@ -161,8 +165,7 @@ func _process(_delta: float) -> void:
 				var joined_player_data = stored_players[data.get("Player_GameID")]
 				var joined_player = joined_player_data["Player"]
 				
-				print("Player data sprite: %s" % [data.get("Player_Health")])
-				if is_instance_valid(joined_player):
+				if is_instance_valid(joined_player) and data.has("Player_Health"):
 					joined_player.player_health_bar_status(float(data.get("Player_Health")))
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
