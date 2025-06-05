@@ -61,7 +61,7 @@ func _process(_delta: float) -> void:
 	player_sprite.visible = PlayerGlobalScript.main_player_spawned
 		
 	send_player_data()
-	player_health_bar_status(PlayerGlobalScript.player_health)
+	player_health_bar_status()
 	
 	if prev_coordinates != Vector2($".".position.x, $".".position.y):
 		PlayerGlobalScript.player_pos_X = $".".position.x
@@ -114,7 +114,8 @@ func send_player_data():
 			"isMoving": isMoving,
 			"player_type": PlayerGlobalScript.player_type,
 			"isAttacking": isAttacking,
-			"isDead": isDead
+			"isDead": isDead,
+			"spawn_code": PlayerGlobalScript.spawn_player_code
 		}
 	
 	if (isMoving or isAttacking or prev_state != current_state or not isDataSend) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
@@ -123,23 +124,23 @@ func send_player_data():
 		prev_state = current_state.duplicate()
 		isDataSend = true
 
-func player_health_bar_status(status: float):
-	if  status <= 0.0:
+func player_health_bar_status():
+	if  PlayerGlobalScript.player_health <= 0.0:
 		isDead = true
 		PlayerGlobalScript.isMainPlayerDead = true
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		play_anim("death_anim")
 		
-		status = 0
+		PlayerGlobalScript.player_health = 0
 	
-	player_health_bar.value = status
-	player_health_label.text = str(status) + "/" + str(PlayerGlobalScript.player_max_health)
+	player_health_bar.value = PlayerGlobalScript.player_health
+	player_health_label.text = str(PlayerGlobalScript.player_health) + "/" + str(PlayerGlobalScript.player_max_health)
 	
 	var attack_state = {
 		"Socket_Name": "player_health",
 		"Player_GameID": PlayerGlobalScript.player_game_id,
-		"Player_Health": status,
+		"Player_Health": PlayerGlobalScript.player_health,
 		"isDead": isDead
 	}
 	
@@ -150,8 +151,26 @@ func player_health_bar_status(status: float):
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		SocketClient.send_data({
-			"Socket_Name": "player_death",
-			"Player_GameID": PlayerGlobalScript.player_game_id
+			"Socket_Name": "Player_Spawn_%s" % [PlayerGlobalScript.spawn_player_code],
+			"Player_username": PlayerGlobalScript.player_username,
+			"Player_inGameName": PlayerGlobalScript.player_in_game_name,
+			"Player_GameID": PlayerGlobalScript.player_game_id,
+			"Player_posX": PlayerGlobalScript.player_pos_X,
+			"Player_posY": PlayerGlobalScript.player_pos_Y,
+			"direction_value": { "x": direction_value.x, "y": direction_value.y },
+			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
+			"isMoving": isMoving,
+			"player_type": PlayerGlobalScript.player_type,
+			"isAttacking": isAttacking,
+			"isDead": isDead,
+			"spawn_code": PlayerGlobalScript.spawn_player_code
+		})
+		
+		SocketClient.send_data({
+			"Socket_Name": "player_health",
+			"Player_GameID": PlayerGlobalScript.player_game_id,
+			"Player_Health": PlayerGlobalScript.player_health,
+			"isDead": isDead
 		})
 		
 		await get_tree().process_frame

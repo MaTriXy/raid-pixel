@@ -103,23 +103,27 @@ func _process(_delta: float) -> void:
 			prev_data = data
 			
 			for populate_data in data.get("player_data"):
-				if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id and not stored_players.has(populate_data.get("Player_GameID")):
-						var newPlayer = joined_Player.instantiate()
-						newPlayer.name = populate_data.get("Player_GameID")
-						newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))
-						newPlayer.direction_value = Vector2(populate_data.get("direction_value")["x"], populate_data.get("direction_value")["y"])
-						newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
-						newPlayer.playerIGN = populate_data.get("Player_inGameName")
-						newPlayer.player_type = populate_data.get("player_type")
+				if bool(populate_data.get("isDead")):
+						stored_players.erase(populate_data.get("Player_GameID"))
 						
-						if newPlayer.get_parent() != ySort:
+				if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id and not stored_players.has(populate_data.get("Player_GameID")):
+					var newPlayer = joined_Player.instantiate()
+					newPlayer.name = populate_data.get("Player_GameID")
+					newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))
+					newPlayer.direction_value = Vector2(populate_data.get("direction_value")["x"], populate_data.get("direction_value")["y"])
+					newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
+					newPlayer.playerIGN = populate_data.get("Player_inGameName")
+					newPlayer.player_type = populate_data.get("player_type")
+					
+					if newPlayer.get_parent() != ySort and not bool(populate_data.get("isDead")):
+						if str(populate_data.get("spawn_code")) == spawn_code:
 							spawner_animation.play("spawner_spawn")
 							ySort.add_child(newPlayer)
-
-						stored_players[populate_data.get("Player_GameID")] = {
-							"Player": newPlayer,
-							"Position": newPlayer.position,
-						}
+						
+							stored_players[populate_data.get("Player_GameID")] = {
+								"Player": newPlayer,
+								"Position": newPlayer.position,
+							}
 					
 		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Disconnect" or data.get("Socket_Name") == "leave_lobby"):
 			prev_data = data
@@ -132,18 +136,6 @@ func _process(_delta: float) -> void:
 					joined_player.queue_free()
 					stored_players.erase(data.get("Player_GameID"))
 					GetPlayerInfo.active_player_dic.erase(data.get("Player_GameID"))
-					
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_death":
-			prev_data = data
-
-			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
-				var joined_player_data = stored_players[data.get("Player_GameID")]
-				var joined_player = joined_player_data["Player"]
-				
-				if is_instance_valid(joined_Player):
-					joined_player.queue_free()
-				
-				stored_players.erase(data.get("Player_GameID"))
 					
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ModifyProfile":
 			prev_data = data
@@ -166,7 +158,7 @@ func _process(_delta: float) -> void:
 				var joined_player = joined_player_data["Player"]
 				
 				if is_instance_valid(joined_player) and data.has("Player_Health"):
-					joined_player.player_health_bar_status(float(data.get("Player_Health")))
+					joined_player.player_health = float(data.get("Player_Health"))
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

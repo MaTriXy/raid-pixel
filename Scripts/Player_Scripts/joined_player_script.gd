@@ -6,6 +6,7 @@ extends CharacterBody2D
 @onready var player_health_bar = $"Health Bar"
 @onready var player_health_label = $"Health Bar/label"
 @onready var player_area = $"Player Area"
+var player_health = 100
 var player_max_health = 100
 
 var direction_value = Vector2.ZERO
@@ -59,12 +60,13 @@ func _process(_delta: float) -> void:
 		if not isDead:
 			play_punch_animation()
 	
-		if isMainPlayerInArea:
+		if isMainPlayerInArea and player_type.to_upper() == "ENEMY":
 			PlayerGlobalScript.player_health -= 5.0
 		
 	else:
 		if not isDead:
 			play_movement_animation()
+	player_health_bar_status()
 		
 func play_movement_animation():
 	var x = direction_value.x
@@ -97,14 +99,14 @@ func play_anim(anim_name):
 	if player_anim.current_animation != anim_name:
 		player_anim.play(anim_name)
 
-func player_health_bar_status(status: float):
-	if status <= 0.0:
+func player_health_bar_status():
+	if player_health <= 0.0:
 		isDead = true
 		player_anim.play("death_anim")
-		status = 0
+		player_health = 0
 	
-	player_health_bar.value = status
-	player_health_label.text = "%s/%s" % [str(status), str(player_max_health)]
+	player_health_bar.value = player_health
+	player_health_label.text = "%s/%s" % [str(player_health), str(player_max_health)]
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":

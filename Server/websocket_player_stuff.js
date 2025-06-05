@@ -36,6 +36,8 @@ module.exports = (wss)=>{
                     "isAttacking": parsed_message.isAttacking,
                     "isMoving": parsed_message.isMoving,
                     "Player_username": parsed_message.Player_username,
+                    "spawn_code": parsed_message.spawn_code,
+                    "isDead": parsed_message.isDead
                 }
 
                 broadcastSocket(wss, data_state)
@@ -77,18 +79,6 @@ module.exports = (wss)=>{
                 )
             }
 
-            //for player death
-            else if(socket_name == "player_death"){
-                broadcastSocket(
-                    wss,
-                    {
-                        Socket_Name: socket_name,
-                        Player_GameID: parsed_message.Player_GameID,
-                    }
-                )
-                console.log(parsed_message)
-            }
-
             //for player health
             else if(socket_name == "player_health"){
                 broadcastSocket(
@@ -97,6 +87,7 @@ module.exports = (wss)=>{
                         Socket_Name: socket_name,
                         Player_GameID: parsed_message.Player_GameID,
                         Player_Health: parsed_message.Player_Health,
+                        isDead: parsed_message.isDead
                     }
                 )
             }
