@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=4 uid="uid://dn723fb516qkt"]
+[gd_scene load_steps=22 format=4 uid="uid://dn723fb516qkt"]
 
 [ext_resource type="Script" uid="uid://cw2r6de5l2y5o" path="res://Scripts/Component_Scripts/scene_script.gd" id="1_3q4fp"]
 [ext_resource type="Texture2D" uid="uid://b2epnngvervp8" path="res://Assets/Tile_Maps/Lobby_TileMap.png" id="2_h23dp"]
@@ -3002,6 +3002,16 @@ corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s7ahk"]
+bg_color = Color(0, 0, 0, 0.196078)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_oohhb"]
+bg_color = Color(1, 1, 1, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
 [node name="Lobby Scene" type="Node2D" node_paths=PackedStringArray("main_player", "ySort", "tileMap")]
 script = ExtResource("1_3q4fp")
 main_player = NodePath("Y Sort/Main Player")
@@ -3030,13 +3040,16 @@ spawn_coords = Vector2(1020, 45)
 [node name="Main Player" parent="Y Sort" instance=ExtResource("4_44aa0")]
 position = Vector2(1020, 45)
 
-[node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("loading_modal", "ready_panel", "go_to_scene_button")]
+[node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("loading_modal", "ready_panel", "go_to_scene_button", "find_match_panel", "find_match_cancel_button", "find_match_timer_label")]
 z_index = 1
 position = Vector2(1120, -251)
 script = ExtResource("6_h23dp")
 loading_modal = NodePath("../../UI/Loading Interface")
 ready_panel = NodePath("../../UI/Going to other scene panel")
 go_to_scene_button = NodePath("../../UI/Going to other scene panel/Enter Button")
+find_match_panel = NodePath("../../UI/Finding Match Panel")
+find_match_cancel_button = NodePath("../../UI/Finding Match Panel/Panel/Cancel Button")
+find_match_timer_label = NodePath("../../UI/Finding Match Panel/Panel/time_label")
 
 [node name="Sprite" type="Sprite2D" parent="Y Sort/Player Door"]
 scale = Vector2(0.6, 0.6)
@@ -3074,8 +3087,10 @@ tile_set = SubResource("TileSet_nr3av")
 layer = 2
 
 [node name="Connection_Interface" parent="UI" instance=ExtResource("7_lvc8g")]
+visible = false
 
 [node name="Going to other scene panel" type="Panel" parent="UI"]
+visible = false
 z_index = 18
 anchors_preset = 5
 anchor_left = 0.5
@@ -3125,6 +3140,89 @@ vertical_alignment = 1
 
 [node name="Loading Interface" parent="UI" instance=ExtResource("10_s7ahk")]
 visible = false
+
+[node name="Finding Match Panel" type="Panel" parent="UI"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_s7ahk")
+
+[node name="Panel" type="Panel" parent="UI/Finding Match Panel"]
+custom_minimum_size = Vector2(500, 250)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -20.0
+offset_right = 20.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_oohhb")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="UI/Finding Match Panel/Panel"]
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -20.0
+offset_right = 150.0
+offset_bottom = 17.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("8_r1is2")
+theme_override_font_sizes/normal_font_size = 30
+text = "Finding Players..."
+fit_content = true
+scroll_following = true
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Cancel Button" type="Button" parent="UI/Finding Match Panel/Panel"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -35.5
+offset_top = -60.0
+offset_right = 35.5
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_default_cursor_shape = 2
+theme = ExtResource("9_oohhb")
+text = "Cancel"
+
+[node name="time_label" type="RichTextLabel" parent="UI/Finding Match Panel/Panel"]
+custom_minimum_size = Vector2(300, 30)
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -20.0
+offset_right = 20.0
+offset_bottom = 46.0
+grow_horizontal = 2
+theme_override_colors/default_color = Color(0, 0, 0, 1)
+theme_override_fonts/normal_font = ExtResource("8_r1is2")
+theme_override_font_sizes/normal_font_size = 20
+text = "00:00"
+fit_content = true
+scroll_following = true
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [connection signal="animation_finished" from="Y Sort/Player Door/Sprite/AnimationPlayer" to="Y Sort/Player Door" method="_on_animation_player_animation_finished"]
 [connection signal="area_entered" from="Y Sort/Player Door/Player Door Area" to="Y Sort/Player Door" method="_on_player_door_area_area_entered"]

@@ -139,22 +139,7 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		SocketClient.send_data({
-			"Socket_Name": "Player_Spawn_%s" % [PlayerGlobalScript.spawn_player_code],
-			"Player_username": PlayerGlobalScript.player_username,
-			"Player_inGameName": PlayerGlobalScript.player_in_game_name,
-			"Player_GameID": PlayerGlobalScript.player_game_id,
-			"Player_posX": PlayerGlobalScript.player_pos_X,
-			"Player_posY": PlayerGlobalScript.player_pos_Y,
-			"direction_value": { "x": direction_value.x, "y": direction_value.y },
-			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
-			"isMoving": isMoving,
-			"player_type": PlayerGlobalScript.player_type,
-			"isAttacking": isAttacking,
-			"isDead": PlayerGlobalScript.isMainPlayerDead,
-			"spawn_code": PlayerGlobalScript.spawn_player_code,
-			"player_health": PlayerGlobalScript.player_health
-		})
+		send_player_data()
 		
 		await get_tree().process_frame
 		queue_free()

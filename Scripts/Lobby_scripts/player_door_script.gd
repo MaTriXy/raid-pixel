@@ -1,18 +1,71 @@
 extends Node
 
 @onready var animation = $"Sprite/AnimationPlayer"
+
 @export var loading_modal: Control
 @export var ready_panel: Panel
 @export var go_to_scene_button: Button
 
+@export var find_match_panel: Panel
+@export var find_match_cancel_button: Button
+@export var find_match_timer_label: RichTextLabel
+var isFindMatchStart = false
+var find_match_timer = 0.0
+
 var prev_status = false
 
 func _ready() -> void:
+	find_match_panel.visible = false
+	find_match_cancel_button.visible = false
 	ready_panel.visible = false
 	go_to_scene_button.connect("pressed", head_to_game)
+	find_match_cancel_button.connect("pressed", cancel_match)
 	
+func _process(delta: float) -> void:
+	if isFindMatchStart:
+		find_match_timer += delta
+		
+		var seconds = int(find_match_timer) % 60
+		var minutes = int(find_match_timer) / 60
+		find_match_timer_label.text = "%02d:%02d" % [minutes, seconds]
+		
+		if seconds >= 10.0:
+			find_match_cancel_button.visible = true
+		
+func cancel_match():
+	SocketClient.send_data({
+		"Socket_Name": "find_match",
+		"Player_GameID": PlayerGlobalScript.player_game_id,
+		"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
+		"status": "leave"
+	})
+		
+	isFindMatchStart = false
+	find_match_timer = 0
+	
+	ready_panel.visible = true
+	find_match_panel.visible = false
+	
+	PlayerGlobalScript.isModalOpen = false
+	PlayerGlobalScript.current_modal_open = false
+		
 func head_to_game():
 	if not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open:
+		find_match_cancel_button.visible = false
+		ready_panel.visible = false
+		find_match_panel.visible = true
+		isFindMatchStart = true
+		
+		PlayerGlobalScript.isModalOpen = true
+		PlayerGlobalScript.current_modal_open = true
+		
+		SocketClient.send_data({
+			"Socket_Name": "find_match",
+			"Player_GameID": PlayerGlobalScript.player_game_id,
+			"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
+			"status": "joined"
+		})
+		"""
 		SocketClient.send_data({
 			"Socket_Name": "leave_lobby",
 			"Player_GameID": PlayerGlobalScript.player_game_id
@@ -21,6 +74,7 @@ func head_to_game():
 		PlayerGlobalScript.current_modal_open = true
 		
 		loading_modal.load("res://Scenes/game_scene.tscn")
+		"""
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "door_anim":

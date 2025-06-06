@@ -6,6 +6,8 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
 
+let queue_match = []
+let match_found = false
 async function delete_image(profile_hash){
     try{
         if(profile_hash != "ajVzRmV"){
@@ -74,6 +76,37 @@ module.exports = (wss)=>{
                         "Player_inGameName": parsed_message.Player_inGameName
                     }
                 )
+            }
+
+            //for finding match
+            else if(socket_name == "find_match"){
+                var data = { "gameID": [parsed_message.Player_GameID], "matchID": parsed_message.match_ID }
+                
+                for(let queue of queue_match){
+                    if(queue.gameID.length < 2){
+                        queue.gameID.push(parsed_message.Player_GameID)
+                        match_found = true
+                        break;
+                    }
+                    else if(queue.gameID.length >= 2){
+                        match_found = false
+                    }
+                }
+
+                if(!match_found){
+                    queue_match.push(data)
+                }
+
+                console.table(queue_match)
+
+                /*
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": "find_match",
+                        "Player_GameID": parsed_message.GameID
+                    }
+                )*/
             }
 
             //for player spawn code
