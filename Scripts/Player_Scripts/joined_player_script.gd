@@ -21,7 +21,7 @@ var playerIGN = ""
 
 var prev_pos = Vector2.ZERO
 var prev_ign = ""
-
+var prev_health = 0
 var player_type = ""
 
 var player_ally_asset = preload("res://Assets/UI_Components/Sprite_Health_Ally_player.png")
@@ -103,15 +103,16 @@ func player_health_bar_status():
 	if player_health <= 0.0:
 		isDead = true
 		player_anim.play("death_anim")
-		player_health = 0
-	
-	player_health_bar.value = player_health
-	player_health_label.text = "%s/%s" % [str(player_health), str(player_max_health)]
+		player_health = 0.0
+							
+	if player_health != prev_health:
+		player_health_bar.value = player_health
+		player_health_label.text = "%s/%s" % [str(player_health), str(player_max_health)]
+		
+		prev_health = player_health
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		
-		await get_tree().process_frame
 		queue_free()
 
 func _on_player_area_area_entered(area: Area2D) -> void:
