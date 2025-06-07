@@ -48,6 +48,21 @@ module.exports = (wss)=>{
                 )
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
+
+                await modifyPlayerCount(1)
+            }
+
+            //for disconnected player
+            else if(socket_name == "Player_Disconnect"){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "Player_GameID": parsed_message.GameID
+                    }
+                )
+
+                await modifyPlayerCount(-1)
             }
 
             //for player logout
@@ -83,13 +98,35 @@ module.exports = (wss)=>{
                 var data = { "gameID": [parsed_message.Player_GameID], "matchID": parsed_message.match_ID }
                 
                 for(let queue of queue_match){
+                    let gameID_index = queue.gameID.findIndex(id => id == parsed_message.gameID)
+
+                    if(gameID_index >= -1){
+                        if(parsed_message.status == "leave"){
+                            queue.gameID.splice(gameID_index, 1)
+                            break;
+                        }
+                    }
+
                     if(queue.gameID.length < 2){
                         queue.gameID.push(parsed_message.Player_GameID)
                         match_found = true
+
+                        if(queue.gameID.length == 2){
+                            broadcastSocket(
+                                wss,
+                                {
+                                    "Socket_Name": socket_name,
+                                    "Players_GameID": queue.gameID,
+                                    "Match_RoomID": queue.matchID
+                                }
+                            )
+                        }
                         break;
                     }
-                    else if(queue.gameID.length >= 2){
+
+                    if(queue.gameID.length >= 2){
                         match_found = false
+                        break;
                     }
                 }
 
@@ -99,14 +136,7 @@ module.exports = (wss)=>{
 
                 console.table(queue_match)
 
-                /*
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": "find_match",
-                        "Player_GameID": parsed_message.GameID
-                    }
-                )*/
+                queue_match = queue_match.filter(queue => queue.gameID.length > 0);
             }
 
             //for player spawn code

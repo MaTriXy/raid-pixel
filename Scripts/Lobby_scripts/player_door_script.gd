@@ -2,7 +2,6 @@ extends Node
 
 @onready var animation = $"Sprite/AnimationPlayer"
 
-@export var loading_modal: Control
 @export var ready_panel: Panel
 @export var go_to_scene_button: Button
 
@@ -65,16 +64,6 @@ func head_to_game():
 			"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
 			"status": "joined"
 		})
-		"""
-		SocketClient.send_data({
-			"Socket_Name": "leave_lobby",
-			"Player_GameID": PlayerGlobalScript.player_game_id
-		})
-		PlayerGlobalScript.isModalOpen = true
-		PlayerGlobalScript.current_modal_open = true
-		
-		loading_modal.load("res://Scenes/game_scene.tscn")
-		"""
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "door_anim":

@@ -3032,19 +3032,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("ySort") instance=ExtResource("3_2ipua")]
+[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("ySort", "loading_modal") instance=ExtResource("3_2ipua")]
 position = Vector2(1106, 93)
 ySort = NodePath("..")
 spawn_coords = Vector2(1020, 45)
+loading_modal = NodePath("../../UI/Loading Interface")
 
 [node name="Main Player" parent="Y Sort" instance=ExtResource("4_44aa0")]
 position = Vector2(1020, 45)
 
-[node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("loading_modal", "ready_panel", "go_to_scene_button", "find_match_panel", "find_match_cancel_button", "find_match_timer_label")]
+[node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("ready_panel", "go_to_scene_button", "find_match_panel", "find_match_cancel_button", "find_match_timer_label")]
 z_index = 1
 position = Vector2(1120, -251)
 script = ExtResource("6_h23dp")
-loading_modal = NodePath("../../UI/Loading Interface")
 ready_panel = NodePath("../../UI/Going to other scene panel")
 go_to_scene_button = NodePath("../../UI/Going to other scene panel/Enter Button")
 find_match_panel = NodePath("../../UI/Finding Match Panel")

@@ -15,6 +15,9 @@ var prev_death_status = false
 @export var spawn_coords: Vector2
 @onready var spawn_timer = $"UI/Death Screen Panel/Spawn Timer"
 
+#for loading modal
+@export var loading_modal: Control
+
 #store player here
 var stored_players = {}
 
@@ -151,6 +154,26 @@ func _process(_delta: float) -> void:
 				player_key_list.Player_IGN = data.get("Player_inGameName")
 				joined_player.name = data.get("Player_GameID")
 				joined_player.playerIGN = data.get("Player_inGameName")
+				
+		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
+			prev_data = data
+			
+			print(data)
+			
+			await get_tree().process_frame
+			if data.has("Players_GameID") and data.has("Match_RoomID"):
+				for playerID in data.get("Players_GameID"):
+					if playerID == PlayerGlobalScript.player_game_id:
+						PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
+						
+						SocketClient.send_data({
+							"Socket_Name": "leave_lobby",
+							"Player_GameID": playerID
+						})
+						PlayerGlobalScript.isModalOpen = true
+						PlayerGlobalScript.current_modal_open = true
+						
+						loading_modal.load("res://Scenes/game_scene.tscn")
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

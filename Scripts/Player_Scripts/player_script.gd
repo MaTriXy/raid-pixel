@@ -118,11 +118,14 @@ func send_player_data():
 			"player_health": PlayerGlobalScript.player_health
 		}
 	
-	if (isMoving or isAttacking or prev_state != current_state or not isDataSend) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
-
-		SocketClient.send_data(current_state)
-		prev_state = current_state.duplicate()
-		isDataSend = true
+	if WebsocketsConnection.socket_connection_status == "Connected":
+		if (isMoving or isAttacking or prev_state != current_state or not isDataSend) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
+			SocketClient.send_data(current_state)
+			prev_state = current_state.duplicate()
+			isDataSend = true
+	else:
+		isDataSend = false
+		prev_state = {}
 
 func player_health_bar_status():
 	if  PlayerGlobalScript.player_health <= 0.0:

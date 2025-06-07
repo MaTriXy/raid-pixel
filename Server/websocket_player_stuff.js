@@ -40,7 +40,8 @@ module.exports = (wss)=>{
                     "isDead": parsed_message.isDead,
                     "player_health": parsed_message.player_health
                 }
-
+                
+                //send to everyone player
                 broadcastSocket(wss, data_state)
                 const index = player_active.findIndex(p => p.Player_GameID === parsed_message.Player_GameID);
 
@@ -51,6 +52,7 @@ module.exports = (wss)=>{
                     player_active[index] = data_state;
                 }
 
+                //send to self player
                 let populate_state = {
                     "Socket_Name": "populate_scene_" + ws.Spawn_Code,
                     "player_data": player_active

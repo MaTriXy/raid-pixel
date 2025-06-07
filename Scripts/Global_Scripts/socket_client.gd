@@ -4,7 +4,7 @@ var socket = WebsocketsConnection.socket
 var socket_data = WebsocketsConnection.socket_data
 var ping = 0
 var prev_data = {}
-var gameID = ""
+var prev_connection_status = ""
 
 func _ready() -> void:
 	var timer = Timer.new()
@@ -18,17 +18,16 @@ func _ready() -> void:
 	add_child(timer)
 		
 func send_connection():
-	if isConnected():
-		if PlayerGlobalScript.player_game_id and not PlayerGlobalScript.player_game_id ==  gameID:
-			send_data(
-				{
-					"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
-					"Player_GameID": PlayerGlobalScript.player_game_id,
-					"Player_username": PlayerGlobalScript.player_username
-				}
-			)
-			
-			gameID = PlayerGlobalScript.player_game_id
+	if WebsocketsConnection.socket_connection_status != prev_connection_status and PlayerGlobalScript.isLobby:
+		send_data(
+			{
+				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
+				"Player_GameID": PlayerGlobalScript.player_game_id,
+				"Player_username": PlayerGlobalScript.player_username
+			}
+		)
+		
+		prev_connection_status = WebsocketsConnection.socket_connection_status
 
 func send_data(data):
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
@@ -44,20 +43,18 @@ func received_data():
 		return socket_data
 
 func send_ping():
-	var ping_sent_time = Time.get_ticks_msec()
-	var data = {
-		"Socket_Name": "ping",
-		"timestamp": ping_sent_time
-	}
-	send_data(data)
-
-func isConnected():
-	return WebsocketsConnection.socket_connection_status == "Connected"
+	if WebsocketsConnection.socket_connection_status == "Connected":
+		var ping_sent_time = Time.get_ticks_msec()
+		var data = {
+			"Socket_Name": "ping",
+			"timestamp": ping_sent_time
+		}
+		send_data(data)
 	
 func output_ping():
 	var data = received_data()
 	
-	if isConnected():
+	if WebsocketsConnection.socket_connection_status == "Connected":
 		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
 			prev_data = data
 			var sent_time = data.get("timestamp", 0)

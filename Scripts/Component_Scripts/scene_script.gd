@@ -13,14 +13,21 @@ var max_scene_height_bottom: float
 
 var world_rect: Rect2
 
+var prev_data = {}
+
 func _ready() -> void:
 	PlayerGlobalScript.current_scene = scene_name
-	PlayerGlobalScript.spawn_player_code = scene_name
+	PlayerGlobalScript.spawn_player_code = scene_name + PlayerGlobalScript.match_roomID
 	
-	SocketClient.send_data({
-		"Socket_Name": "scene_code",
-		"Spawn_Player_Code": PlayerGlobalScript.spawn_player_code
-	})
+	
+	var timer = Timer.new()
+	
+	if not timer.is_inside_tree():
+		add_child(timer)
+		
+	timer.wait_time = 1.0
+	timer.timeout.connect(send_scene_data)
+	timer.start()
 	
 	#clean dictionary for changing scenes.
 	GetPlayerInfo.active_player_dic.clear()
@@ -42,6 +49,20 @@ func _ready() -> void:
 		max_scene_width_right = world_rect.position.x
 		max_scene_height_bottom = world_rect.position.y + world_rect.size.y
 		max_scene_height_top = world_rect.position.y
+		
+func send_scene_data():
+	var state = {
+			"Socket_Name": "scene_code",
+			"Spawn_Player_Code": PlayerGlobalScript.spawn_player_code
+		}
+		
+	if WebsocketsConnection.socket_connection_status == "Connected" and prev_data != state:
+		PlayerGlobalScript.isLobby = true
+		SocketClient.send_data(state)
+		prev_data = state
+	else:
+		PlayerGlobalScript.isLobby = false
+		prev_data = {}
 	
 func _process(_delta: float):
 	if tileMap and tileMap.tile_set and main_player:

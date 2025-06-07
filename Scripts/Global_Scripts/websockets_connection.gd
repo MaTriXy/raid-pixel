@@ -53,9 +53,6 @@ func _process(_delta):
 			var code = socket.get_close_code()
 			print("WebSocket closed with code: %d. Clean: %s" % [code, code != -1])
 			set_process(false) # Stop processing.
-			
-			await get_tree().create_timer(1.0).timeout
-			PlayerGlobalScript.player_game_id = ""
 	
 func established_connection():
 	# Initiate connection to the given URL.

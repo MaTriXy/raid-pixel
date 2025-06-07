@@ -25,6 +25,7 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.isModalOpen = false
 	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.current_modal_open = false
+	PlayerGlobalScript.isLobby = false
 	PlayerGlobalScript.player_in_game_name = ""
 	PlayerGlobalScript.player_game_id = ""
 	PlayerGlobalScript.player_UUID = ""
@@ -36,14 +37,19 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.player_health = 100
 	PlayerGlobalScript.player_max_health = 100
 	PlayerGlobalScript.isPlayerAttack = false
+	PlayerGlobalScript.match_roomID = ""
+	PlayerGlobalScript.player_class_game_type = ""
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")
 	
 func get_player_count():
-	var result = await ServerFetch.get_request(ServerFetch.backend_url + "gameData/getPlayerCount")
+	if WebsocketsConnection.socket_connection_status == "Connected":
+		var result = await ServerFetch.get_request(ServerFetch.backend_url + "gameData/getPlayerCount")
 
-	if result.has("status") and result["status"] == "Success":
-		return int(result["count"])
+		if result.has("status") and result["status"] == "Success":
+			return int(result["count"])
+		else:
+			return 0
 	else:
 		return 0
