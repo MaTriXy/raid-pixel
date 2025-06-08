@@ -13,30 +13,24 @@ const path = require('path');
 //dotenv for the envs
 require('dotenv').config({ path: path.resolve(__dirname, '../keys.env') });
 
-//connect to mongodb
-const mongoose = require('mongoose');
-const uri = process.env.URI;
+//POSTGRE SQL set up
+const { Pool } = require('pg');
 
-const clientOptions = { serverApi: { version: '1', strict: true, deprecationErrors: true } };
+const pool = new Pool({
+  user: process.env.userDB,
+  host: 'localhost',
+  database: 'Raid_Pixel',
+  password:  process.env.passDB,
+  port: 5432,
+});
 
-async function run() {
-    try {
-        // Create a Mongoose client with a MongoClientOptions object to set the Stable API version
-        await mongoose.connect(uri, clientOptions);
-        await mongoose.connection.db.admin().command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-        console.log("Database name: " + mongoose.connection.name)
-
-        mongoose.connection.on('connected', () => console.log('MongoDB connected'));
-        mongoose.connection.on('error', (err) => console.log('MongoDB connection error:', err));
-        mongoose.connection.on('disconnected', () => console.log('MongoDB disconnected'));
-
+pool.query('SELECT current_database()', (err, res) => {
+    if (err) {
+      console.error('Error fetching DB name', err.stack);
+    } else {
+      console.log('Connected to DB:', res.rows[0].current_database);
     }
-    catch(err){
-        console.log(err)
-    }
-}
-run();
+  });
 
 //parse json
 app.use(bodyParser.json({limit: '50mb'}));
@@ -51,30 +45,27 @@ app.get('/', (req, res) => {
 });
 
 //Routers
-app.use("/accountRoute", require("./accountRoutes"));
-app.use("/gameData", require("./gameDataRoute"));
-app.use("/playerInformation", require("./playerInformationRoute"));
+app.use("/accountRoute", require("./accountRoutes")(pool));
+app.use("/gameData", require("./gameDataRoute")(pool));
+app.use("/playerInformation", require("./playerInformationRoute")(pool));
 
 //websocket server
 const wss = new WebSocketServer({ server: expressServer });
 
-require("./websocket_game_stuff")(wss);
+require("./websocket_game_stuff")(wss, pool);
 require("./websocket_player_stuff")(wss);
 
 //listen to port
 const PORT = process.env.PORT;
 expressServer.listen(PORT, async ()=>{
     console.log('Listening to port ' + PORT);
-    reset_playerCount(require("./gameDataMongooseSchema"))
+    reset_playerCount(pool)
 });
 
-async function reset_playerCount(gameDataModel){
+async function reset_playerCount(pool){
     try{
-        await gameDataModel.findOneAndUpdate(
-            {},
-            { $set: { playerCount: 0 }},
-            { new: true, upsert: true }
-        )
+        const query = await pool.query("UPDATE game_data SET player_count = $1", [0])
+        console.log(query.rowCount)
     }
     catch(err){
         console.log(err);

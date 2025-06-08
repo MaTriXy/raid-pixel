@@ -1,24 +1,26 @@
 const express = require("express");
-const gameDataModel = require("./gameDataMongooseSchema");
 const route = express.Router();
 
-route.get("/getPlayerCount", async (req, res)=>{
-    try{
-        const get_count = await gameDataModel.findOne({})
-
-        let status = "Failed";
-        let count = 0
-
-        if(get_count){
-            status = "Success";
-            count = get_count.playerCount;
+module.exports = function(pool){
+    route.get("/getPlayerCount", async (req, res)=>{
+        try{
+            const query = await pool.query("SELECT * FROM game_data")
+    
+            let status = "Failed";
+            let count = 0
+    
+            if(query.rows.length > 0){
+                let data = query.rows[0]
+                status = "Success";
+                count = data.player_count;
+            }
+    
+            res.status(200).json({ status: status, count: count })
         }
+        catch(err){
+            console.log(err)
+        }
+    });
 
-        res.status(200).json({ status: status, count: count })
-    }
-    catch(err){
-        console.log(err)
-    }
-});
-
-module.exports = route;
+    return route
+};

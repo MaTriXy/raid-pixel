@@ -1,5 +1,3 @@
-const accountModel = require("./accountMongooseSchema");
-const playerInfoModel = require("./playerInformationMongooseSchema");
 const broadcastSocket = require("./websocket_broadcast");
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
@@ -30,7 +28,7 @@ async function delete_image(profile_hash){
     }
 }
 
-module.exports = (wss)=>{
+module.exports = (wss, pool)=>{
     wss.on('connection', (ws) => {
         // Listen for messages from clients
         ws.on('message', async (message) => {
@@ -49,7 +47,7 @@ module.exports = (wss)=>{
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
 
-                await modifyPlayerCount(1)
+                await modifyPlayerCount(1, pool)
             }
 
             //for disconnected player
@@ -62,7 +60,7 @@ module.exports = (wss)=>{
                     }
                 )
 
-                await modifyPlayerCount(-1)
+                await modifyPlayerCount(-1, pool)
             }
 
             //for player logout
@@ -185,7 +183,7 @@ module.exports = (wss)=>{
                         "Player_GameID": ws.GameID
                     }
                 )
-                await deleteGuestPlayer_account(ws.username);
+                await deleteGuestPlayer_account(ws.username, pool);
 
                 ws.GameID = ""
                 ws.username = ""
@@ -199,49 +197,42 @@ module.exports = (wss)=>{
     });
 }
 
-async function deleteGuestPlayer_account(username) {
+async function deleteGuestPlayer_account(username, pool) {
     try{
-        let findAcc = await accountModel.findOneAndDelete({ username: username, account_type: "Guest" });
+        const query = await pool.query('SELECT * FROM account WHERE username = $1', [username]);
 
-        if(findAcc){
-            const find_player = await playerInfoModel.findOne({ username: username })
+        if(query.rows.length === 0){
+            console.log("Account does not exist");
+            return;
+        }
 
-            if(find_player){
-                await delete_image(find_player.profile_hash);
+        if(query.rows[0].account_type == "Guest"){
+            const find_player = await pool.query('SELECT * FROM player_infos WHERE username = $1', [username]);
+
+            if(find_player.rows.length > 0){
+                const profile_hash = find_player.rows[0].profile_hash;
+
+                if(profile_hash){
+                    await delete_image(profile_hash);
+                }
             }
 
-            await playerInfoModel.findOneAndDelete({ username: username });
+            await pool.query('DELETE FROM account WHERE username = $1', [username]);
+            await pool.query('DELETE FROM player_infos WHERE username = $1', [username]);
         }
         else{
-            const findAcc = await accountModel.findOneAndUpdate({ username: username, isOnline: true, account_type: "Player" }, { $set: { isOnline: false }}, { new: true })
-
-            if(!findAcc){
-                console.log("Account player failed to logged out")
-            }
+            await pool.query('UPDATE account SET isonline = $1 WHERE username = $2', [false, username]);
         }
-        await modifyPlayerCount(-1);
+        await modifyPlayerCount(-1, pool);
     }
     catch(err){
         console.log(err);
     }
 }
 
-async function modifyPlayerCount(count){
+async function modifyPlayerCount(count, pool) {
     try{
-        const gameDataModel = require("./gameDataMongooseSchema")
-
-        await gameDataModel.findOneAndUpdate(
-            {}, 
-            { $inc: { playerCount: count }},
-            { new: true, upsert: true }
-        );
-
-        //clamp to zero when it become negative
-        await gameDataModel.findOneAndUpdate(
-            {}, 
-            { $max: { playerCount: 0 }},
-            { new: true }
-        );
+        await pool.query("UPDATE game_data SET player_count = GREATEST(player_count + $1, 0)", [count])
     }
     catch(err){
         console.log(err)
