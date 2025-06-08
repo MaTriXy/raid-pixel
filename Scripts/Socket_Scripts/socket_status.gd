@@ -41,7 +41,6 @@ func _process(_delta: float) -> void:
 		connection_panel.visible = false
 	else:
 		connection_panel.visible = true
-		
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "Disconnected_Anim":

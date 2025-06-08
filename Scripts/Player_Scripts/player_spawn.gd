@@ -129,6 +129,12 @@ func _process(_delta: float) -> void:
 							"Player": newPlayer,
 							"Position": newPlayer.position,
 						}
+						
+						GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
+							"Player_username": populate_data.get("Player_username"),
+							"Player_IGN": populate_data.get("Player_inGameName"),
+							"isFetched": false
+						}
 					
 		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Disconnect" or data.get("Socket_Name") == "leave_lobby"):
 			prev_data = data

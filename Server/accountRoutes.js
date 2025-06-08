@@ -132,7 +132,7 @@ module.exports = function(pool){
             else{
                 await pool.query("INSERT INTO account (username, password_hash, account_type, login_token, isonline) VALUES ($1, $2, $3, $4, $5)", [sanitize(req.body.username), hash_pass(sanitize(req.body.password)), "Player", uuidv4(), true])
 
-                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash) VALUES ($1, $2, $3, $4, $5, $6)", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://i.imgur.com/ajVzRmV.png", "No description yet", "ajVzRmV"])
+                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type) VALUES ($1, $2, $3, $4, $5, $6, 'Player')", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
             }
             res.status(200).json({ status: status })
         }
@@ -169,7 +169,7 @@ module.exports = function(pool){
                 login_token = createAcc.login_token;
                 player_account_type = createAcc.account_type;
 
-                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash) VALUES ($1, $2, $3, $4, $5, $6)", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://i.imgur.com/ajVzRmV.png", "No description yet", "ajVzRmV"])
+                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type) VALUES ($1, $2, $3, $4, $5, $6, 'Guest')", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
             }
             res.status(200).json({ status: status, username: username, login_token: login_token, player_type: player_account_type })
         }
@@ -227,7 +227,7 @@ module.exports = function(pool){
                     let playerInfo = query_player_info.rows[0]
                     let data = query_acc.rows[0];
 
-                    await delete_image(playerInfo.profile_hash);
+                    //await delete_image(playerInfo.profile_hash);
                     await pool.query('DELETE FROM account WHERE username = $1', [data.username]);
                     await pool.query('DELETE FROM player_infos WHERE username = $1', [data.username]);
                     status = "Modified account on guest side, deleting....";

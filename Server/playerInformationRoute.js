@@ -1,9 +1,18 @@
 const express = require("express");
 const route = express.Router();
 const sanitizeHTML = require("sanitize-html")
+const cloudinary = require("cloudinary").v2;
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { v4: uuidv4 } = require('uuid');
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
 
 module.exports = function(pool){
     route.post("/playerData", async (req, res)=>{
@@ -33,32 +42,27 @@ module.exports = function(pool){
         }
     });
     
-    //TODO: replace this with something else.
-    async function upload_image_imgur(profile){
+    async function upload_image(profile){
         try{
             if(profile){
-                const uploadImage = await fetch("https://api.imgur.com/3/image", {
-                    method: "POST",
-                    headers: {
-                        Authorization: `Bearer ${process.env.IMGUR_ACCESS_TOKEN}`,
-                        "Content-Type": "application/json" 
-                    },
-                    body: JSON.stringify({ image: profile,  album: "BkaAHPo" })
-                })
-        
-                const uploadImage_res = await uploadImage.json();
-        
-                if(uploadImage_res.success){
-                    return uploadImage_res.data
-                } 
-                else {
-                    console.error("Upload Failed:", uploadImage_res);
-                    return null;
-                }
+                const fullBase64 = `data:image/png;base64,${profile}`;
+                const uploadResult = await cloudinary.uploader.upload(
+                    fullBase64, {
+                        public_id: 'Profile_' + uuidv4(),
+                        folder: "Profile"
+                    }
+                )
+                .catch((error) => {
+                    console.log(error);
+                    return {}
+                });
+                
+                return uploadResult;
             }
         }
         catch(err){
             console.log(err);
+            return {}
         }
     }
     
@@ -73,11 +77,11 @@ module.exports = function(pool){
             }
     
             if(req.body.profile){
-                let wait_for_upload = await upload_image_imgur(req.body.profile)
+                let wait_for_upload = await upload_image(req.body.profile)
     
                 if(wait_for_upload){
-                    update_fields.profile = wait_for_upload.link;
-                    update_fields.profile_hash = wait_for_upload.id
+                    update_fields.profile = wait_for_upload.url;
+                    update_fields.profile_hash = wait_for_upload.public_id;
                 }
             }
 

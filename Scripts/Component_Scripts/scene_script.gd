@@ -60,7 +60,8 @@ func send_scene_data():
 		PlayerGlobalScript.isLobby = true
 		SocketClient.send_data(state)
 		prev_data = state
-	else:
+
+	if WebsocketsConnection.socket_connection_status == "Disconnected":
 		PlayerGlobalScript.isLobby = false
 		prev_data = {}
 	
