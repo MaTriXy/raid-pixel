@@ -110,7 +110,7 @@ func _process(_delta: float) -> void:
 				if bool(populate_data.get("isDead")):
 					stored_players.erase(populate_data.get("Player_GameID"))
 						
-				if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id and not stored_players.has(populate_data.get("Player_GameID")):
+				if populate_data.get("Player_username") != PlayerGlobalScript.player_username and not stored_players.has(populate_data.get("Player_GameID")):
 					var newPlayer = joined_player_scene.instantiate()
 					newPlayer.name = populate_data.get("Player_GameID")
 					newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))

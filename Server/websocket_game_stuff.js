@@ -1,26 +1,20 @@
 const broadcastSocket = require("./websocket_broadcast");
-
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const cloudinary = require("cloudinary").v2;
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 let queue_match = []
 let match_found = false
 async function delete_image(profile_hash){
     try{
-        if(profile_hash != "ajVzRmV"){
-            const deleteImg = await fetch(`https://api.imgur.com/3/image/${profile_hash}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${process.env.IMGUR_ACCESS_TOKEN}`
-                }
-            });
-
-            const deleteImg_res = await deleteImg.json();
-
-            if(!deleteImg_res.success){
-                console.log(deleteImg_res)
-            }
+        if(profile_hash && profile_hash != "default_profile_vw2q2o"){
+            cloudinary.uploader.destroy(profile_hash, function(result) { console.log(result) });
         }
     }
     catch(err){
@@ -37,6 +31,8 @@ module.exports = (wss, pool)=>{
 
             //for connected player
             if(socket_name === "Player_Connected"){
+                await modifyPlayerCount(1, pool);
+
                 broadcastSocket(
                     wss,
                     {
@@ -46,12 +42,12 @@ module.exports = (wss, pool)=>{
                 )
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
-
-                await modifyPlayerCount(1, pool)
             }
 
             //for disconnected player
             else if(socket_name == "Player_Disconnect"){
+                await modifyPlayerCount(-1, pool)
+                
                 broadcastSocket(
                     wss,
                     {
@@ -59,8 +55,6 @@ module.exports = (wss, pool)=>{
                         "Player_GameID": parsed_message.GameID
                     }
                 )
-
-                await modifyPlayerCount(-1, pool)
             }
 
             //for player logout
@@ -210,10 +204,10 @@ async function deleteGuestPlayer_account(username, pool) {
             const find_player = await pool.query('SELECT * FROM player_infos WHERE username = $1', [username]);
 
             if(find_player.rows.length > 0){
-                const profile_hash = find_player.rows[0].profile_hash;
+                const image_name = find_player.rows[0].profile_hash;
 
-                if(profile_hash){
-                    await delete_image(profile_hash);
+                if(image_name){
+                    await delete_image(image_name);
                 }
             }
 

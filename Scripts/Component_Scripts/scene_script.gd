@@ -51,18 +51,18 @@ func _ready() -> void:
 		max_scene_height_top = world_rect.position.y
 		
 func send_scene_data():
+	PlayerGlobalScript.isLobby = true if WebsocketsConnection.socket_connection_status == "Connected" else false
+	
 	var state = {
 			"Socket_Name": "scene_code",
 			"Spawn_Player_Code": PlayerGlobalScript.spawn_player_code
 		}
 		
 	if WebsocketsConnection.socket_connection_status == "Connected" and prev_data != state:
-		PlayerGlobalScript.isLobby = true
 		SocketClient.send_data(state)
 		prev_data = state
 
-	if WebsocketsConnection.socket_connection_status == "Disconnected":
-		PlayerGlobalScript.isLobby = false
+	elif WebsocketsConnection.socket_connection_status == "Disconnected":
 		prev_data = {}
 	
 func _process(_delta: float):

@@ -17,6 +17,7 @@ extends Node
 var gameData = GameData.new()
 
 var isSend = false
+var wasConnected = false
 
 #this is for prev data to avoid receiving a bunch
 var prev_data: Dictionary
@@ -34,10 +35,11 @@ func message_append_on_container():
 func message_render_display():	
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
+	var status = connection_status == "Connected"
 
 	if connection_status == "Connected":
 		#sending global messages
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "GlobalMessage":
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "GlobalMessage":
 			prev_data = data
 			
 			var receiver = data.get("Receiver") + "(You)" if data.get("Receiver") == PlayerGlobalScript.player_in_game_name else data.get("Receiver")
@@ -57,10 +59,13 @@ func message_render_display():
 			display_message_panel.add_child(display_msg)
 		
 		#for player connected and disconnected
-		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Connected" or data.get("Socket_Name") == "Player_Disconnect"):
+		elif data.has("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Connected" or data.get("Socket_Name") == "Player_Disconnect") and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 			prev_data = data
-			
 			append_connection_notify(data.get("Player_GameID"), data.get("Socket_Name"))
+	
+	if status != wasConnected:
+		wasConnected = status
+		append_connection_notify(PlayerGlobalScript.player_game_id, connection_status)
 				
 func append_connection_notify(gameID, status):
 	#remove old messages
@@ -69,10 +74,9 @@ func append_connection_notify(gameID, status):
 		oldest.queue_free()
 	
 	#add a new one
-	if gameID:
-		var display_msg = message_label.duplicate()
-		display_msg.visible = true
-		
-		display_msg.text = "%s %s" % [gameID, "connected" if status == "Player_Connected" else "disconnected"]
-		display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Player_Connected" else Color("#ff0000"))
-		display_message_panel.add_child(display_msg)
+	var display_msg = message_label.duplicate()
+	display_msg.visible = true
+	
+	display_msg.text = "%s %s" % [gameID, "connected" if status == "Connected" else "disconnected"]
+	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Connected" else Color("#ff0000"))
+	display_message_panel.add_child(display_msg)

@@ -1,8 +1,8 @@
 const express = require("express");
+const { Result } = require("pg");
 const route = express.Router();
 const sanitizeHTML = require("sanitize-html")
 const cloudinary = require("cloudinary").v2;
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const { v4: uuidv4 } = require('uuid');
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
@@ -65,6 +65,17 @@ module.exports = function(pool){
             return {}
         }
     }
+
+    async function delete_image(profile_hash){
+        try{
+            if(profile_hash && profile_hash != "default_profile_vw2q2o"){
+                cloudinary.uploader.destroy(profile_hash, function(result) { console.log(result) });
+            }
+        }
+        catch(err){
+            console.log(err);
+        }
+    }
     
     route.post("/modifyPlayerData", async (req, res)=>{
         try{
@@ -98,6 +109,8 @@ module.exports = function(pool){
                 let profile_hash_result = update_fields.profile_hash || data.profile_hash;
                 let in_game_name_result = update_fields.in_game_name || data.in_game_name;
                 let description_result = update_fields.description || data.description;
+
+                await delete_image(data.profile_hash)
 
                 const query = await pool.query("UPDATE player_infos SET in_game_name = $1, profile = $2, profile_hash = $3, description = $4 WHERE username = $5 RETURNING *", [in_game_name_result, profile_result, profile_hash_result, description_result, sanitizeHTML(req.body.username)]);
 

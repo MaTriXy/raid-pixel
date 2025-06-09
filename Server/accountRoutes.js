@@ -3,10 +3,15 @@ const route = express.Router();
 const sanitize = require("sanitize-html");
 const bcrypt = require("bcryptjs")
 const { v4: uuidv4 } = require('uuid');
-
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const cloudinary = require("cloudinary").v2;
 
 require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 module.exports = function(pool){
     async function setOnline(username){
@@ -54,19 +59,8 @@ module.exports = function(pool){
     
     async function delete_image(profile_hash){
         try{
-            if(profile_hash != "ajVzRmV"){
-                const deleteImg = await fetch(`https://api.imgur.com/3/image/${profile_hash}`, {
-                    method: "DELETE",
-                    headers: {
-                        Authorization: `Bearer ${process.env.IMGUR_ACCESS_TOKEN}`
-                    }
-                });
-    
-                const deleteImg_res = await deleteImg.json();
-    
-                if(!deleteImg_res.success){
-                    console.log(deleteImg_res)
-                }
+            if(profile_hash && profile_hash != "default_profile_vw2q2o"){
+                cloudinary.uploader.destroy(profile_hash, function(result) { console.log(result) });
             }
         }
         catch(err){
@@ -227,7 +221,7 @@ module.exports = function(pool){
                     let playerInfo = query_player_info.rows[0]
                     let data = query_acc.rows[0];
 
-                    //await delete_image(playerInfo.profile_hash);
+                    await delete_image(playerInfo.profile_hash);
                     await pool.query('DELETE FROM account WHERE username = $1', [data.username]);
                     await pool.query('DELETE FROM player_infos WHERE username = $1', [data.username]);
                     status = "Modified account on guest side, deleting....";
