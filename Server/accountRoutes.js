@@ -126,7 +126,7 @@ module.exports = function(pool){
             else{
                 await pool.query("INSERT INTO account (username, password_hash, account_type, login_token, isonline) VALUES ($1, $2, $3, $4, $5)", [sanitize(req.body.username), hash_pass(sanitize(req.body.password)), "Player", uuidv4(), true])
 
-                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type) VALUES ($1, $2, $3, $4, $5, $6, 'Player')", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
+                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type, ign_change_date, desc_change_date, profile_change_date) VALUES ($1, $2, $3, $4, $5, $6, 'Player', NOW(), NOW(), NOW())", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
             }
             res.status(200).json({ status: status })
         }
@@ -163,7 +163,7 @@ module.exports = function(pool){
                 login_token = createAcc.login_token;
                 player_account_type = createAcc.account_type;
 
-                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type) VALUES ($1, $2, $3, $4, $5, $6, 'Guest')", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
+                await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type, ign_change_date, desc_change_date, profile_change_date) VALUES ($1, $2, $3, $4, $5, $6, 'Player', NOW(), NOW(), NOW())", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
             }
             res.status(200).json({ status: status, username: username, login_token: login_token, player_type: player_account_type })
         }

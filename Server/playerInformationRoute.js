@@ -1,5 +1,4 @@
 const express = require("express");
-const { Result } = require("pg");
 const route = express.Router();
 const sanitizeHTML = require("sanitize-html")
 const cloudinary = require("cloudinary").v2;
@@ -24,7 +23,9 @@ module.exports = function(pool){
             let profile = "Invalid";
             let inGameName = "Not Found";
             let description = "Not Found";
-            let profile_hash = "Not found";
+            let ign_change_date = new Date().toISOString().split('T')[0];
+            let profile_change_date = new Date().toISOString().split('T')[0];
+            let desc_change_date = new Date().toISOString().split('T')[0];
     
             if(findData.rows.length > 0){
                 let data = findData.rows[0]
@@ -34,10 +35,12 @@ module.exports = function(pool){
                 profile = data.profile;
                 inGameName = data.in_game_name;
                 description = data.description;
-                profile_hash = data.profile_hash;
+                desc_change_date = new Date(data.desc_change_date).toISOString().split('T')[0];
+                ign_change_date = new Date(data.ign_change_date).toISOString().split('T')[0];
+                profile_change_date = new Date(data.profile_change_date).toISOString().split('T')[0];
             }
-    
-            res.status(200).json({ status: status, diamond: diamond, profile: profile, inGameName: inGameName, description: description, profile_hash: profile_hash });
+
+            res.status(200).json({ status: status, diamond: diamond, profile: profile, inGameName: inGameName, description: description, desc_change_date: desc_change_date, ign_change_date: ign_change_date, profile_change_date: profile_change_date });
         }
         catch(err){
             console.log(err)
@@ -83,50 +86,71 @@ module.exports = function(pool){
         try{
             const rawDescription = req.body.description || "";
             const cleanDescription = rawDescription.trim() === "" ? "No Description yet." : rawDescription;
-    
-            const update_fields = {
-                in_game_name: sanitizeHTML(req.body.inGameName),
-                description: sanitizeHTML(cleanDescription)
-            }
-    
-            if(req.body.profile){
-                let wait_for_upload = await upload_image(req.body.profile)
-    
-                if(wait_for_upload){
-                    update_fields.profile = wait_for_upload.url;
-                    update_fields.profile_hash = wait_for_upload.public_id;
-                }
-            }
-
-            let status = "Failed";
-            let in_game_name = "Not Found";
-            let description = "Not Found";
-            let profile = ""
 
             const player_data = await pool.query("SELECT * FROM player_infos WHERE username = $1", [sanitizeHTML(req.body.username)])
 
             if(player_data.rows.length > 0){
-                let data = player_data.rows[0]
-                let profile_result = update_fields.profile || data.profile;
-                let profile_hash_result = update_fields.profile_hash || data.profile_hash;
-                let in_game_name_result = update_fields.in_game_name || data.in_game_name;
-                let description_result = update_fields.description || data.description;
+                let data = player_data.rows[0];
+                let in_game_name = data.in_game_name;
+                let ign_change_date = new Date(data.ign_change_date).toISOString().split("T")[0];
 
-                await delete_image(data.profile_hash)
+                let description = data.description;
+                let desc_change_date = new Date(data.desc_change_date).toISOString().split("T")[0];
 
-                const query = await pool.query("UPDATE player_infos SET in_game_name = $1, profile = $2, profile_hash = $3, description = $4 WHERE username = $5 RETURNING *", [in_game_name_result, profile_result, profile_hash_result, description_result, sanitizeHTML(req.body.username)]);
+                let profile = data.profile;
+                let profile_change_date = new Date(data.profile_change_date).toISOString().split("T")[0];
 
-                if(query.rows.length > 0){
-                    let data = query.rows[0];
-    
-                    status = "Success";
-                    in_game_name = data.in_game_name;
-                    description = data.description;
-                    profile = data.profile;
+                let profile_hash = data.profile_hash
+
+                //ign change
+                if(req.body.inGameName && sanitizeHTML(req.body.inGameName) !== data.in_game_name){
+                    const date = new Date();
+                    date.setDate(date.getDate() + 7);
+
+                    const query = await pool.query("UPDATE player_infos SET in_game_name = $1, ign_change_date = $2 WHERE username = $3 RETURNING *", [sanitizeHTML(req.body.inGameName), date.toISOString().split('T')[0], req.body.username]);
+
+                    if(query.rows.length > 0){
+                        in_game_name = query.rows[0].in_game_name;
+                        ign_change_date = new Date(query.rows[0].ign_change_date).toISOString().split("T")[0];
+                    }
                 }
+
+                //description change
+                if(cleanDescription && sanitizeHTML(req.body.description) !== data.description && cleanDescription !== "No Description yet."){
+                    const date = new Date();
+                    date.setDate(date.getDate() + 7);
+
+                    const query = await pool.query("UPDATE player_infos SET description = $1, desc_change_date = $2 WHERE username = $3 RETURNING *", [sanitizeHTML(cleanDescription), date.toISOString().split('T')[0], req.body.username]);
+
+                    if(query.rows.length > 0){
+                        description = query.rows[0].description;
+                        desc_change_date = new Date(query.rows[0].desc_change_date).toISOString().split("T")[0];
+                    }
+                }
+
+                //profile change
+                if(req.body.profile){
+                    let wait_for_upload = await upload_image(req.body.profile)
+        
+                    if(wait_for_upload){
+                        const date = new Date();
+                        date.setDate(date.getDate() + 7);
+
+                        const query = await pool.query("UPDATE player_infos SET profile = $1, profile_change_date = $2, profile_hash = $3 WHERE username = $4 RETURNING *", [wait_for_upload.url, date.toISOString().split('T')[0], wait_for_upload.public_id , req.body.username]);
+
+                        if(query.rows.length > 0){
+                            profile = query.rows[0].profile;
+                            profile_change_date = new Date(query.rows[0].profile_change_date).toISOString().split("T")[0];
+                        }
+
+                        if(wait_for_upload.public_id){
+                            await delete_image(profile_hash)
+                        }
+                    }
+                }
+
+                res.status(200).json({ status: "Success", inGameName: in_game_name, description: description, profile: profile, ign_change_date: ign_change_date, profile_change_date: profile_change_date, desc_change_date: desc_change_date });
             }
-    
-            res.status(200).json({ status: status, inGameName: in_game_name, description: description, profile: profile });
         }
         catch(err){
             console.log(err)

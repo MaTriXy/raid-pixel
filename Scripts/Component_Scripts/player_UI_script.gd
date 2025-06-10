@@ -44,6 +44,9 @@ extends Global_Message
 @onready var player_gameID_label = $"Profile Modal/Panel/Game ID Label"
 @onready var player_description_label = $"Profile Modal/Panel/Description Label"
 @onready var player_profile_view = $"Profile Modal/Panel/Profile View"
+@onready var IGN_last_date_change = $"Profile Modal/Panel/IGN last date change"
+@onready var profile_last_date_change = $"Profile Modal/Panel/Profile last date change"
+@onready var description_last_date_change = $"Profile Modal/Panel/Description last date change"
 
 @onready var warning_text = $"Profile Modal/Panel/Warning Text"
 
@@ -58,7 +61,10 @@ extends Global_Message
 @onready var cancel_edit_profile_button = $"Profile Modal/Panel/Cancel Edit Button"
 @onready var save_edit_profile_button =  $"Profile Modal/Panel/Save Edit Button"
 
-var current_profile_hash = ""
+#for warning panel when saving edit profile
+@onready var profile_confirmation_panel = $"Profile Confirmation Panel"
+@onready var profile_confirmation_panel_proceed = $"Profile Confirmation Panel/Panel/Confirm Button"
+@onready var profile_confirmation_panel_cancel = $"Profile Confirmation Panel/Panel/Cancel Button"
 
 #for passing data
 var prev_count = ""
@@ -99,6 +105,7 @@ func _ready() -> void:
 	validation_modal.visible = false
 	guest_connect_account_panel.visible = false
 	guest_connect_success_panel.visible = false
+	profile_confirmation_panel.visible = false
 	
 	timer_label.visible = false
 	loading_modal.visible = false
@@ -121,6 +128,7 @@ func _ready() -> void:
 	#for profile picture inputs
 	fileDialog_panel.visible = false
 	fileDialog.visible = false
+	fileDialog.add_theme_icon_override("close", ImageTexture.new())
 	fileDialog.filters = ["*.png", "*.jpg", "*.jpeg"]
 	
 	save_edit_profile_button.visible = false
@@ -129,9 +137,12 @@ func _ready() -> void:
 	change_profile_button.visible = false
 	
 	change_profile_button.connect("pressed", open_file_Dialog)
-	cancel_edit_profile_button.connect("pressed", func(): player_profile_class.edit_profile_status(false, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view))
-	edit_profile_button.connect("pressed", func(): player_profile_class.edit_profile_status(true, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view))
-	save_edit_profile_button.connect("pressed", save_profile_edit)
+	cancel_edit_profile_button.connect("pressed", func(): player_profile_class.edit_profile_status(false, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view, IGN_last_date_change, profile_last_date_change, description_last_date_change))
+	edit_profile_button.connect("pressed", func(): player_profile_class.edit_profile_status(true, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view, IGN_last_date_change, profile_last_date_change, description_last_date_change))
+	save_edit_profile_button.connect("pressed", func(): profile_confirmation_panel.visible = true)
+	
+	profile_confirmation_panel_cancel.connect("pressed", func(): profile_confirmation_panel.visible = false)
+	profile_confirmation_panel_proceed.connect("pressed", save_profile_edit)
 	
 	#for setting modal, to check if player is in game.
 	await get_tree().process_frame
@@ -145,7 +156,17 @@ func _ready() -> void:
 	if data["status"] == "Finished":
 		in_game_name_input.text = data["inGameName"]
 		description_input.text = data["description"]
-		current_profile_hash = data["profile_hash"]
+		IGN_last_date_change.text = "(Change again in: %s)" % [data["IGN_last_date_change"]]
+		profile_last_date_change.text = "(Change again ine: %s)" % [data["profile_last_date_change"]]
+		description_last_date_change.text = "(Change again in: %s)" % [data["desc_last_date_change"]]
+		
+		#for ign input field
+		var today = Time.get_datetime_dict_from_system()
+		var today_date = "%04d-%02d-%02d" % [today.year, today.month, today.day]
+
+		in_game_name_input.editable = today_date >= data["IGN_last_date_change"]
+		description_input.editable = today_date >= data["desc_last_date_change"]
+		change_profile_button.disabled = today_date < data["profile_last_date_change"]
 	
 func renderCount():
 	var count = await game_data_class.get_player_count()
@@ -190,15 +211,28 @@ func save_profile_edit():
 		validation_modal.visible = false
 
 	else:
+		profile_confirmation_panel.visible = false
 		warning_text.visible = false
 		
-		var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/modifyPlayerData", { "username": PlayerGlobalScript.player_username, "inGameName": in_game_name_input.text, "description": description_input.text, "profile": profile_base64, "profile_hash": current_profile_hash })
+		var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/modifyPlayerData", { "username": PlayerGlobalScript.player_username, "inGameName": in_game_name_input.text, "description": description_input.text, "profile": profile_base64 })
 		
 		if result.has("status") and result["status"] == "Success":
 			validation_modal.visible = false
 			
 			PlayerGlobalScript.player_in_game_name = result["inGameName"]
 			player_profile_class.description_profile = result["description"]
+			
+			IGN_last_date_change.text = "(Change again in: %s)" % [result["ign_change_date"]]
+			profile_last_date_change.text = "(Change again in: %s)" % [result["profile_change_date"]]
+			description_last_date_change.text = "(Change again in: %s)" % [result["desc_change_date"]]
+			
+			#for ign input field
+			var today = Time.get_datetime_dict_from_system()
+			var today_date = "%04d-%02d-%02d" % [today.year, today.month, today.day]
+
+			in_game_name_input.editable = today_date >= result["ign_change_date"]
+			description_input.editable = today_date >= result["desc_change_date"]
+			change_profile_button.disabled = today_date < result["profile_change_date"]
 			
 			if result["profile"]:
 				PlayerGlobalScript.player_profile = result["profile"]
@@ -208,7 +242,7 @@ func save_profile_edit():
 			
 			profile_base64 = ""
 			
-			player_profile_class.edit_profile_status(false, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view)
+			player_profile_class.edit_profile_status(false, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view, IGN_last_date_change, profile_last_date_change, description_last_date_change)
 			
 			SocketClient.send_data({
 				"Socket_Name": "ModifyProfile",

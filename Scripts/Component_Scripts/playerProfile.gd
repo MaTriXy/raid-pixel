@@ -11,7 +11,7 @@ var prev_description = ""
 #for profile
 var description_profile = ""
 
-func edit_profile_status(status: bool, in_game_name_input: LineEdit, description_input: TextEdit, cancel_edit_profile_button: Button, save_edit_profile_button: Button, edit_profile_button: Button, player_in_game_name_label: RichTextLabel, player_description_label: RichTextLabel, change_profile_button: Button, preview_profile: TextureRect, main_profile: TextureRect):
+func edit_profile_status(status: bool, in_game_name_input: LineEdit, description_input: TextEdit, cancel_edit_profile_button: Button, save_edit_profile_button: Button, edit_profile_button: Button, player_in_game_name_label: RichTextLabel, player_description_label: RichTextLabel, change_profile_button: Button, preview_profile: TextureRect, main_profile: TextureRect, IGN_last_date_change: RichTextLabel, profile_last_date_change: RichTextLabel, desc_last_date_change: RichTextLabel):
 	in_game_name_input.visible = status
 	description_input.visible = status
 	cancel_edit_profile_button.visible = status
@@ -24,6 +24,9 @@ func edit_profile_status(status: bool, in_game_name_input: LineEdit, description
 	player_in_game_name_label.visible = !status
 	player_description_label.visible = !status
 	main_profile.visible = !status
+	IGN_last_date_change.visible = !status
+	profile_last_date_change.visible = !status
+	desc_last_date_change.visible = !status
 	
 	preview_profile.texture = main_profile.texture
 
@@ -60,7 +63,9 @@ func get_player_data(http_request):
 			"status": "Finished",
 			"inGameName": result["inGameName"],
 			"description": result["description"],
-			"profile_hash": result["profile_hash"]
+			"IGN_last_date_change": result["ign_change_date"],
+			"profile_last_date_change": result["profile_change_date"],
+			"desc_last_date_change": result["desc_change_date"]
 		}
 	else:
 		return {
