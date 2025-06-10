@@ -17,10 +17,36 @@ extends Node
 var gameData = GameData.new()
 
 var isSend = false
-var wasConnected = false
+var prev_connection_status = ""
 
 #this is for prev data to avoid receiving a bunch
 var prev_data: Dictionary
+
+#this will notify player for connection, a heartbeat
+func connection_notify_main_player():
+	if prev_connection_status != WebsocketsConnection.socket_connection_status and WebsocketsConnection.socket_connection_status == "Connected":
+		prev_connection_status = WebsocketsConnection.socket_connection_status
+		append_connection_notify(PlayerGlobalScript.player_game_id, "Player_Connected")
+		
+		await get_tree().create_timer(0.5).timeout
+		SocketClient.send_data(
+			{
+				"Socket_Name": "Player_Connected",
+				"Player_GameID": PlayerGlobalScript.player_game_id,
+				"Player_username": PlayerGlobalScript.player_username
+			}
+		)
+		
+	else:
+		if WebsocketsConnection.socket_connection_status == "Disconnected":
+			prev_connection_status = ""
+			SocketClient.send_data(
+				{
+					"Socket_Name": "Player_Disconnected",
+					"Player_GameID": PlayerGlobalScript.player_game_id,
+					"Player_username": PlayerGlobalScript.player_username
+				}
+			)
 
 func message_append_on_container():
 	if global_message_input.text:		
@@ -35,7 +61,6 @@ func message_append_on_container():
 func message_render_display():	
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
-	var status = connection_status == "Connected"
 
 	if connection_status == "Connected":
 		#sending global messages
@@ -62,10 +87,6 @@ func message_render_display():
 		elif data.has("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Connected" or data.get("Socket_Name") == "Player_Disconnect") and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 			prev_data = data
 			append_connection_notify(data.get("Player_GameID"), data.get("Socket_Name"))
-	
-	if status != wasConnected:
-		wasConnected = status
-		append_connection_notify(PlayerGlobalScript.player_game_id, connection_status)
 				
 func append_connection_notify(gameID, status):
 	#remove old messages
@@ -77,6 +98,6 @@ func append_connection_notify(gameID, status):
 	var display_msg = message_label.duplicate()
 	display_msg.visible = true
 	
-	display_msg.text = "%s %s" % [gameID, "connected" if status == "Connected" else "disconnected"]
-	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Connected" else Color("#ff0000"))
+	display_msg.text = "%s %s" % [gameID, "connected" if status == "Player_Connected" else "disconnected"]
+	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Player_Connected" else Color("#ff0000"))
 	display_message_panel.add_child(display_msg)

@@ -3,6 +3,7 @@ extends Node
 var backend_url = "http://localhost:8080/"
 var httpRequest: HTTPRequest
 var isFetching = false
+var isGettingRequest = false
 
 func _ready() -> void:
 	httpRequest = HTTPRequest.new()
@@ -44,6 +45,9 @@ func send_post_request(route: String, data: Dictionary) -> Dictionary:
 	return response_json
 
 func get_request(route: String) -> Dictionary:
+	if isGettingRequest:
+		return {}
+		
 	var url = route
 
 	var headers = [
@@ -51,7 +55,9 @@ func get_request(route: String) -> Dictionary:
 	]
 
 	var err = httpRequest.request(url, headers, HTTPClient.METHOD_GET)
+	isGettingRequest = true
 	if err != OK:
+		isGettingRequest = false
 		print("Failed to send GET request")
 		return {}
 		
@@ -59,5 +65,6 @@ func get_request(route: String) -> Dictionary:
 	var result = await httpRequest.request_completed
 	var response_text = result[3].get_string_from_utf8()
 	var response_json = JSON.parse_string(response_text)
-
+	
+	isGettingRequest = false
 	return response_json if typeof(response_json) == TYPE_DICTIONARY else {}

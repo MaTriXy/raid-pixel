@@ -59,7 +59,8 @@ func get_player_data(http_request):
 		return {
 			"status": "Finished",
 			"inGameName": result["inGameName"],
-			"description": result["description"]
+			"description": result["description"],
+			"profile_hash": result["profile_hash"]
 		}
 	else:
 		return {

@@ -58,6 +58,8 @@ extends Global_Message
 @onready var cancel_edit_profile_button = $"Profile Modal/Panel/Cancel Edit Button"
 @onready var save_edit_profile_button =  $"Profile Modal/Panel/Save Edit Button"
 
+var current_profile_hash = ""
+
 #for passing data
 var prev_count = ""
 var prev_coordinates = Vector2.ZERO
@@ -80,6 +82,16 @@ func _ready() -> void:
 	playerCount_timer.wait_time = 2.0
 	playerCount_timer.timeout.connect(renderCount)
 	playerCount_timer.start()
+	
+	var connection_timer = Timer.new()
+	connection_timer.name = "Connection Timer"
+	
+	if not connection_timer.is_inside_tree():
+		add_child(connection_timer)
+	
+	connection_timer.wait_time = 1.0
+	connection_timer.timeout.connect(connection_notify_main_player)
+	connection_timer.start()
 	
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
@@ -133,6 +145,7 @@ func _ready() -> void:
 	if data["status"] == "Finished":
 		in_game_name_input.text = data["inGameName"]
 		description_input.text = data["description"]
+		current_profile_hash = data["profile_hash"]
 	
 func renderCount():
 	var count = await game_data_class.get_player_count()
@@ -179,7 +192,7 @@ func save_profile_edit():
 	else:
 		warning_text.visible = false
 		
-		var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/modifyPlayerData", { "username": PlayerGlobalScript.player_username, "inGameName": in_game_name_input.text, "description": description_input.text, "profile": profile_base64 })
+		var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/modifyPlayerData", { "username": PlayerGlobalScript.player_username, "inGameName": in_game_name_input.text, "description": description_input.text, "profile": profile_base64, "profile_hash": current_profile_hash })
 		
 		if result.has("status") and result["status"] == "Success":
 			validation_modal.visible = false

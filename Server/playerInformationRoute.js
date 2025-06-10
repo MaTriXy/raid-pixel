@@ -23,7 +23,8 @@ module.exports = function(pool){
             let diamond = 0;
             let profile = "Invalid";
             let inGameName = "Not Found";
-            let description = "Not Found"
+            let description = "Not Found";
+            let profile_hash = "Not found";
     
             if(findData.rows.length > 0){
                 let data = findData.rows[0]
@@ -33,9 +34,10 @@ module.exports = function(pool){
                 profile = data.profile;
                 inGameName = data.in_game_name;
                 description = data.description;
+                profile_hash = data.profile_hash;
             }
     
-            res.status(200).json({ status: status, diamond: diamond, profile: profile, inGameName: inGameName, description: description });
+            res.status(200).json({ status: status, diamond: diamond, profile: profile, inGameName: inGameName, description: description, profile_hash: profile_hash });
         }
         catch(err){
             console.log(err)

@@ -4,30 +4,6 @@ var socket = WebsocketsConnection.socket
 var socket_data = WebsocketsConnection.socket_data
 var ping = 0
 var prev_data = {}
-var prev_connection_status = ""
-
-func _ready() -> void:
-	var timer = Timer.new()
-	timer.name = "Socket_Timer"
-	
-	timer.wait_time = 0.1
-	timer.timeout.connect(send_connection)
-	timer.autostart = true
-	timer.one_shot = false
-		
-	add_child(timer)
-		
-func send_connection():
-	if WebsocketsConnection.socket_connection_status != prev_connection_status and PlayerGlobalScript.isLobby:
-		send_data(
-			{
-				"Socket_Name": "Player_Connected" if WebsocketsConnection.socket_connection_status == "Connected" else "Player_Disconnected",
-				"Player_GameID": PlayerGlobalScript.player_game_id,
-				"Player_username": PlayerGlobalScript.player_username
-			}
-		)
-		
-		prev_connection_status = WebsocketsConnection.socket_connection_status
 
 func send_data(data):
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:

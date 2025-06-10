@@ -64,8 +64,7 @@ expressServer.listen(PORT, async ()=>{
 
 async function reset_playerCount(pool){
     try{
-        const query = await pool.query("UPDATE game_data SET player_count = $1", [0])
-        console.log(query.rowCount)
+        await pool.query("UPDATE game_data SET player_count = $1", [0])
     }
     catch(err){
         console.log(err);
