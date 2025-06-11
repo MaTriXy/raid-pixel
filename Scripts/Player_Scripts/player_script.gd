@@ -23,7 +23,6 @@ func _ready() -> void:
 	player_anim.play("side_idle_anim")
 	
 	await get_tree().process_frame
-	PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
 	player_health_label.text = str(player_health_bar.value) + "/" + str(PlayerGlobalScript.player_max_health)
 		
 func play_punch_animation():
@@ -111,11 +110,11 @@ func send_player_data():
 			"direction_value": { "x": direction_value.x, "y": direction_value.y },
 			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
 			"isMoving": isMoving,
-			"player_type": PlayerGlobalScript.player_type,
+			"player_class_type": PlayerGlobalScript.player_class_game_type,
 			"isAttacking": isAttacking,
 			"isDead": PlayerGlobalScript.isMainPlayerDead,
 			"spawn_code": PlayerGlobalScript.spawn_player_code,
-			"player_health": PlayerGlobalScript.player_health
+			"player_health": PlayerGlobalScript.player_health,
 		}
 	
 	if WebsocketsConnection.socket_connection_status == "Connected":

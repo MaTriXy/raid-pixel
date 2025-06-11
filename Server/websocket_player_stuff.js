@@ -32,7 +32,7 @@ module.exports = (wss)=>{
                     "Player_posY": parsed_message.Player_posY,
                     "direction_value": parsed_message.direction_value,
                     "last_direction_value": parsed_message.last_direction_value,
-                    "player_type": parsed_message.player_type,
+                    "player_class_type": parsed_message.player_class_type,
                     "isAttacking": parsed_message.isAttacking,
                     "isMoving": parsed_message.isMoving,
                     "Player_username": parsed_message.Player_username,

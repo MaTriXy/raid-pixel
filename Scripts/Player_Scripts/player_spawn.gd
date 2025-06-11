@@ -15,6 +15,14 @@ var prev_death_status = false
 @export var spawn_coords: Vector2
 @onready var spawn_timer = $"UI/Death Screen Panel/Spawn Timer"
 
+var game_scene_spawn_coords = { 
+	"grassy_land": { 
+		"allied_spawn_coords": Vector2(5147.0, 867.0), 
+		"enemy_spawn_coords": Vector2(-633.66, 867.0)
+	} 
+}
+
+
 #for loading modal
 @export var loading_modal: Control
 
@@ -27,6 +35,9 @@ func _ready() -> void:
 	respawn_button.connect("pressed", respawn)
 	
 	await get_tree().process_frame
+	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+		var scene_instance = main_player_scene.instantiate()
+		scene_instance.position = game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
 	spawn_code = PlayerGlobalScript.spawn_player_code
 	
 func respawn():
@@ -35,7 +46,12 @@ func respawn():
 	
 	await get_tree().process_frame
 	var player = main_player_scene.instantiate()
-	player.position = spawn_coords
+	
+	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+		player.position = game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
+	else:
+		player.position = spawn_coords
+		
 	ySort.add_child(player)
 	spawner_animation.play("spawner_spawn")
 	
@@ -63,15 +79,14 @@ func _process(_delta: float) -> void:
 						joined_player.direction_value = Vector2(data.get("direction_value")["x"], data.get("direction_value")["y"])
 						joined_player.last_direction_value = Vector2(data.get("last_direction_value")["x"], data.get("last_direction_value")["y"])
 						joined_player.isMoving = data.get("isMoving")
-						joined_player.player_type = data.get("player_type")
 						joined_player.isAttacking = data.get("isAttacking")
 						joined_player.player_health = float(data.get("player_health"))
 					else:
 						var newPlayer = joined_player_scene.instantiate()
-						newPlayer.position = spawn_coords
 						newPlayer.name = data.get("Player_GameID")
+						newPlayer.position = spawn_coords
 						newPlayer.playerIGN = data.get("Player_inGameName")
-						newPlayer.player_type = data.get("player_type")
+						newPlayer.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
 						
 						if newPlayer.get_parent() != ySort and not bool(data.get("isDead")):
 							spawner_animation.play("spawner_spawn")
@@ -93,10 +108,9 @@ func _process(_delta: float) -> void:
 					if player.get_parent() != ySort and not bool(data.get("isDead")):
 						spawner_animation.play("spawner_spawn")
 						player.name = data.get("Player_GameID")
-						player.playerIGN = data.get("Player_inGameName")
 						player.position = spawn_coords
-						player.player_type = data.get("player_type")
-						ySort.add_child(player)
+						player.playerIGN = data.get("Player_inGameName")
+						player.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
 						
 					stored_players[data.get("Player_GameID")] = {
 						"Player": player,
@@ -117,8 +131,8 @@ func _process(_delta: float) -> void:
 					newPlayer.direction_value = Vector2(populate_data.get("direction_value")["x"], populate_data.get("direction_value")["y"])
 					newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
 					newPlayer.playerIGN = populate_data.get("Player_inGameName")
-					newPlayer.player_type = populate_data.get("player_type")
 					newPlayer.player_health = float(populate_data.get("player_health"))
+					newPlayer.player_type = "ally" if populate_data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
 					
 					if newPlayer.get_parent() != ySort and not bool(populate_data.get("isDead")):
 						if str(populate_data.get("spawn_code")) == spawn_code:
@@ -167,10 +181,15 @@ func _process(_delta: float) -> void:
 			print(data)
 			
 			await get_tree().process_frame
-			if data.has("Players_GameID") and data.has("Match_RoomID"):
+			if data.has("Players_GameID") and data.has("Match_RoomID") and data.has("class_type"):
 				for playerID in data.get("Players_GameID"):
 					if playerID == PlayerGlobalScript.player_game_id:
 						PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
+						PlayerGlobalScript.game_scene_name = data.get("game_scene")
+						
+						#PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
+						#if data.get("class_type")["gameID"] == playerID:
+						PlayerGlobalScript.player_class_game_type = data.get("class_type")#["gameID"].type
 						
 						SocketClient.send_data({
 							"Socket_Name": "leave_lobby",

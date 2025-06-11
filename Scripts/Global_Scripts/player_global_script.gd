@@ -48,3 +48,4 @@ var isPlayerAttack: bool
 #for player match stuff
 var match_roomID: String
 var player_class_game_type: String
+var game_scene_name: String

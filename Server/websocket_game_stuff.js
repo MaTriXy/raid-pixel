@@ -10,7 +10,7 @@ cloudinary.config({
 });
 
 let queue_match = []
-let match_found = false
+let isMatchFound = false
 async function delete_image(profile_hash){
     try{
         if(profile_hash && profile_hash != "default_profile_vw2q2o"){
@@ -88,47 +88,61 @@ module.exports = (wss, pool)=>{
             //for finding match
             else if(socket_name == "find_match"){
                 var data = { "gameID": [parsed_message.Player_GameID], "matchID": parsed_message.match_ID }
+                let match_to_remove = []
+                
+                if(queue_match.length === 0){
+                    queue_match.push(data)
+                    isMatchFound = true
+                }
                 
                 for(let queue of queue_match){
+                    //this is where if a player cancel a match, it will be removed to a queue array
                     let gameID_index = queue.gameID.findIndex(id => id == parsed_message.gameID)
 
-                    if(gameID_index >= -1){
+                    if(gameID_index > -1){
                         if(parsed_message.status == "leave"){
+                            isMatchFound = false
                             queue.gameID.splice(gameID_index, 1)
-                            break;
+                            return;
                         }
                     }
 
-                    if(queue.gameID.length < 2){
+                    //this is where the match if the array is filled with designated numbers of players
+                    if(queue.gameID.length < 2 && !queue.gameID.includes(parsed_message.Player_GameID)){
                         queue.gameID.push(parsed_message.Player_GameID)
-                        match_found = true
-
-                        if(queue.gameID.length == 2){
-                            broadcastSocket(
-                                wss,
-                                {
-                                    "Socket_Name": socket_name,
-                                    "Players_GameID": queue.gameID,
-                                    "Match_RoomID": queue.matchID
-                                }
-                            )
-                        }
-                        break;
+                        isMatchFound = true
                     }
 
-                    if(queue.gameID.length >= 2){
-                        match_found = false
+                    //start the match now
+                    if(isMatchFound && queue.gameID.length === 2){
+                        let game_scene = ["grassy_land"]
+
+                        broadcastSocket(
+                            wss,
+                            {
+                                "Socket_Name": socket_name,
+                                "Players_GameID": queue.gameID,
+                                "Match_RoomID": queue.matchID,
+                                "game_scene": game_scene[0],
+                                "class_type": "Defenders"
+                            }
+                        )
+
+                        //add the match for removal
+                        match_to_remove.push(queue.matchID)
+                        isMatchFound = false
                         break;
                     }
                 }
 
-                if(!match_found){
-                    queue_match.push(data)
+                //remove all the matches that completed with players
+                if(match_to_remove.length > 0){
+                    queue_match = queue_match.filter(entry => !match_to_remove.includes(entry.matchID))
                 }
 
-                console.table(queue_match)
-
+                //for cleaning up the empty matches
                 queue_match = queue_match.filter(queue => queue.gameID.length > 0);
+                console.table(queue_match)
             }
 
             //for player spawn code
