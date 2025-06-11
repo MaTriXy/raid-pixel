@@ -1,10 +1,13 @@
 extends Node
 
 @export var scene_particle: CPUParticles2D
-@export var main_player: CharacterBody2D
 @export var ySort: Control
 @export var tileMap: TileMapLayer
 @export var scene_name: String
+@onready var spawn_machine = $"Y Sort/Spawner"
+
+var main_player_scene = preload("res://Sprite_Nodes/main_player.tscn")
+var main_player = main_player_scene.instantiate()
 
 var max_scene_width_left: float
 var max_scene_width_right: float
@@ -15,10 +18,11 @@ var world_rect: Rect2
 
 var prev_data = {}
 
-func _ready() -> void:
+func _ready() -> void:	
 	PlayerGlobalScript.current_scene = scene_name
 	PlayerGlobalScript.spawn_player_code = scene_name + PlayerGlobalScript.match_roomID
 	
+	spawn_player_on_scene()
 	
 	var timer = Timer.new()
 	
@@ -50,6 +54,28 @@ func _ready() -> void:
 		max_scene_height_bottom = world_rect.position.y + world_rect.size.y
 		max_scene_height_top = world_rect.position.y
 		
+func spawn_player_on_scene():
+	await get_tree().process_frame
+	if is_instance_valid(main_player):
+		if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+			main_player.position = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
+		else:
+			main_player.position = spawn_machine.spawn_coords
+			
+		ySort.add_child(main_player)
+	else:
+		var new_player = main_player_scene.instantiate()
+		
+		if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+			new_player.position = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
+		else:
+			new_player.position = spawn_machine.spawn_coords
+		
+		main_player = new_player
+		ySort.add_child(new_player)
+		
+	spawn_machine.spawner_animation.play("spawner_spawn")
+		
 func send_scene_data():
 	PlayerGlobalScript.isLobby = true if WebsocketsConnection.socket_connection_status == "Connected" else false
 	
@@ -66,7 +92,11 @@ func send_scene_data():
 		prev_data = {}
 	
 func _process(_delta: float):
-	if tileMap and tileMap.tile_set and main_player:
+	if spawn_machine.isRespawn:
+		spawn_player_on_scene()
+		spawn_machine.isRespawn = false
+		
+	if tileMap and tileMap.tile_set and main_player and main_player.get_parent() == ySort:
 		wrap_around()
 		adjust_player_camera_limit()
 	

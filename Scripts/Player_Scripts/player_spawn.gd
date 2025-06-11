@@ -1,13 +1,13 @@
 extends Node
 
 @onready var spawner_animation = $Sprite/AnimationPlayer
-
-var main_player_scene = preload("res://Sprite_Nodes/main_player.tscn")
 var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
+
 @export var ySort: Control
 var prev_data: Dictionary
 var spawn_code: String
 var prev_death_status = false
+var isRespawn = false
 
 #for player spawn
 @onready var death_panel = $"UI/Death Screen Panel"
@@ -22,7 +22,6 @@ var game_scene_spawn_coords = {
 	} 
 }
 
-
 #for loading modal
 @export var loading_modal: Control
 
@@ -35,25 +34,13 @@ func _ready() -> void:
 	respawn_button.connect("pressed", respawn)
 	
 	await get_tree().process_frame
-	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
-		var scene_instance = main_player_scene.instantiate()
-		scene_instance.position = game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
 	spawn_code = PlayerGlobalScript.spawn_player_code
 	
 func respawn():
 	PlayerGlobalScript.isModalOpen = false
 	PlayerGlobalScript.current_modal_open = false
 	
-	await get_tree().process_frame
-	var player = main_player_scene.instantiate()
-	
-	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
-		player.position = game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
-	else:
-		player.position = spawn_coords
-		
-	ySort.add_child(player)
-	spawner_animation.play("spawner_spawn")
+	isRespawn = true
 	
 func start_timer():
 	spawn_timer.wait_time = 1.0
@@ -65,7 +52,8 @@ func _process(_delta: float) -> void:
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
 	if connection_status == "Connected":		
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn_%s" % [spawn_code] and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn_%s" % [spawn_code] and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
+
 			prev_data = data
 			
 			if data.has("Player_inGameName"):
@@ -84,9 +72,9 @@ func _process(_delta: float) -> void:
 					else:
 						var newPlayer = joined_player_scene.instantiate()
 						newPlayer.name = data.get("Player_GameID")
-						newPlayer.position = spawn_coords
 						newPlayer.playerIGN = data.get("Player_inGameName")
 						newPlayer.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
+						newPlayer.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						
 						if newPlayer.get_parent() != ySort and not bool(data.get("isDead")):
 							spawner_animation.play("spawner_spawn")
@@ -107,10 +95,13 @@ func _process(_delta: float) -> void:
 					
 					if player.get_parent() != ySort and not bool(data.get("isDead")):
 						spawner_animation.play("spawner_spawn")
+				
 						player.name = data.get("Player_GameID")
-						player.position = spawn_coords
+						player.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						player.playerIGN = data.get("Player_inGameName")
 						player.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
+
+						ySort.add_child(player)
 						
 					stored_players[data.get("Player_GameID")] = {
 						"Player": player,
@@ -178,19 +169,17 @@ func _process(_delta: float) -> void:
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
 			prev_data = data
 			
-			print(data)
-			
-			await get_tree().process_frame
 			if data.has("Players_GameID") and data.has("Match_RoomID") and data.has("class_type"):
 				for playerID in data.get("Players_GameID"):
 					if playerID == PlayerGlobalScript.player_game_id:
 						PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
 						PlayerGlobalScript.game_scene_name = data.get("game_scene")
 						
-						#PlayerGlobalScript.player_type = "Ally" if PlayerGlobalScript.current_scene.to_upper() == "LOBBY" else "Enemy"
-						#if data.get("class_type")["gameID"] == playerID:
-						PlayerGlobalScript.player_class_game_type = data.get("class_type")#["gameID"].type
+						for entry in data.get("class_type"):
+							if entry.get("gameID") == PlayerGlobalScript.player_game_id:
+								PlayerGlobalScript.player_class_game_type = entry.get("class")
 						
+						await get_tree().process_frame
 						SocketClient.send_data({
 							"Socket_Name": "leave_lobby",
 							"Player_GameID": playerID

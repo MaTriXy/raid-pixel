@@ -11,6 +11,7 @@ cloudinary.config({
 
 let queue_match = []
 let isMatchFound = false
+const max_players = 2
 async function delete_image(profile_hash){
     try{
         if(profile_hash && profile_hash != "default_profile_vw2q2o"){
@@ -31,7 +32,9 @@ module.exports = (wss, pool)=>{
 
             //for connected player
             if(socket_name === "Player_Connected"){
-                await modifyPlayerCount(1, pool);
+                if(!ws.connected){
+                    await modifyPlayerCount(1, pool);
+                }
 
                 broadcastSocket(
                     wss,
@@ -42,6 +45,7 @@ module.exports = (wss, pool)=>{
                 )
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
+                ws.connected = true
             }
 
             //for disconnected player
@@ -108,14 +112,19 @@ module.exports = (wss, pool)=>{
                     }
 
                     //this is where the match if the array is filled with designated numbers of players
-                    if(queue.gameID.length < 2 && !queue.gameID.includes(parsed_message.Player_GameID)){
+                    if(queue.gameID.length < max_players && !queue.gameID.includes(parsed_message.Player_GameID)){
                         queue.gameID.push(parsed_message.Player_GameID)
                         isMatchFound = true
                     }
 
                     //start the match now
-                    if(isMatchFound && queue.gameID.length === 2){
+                    if(isMatchFound && queue.gameID.length === max_players){
                         let game_scene = ["grassy_land"]
+                        let class_type = []
+
+                        queue.gameID.forEach((player, index) => {
+                            class_type.push({ gameID: player, class: (index % 2 === 0) ? "Defender" : "Attacker" }) 
+                        });
 
                         broadcastSocket(
                             wss,
@@ -124,7 +133,7 @@ module.exports = (wss, pool)=>{
                                 "Players_GameID": queue.gameID,
                                 "Match_RoomID": queue.matchID,
                                 "game_scene": game_scene[0],
-                                "class_type": "Defenders"
+                                "class_type": class_type
                             }
                         )
 
@@ -191,6 +200,7 @@ module.exports = (wss, pool)=>{
                         "Player_GameID": ws.GameID
                     }
                 )
+                ws.connected = false
                 await deleteGuestPlayer_account(ws.username, pool);
 
                 ws.GameID = ""
