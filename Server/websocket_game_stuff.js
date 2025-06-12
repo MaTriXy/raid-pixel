@@ -94,20 +94,24 @@ module.exports = (wss, pool)=>{
                 var data = { "gameID": [parsed_message.Player_GameID], "matchID": parsed_message.match_ID }
                 let match_to_remove = []
                 
-                if(queue_match.length === 0){
+                if(queue_match.length === 0 && parsed_message.status != "leave"){
                     queue_match.push(data)
                     isMatchFound = true
                 }
                 
                 for(let queue of queue_match){
                     //this is where if a player cancel a match, it will be removed to a queue array
-                    let gameID_index = queue.gameID.findIndex(id => id == parsed_message.gameID)
+                    if(parsed_message.status == "leave"){
+                        let gameID_index = queue.gameID.indexOf(parsed_message.Player_GameID)
 
-                    if(gameID_index > -1){
-                        if(parsed_message.status == "leave"){
+                        if(gameID_index > -1){
                             isMatchFound = false
                             queue.gameID.splice(gameID_index, 1)
-                            return;
+
+                            if(queue.gameID.length <= 1){
+                                match_to_remove.push(queue.matchID)
+                            }
+                            break;
                         }
                     }
 
@@ -151,6 +155,7 @@ module.exports = (wss, pool)=>{
 
                 //for cleaning up the empty matches
                 queue_match = queue_match.filter(queue => queue.gameID.length > 0);
+
                 console.table(queue_match)
             }
 

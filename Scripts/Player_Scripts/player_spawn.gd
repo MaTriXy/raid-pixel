@@ -180,6 +180,8 @@ func _process(_delta: float) -> void:
 								PlayerGlobalScript.player_class_game_type = entry.get("class")
 						
 						await get_tree().process_frame
+						print(data)
+						"""
 						SocketClient.send_data({
 							"Socket_Name": "leave_lobby",
 							"Player_GameID": playerID
@@ -188,6 +190,7 @@ func _process(_delta: float) -> void:
 						PlayerGlobalScript.current_modal_open = true
 						
 						loading_modal.load("res://Scenes/game_scene.tscn")
+						"""
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

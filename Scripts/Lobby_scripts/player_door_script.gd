@@ -38,7 +38,6 @@ func cancel_match():
 	SocketClient.send_data({
 		"Socket_Name": "find_match",
 		"Player_GameID": PlayerGlobalScript.player_game_id,
-		"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
 		"status": "leave"
 	})
 		
