@@ -12,59 +12,59 @@ func _ready() -> void:
 		add_child(httpRequest)
 
 func send_post_request(route: String, data: Dictionary) -> Dictionary:
-	if isFetching:
-		return {}
-	
-	var url = route
-	var json_data = JSON.stringify(data)
+	if not isFetching:
+		var url = route
+		var json_data = JSON.stringify(data)
 
-	var headers = [
-		"Content-Type: application/json"
-	]
-	
-	var err = httpRequest.request(url, headers, HTTPClient.METHOD_POST, json_data)
-	isFetching = true
-	
-	if err != OK:
+		var headers = [
+			"Content-Type: application/json"
+		]
+		
+		isFetching = true
+		var err = httpRequest.request(url, headers, HTTPClient.METHOD_POST, json_data)
+		
+		if err != OK:
+			isFetching = false
+			print("Failed to send request")
+			return {}
+
+		# Wait for the request to complete
+		var result = await httpRequest.request_completed
+		var response_code = result[1]
+		
+		if response_code != 200:
+			print("Server responded with code: ", response_code)
+			return {}
+		
+		var response_text = result[3].get_string_from_utf8()
+		var response_json = JSON.parse_string(response_text)
 		isFetching = false
-		print("Failed to send request")
+		return response_json
+	else:
 		return {}
-
-	# Wait for the request to complete
-	var result = await httpRequest.request_completed
-	isFetching = false
-	
-	var response_code = result[1]
-	
-	if response_code != 200:
-		print("Server responded with code: ", response_code)
-		return {}
-	
-	var response_text = result[3].get_string_from_utf8()
-	var response_json = JSON.parse_string(response_text)
-	return response_json
 
 func get_request(route: String) -> Dictionary:
-	if isGettingRequest:
-		return {}
+	if not isGettingRequest:
+		var url = route
+
+		var headers = [
+			"Accept: application/json"
+		]
+
+		isGettingRequest = true
+		var err = httpRequest.request(url, headers, HTTPClient.METHOD_GET)
 		
-	var url = route
-
-	var headers = [
-		"Accept: application/json"
-	]
-
-	var err = httpRequest.request(url, headers, HTTPClient.METHOD_GET)
-	isGettingRequest = true
-	if err != OK:
+		if err != OK:
+			isGettingRequest = false
+			print("Failed to send GET request")
+			return {}
+			
+		# Wait for the request to complete
+		var result = await httpRequest.request_completed
+		var response_text = result[3].get_string_from_utf8()
+		var response_json = JSON.parse_string(response_text)
+		
 		isGettingRequest = false
-		print("Failed to send GET request")
+		return response_json if typeof(response_json) == TYPE_DICTIONARY else {}
+	else:
 		return {}
-		
-	# Wait for the request to complete
-	var result = await httpRequest.request_completed
-	var response_text = result[3].get_string_from_utf8()
-	var response_json = JSON.parse_string(response_text)
-	
-	isGettingRequest = false
-	return response_json if typeof(response_json) == TYPE_DICTIONARY else {}

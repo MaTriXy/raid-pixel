@@ -23,7 +23,7 @@ var game_scene_spawn_coords = {
 }
 
 #for loading modal
-@export var loading_modal: Control
+@export var player_loading_modal: Control
 
 #store player here
 var stored_players = {}
@@ -169,28 +169,21 @@ func _process(_delta: float) -> void:
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
 			prev_data = data
 			
-			if data.has("Players_GameID") and data.has("Match_RoomID") and data.has("class_type"):
-				for playerID in data.get("Players_GameID"):
-					if playerID == PlayerGlobalScript.player_game_id:
+			if data.has("Player_Username") and data.has("Match_RoomID") and data.has("class_type"):
+				for username in data.get("Player_Username"):
+					if username == PlayerGlobalScript.player_username:
 						PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
 						PlayerGlobalScript.game_scene_name = data.get("game_scene")
 						
 						for entry in data.get("class_type"):
-							if entry.get("gameID") == PlayerGlobalScript.player_game_id:
+							if entry.get("Player_Username") == PlayerGlobalScript.player_username:
 								PlayerGlobalScript.player_class_game_type = entry.get("class")
+							player_loading_modal.player_list[entry.get("Player_Username")] = entry.get("class")
 						
-						await get_tree().process_frame
-						print(data)
-						"""
-						SocketClient.send_data({
-							"Socket_Name": "leave_lobby",
-							"Player_GameID": playerID
-						})
-						PlayerGlobalScript.isModalOpen = true
-						PlayerGlobalScript.current_modal_open = true
-						
-						loading_modal.load("res://Scenes/game_scene.tscn")
-						"""
+				player_loading_modal.visible = true
+				player_loading_modal.is_player_load = true
+				
+				print(player_loading_modal.player_list)
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

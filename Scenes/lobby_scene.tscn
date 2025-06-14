@@ -1,4 +1,4 @@
-[gd_scene load_steps=35 format=4 uid="uid://dn723fb516qkt"]
+[gd_scene load_steps=36 format=4 uid="uid://dn723fb516qkt"]
 
 [ext_resource type="Script" uid="uid://cw2r6de5l2y5o" path="res://Scripts/Component_Scripts/scene_script.gd" id="1_3q4fp"]
 [ext_resource type="Texture2D" uid="uid://b2epnngvervp8" path="res://Assets/Tile_Maps/Lobby_TileMap.png" id="2_h23dp"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://c8jsdbprfkw5m" path="res://Interface_Scenes/Loading_interface.tscn" id="10_s7ahk"]
 [ext_resource type="Texture2D" uid="uid://c53rnx0n23pp7" path="res://Assets/Background_Images/Grassy_Land.png" id="11_s7ahk"]
 [ext_resource type="Texture2D" uid="uid://svgu531dykhu" path="res://Assets/Sprite_Static/Bob_No_Img.png" id="12_h23dp"]
+[ext_resource type="Script" uid="uid://b1d3vc46ka5pi" path="res://Scripts/Lobby_scripts/player_loading_screen.gd" id="12_oohhb"]
 
 [sub_resource type="Animation" id="Animation_h23dp"]
 length = 0.001
@@ -6572,11 +6573,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("ySort", "loading_modal") instance=ExtResource("3_2ipua")]
+[node name="Spawner" parent="Y Sort" node_paths=PackedStringArray("ySort", "player_loading_modal") instance=ExtResource("3_2ipua")]
 position = Vector2(1106, 93)
 ySort = NodePath("..")
 spawn_coords = Vector2(1020, 45)
-loading_modal = NodePath("../../UI/Loading Interface")
+player_loading_modal = NodePath("../../UI/Player Loading Panel")
 
 [node name="Player Door" type="StaticBody2D" parent="Y Sort" node_paths=PackedStringArray("ready_panel", "go_to_scene_button", "find_match_panel", "find_match_cancel_button", "find_match_timer_label")]
 z_index = 1
@@ -6761,13 +6762,15 @@ scroll_following = true
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Player Loading Panel" type="Panel" parent="UI"]
+[node name="Player Loading Panel" type="Panel" parent="UI" node_paths=PackedStringArray("loading_modal")]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxTexture_h23dp")
+script = ExtResource("12_oohhb")
+loading_modal = NodePath("../Loading Interface")
 
 [node name="Defender Container" type="VBoxContainer" parent="UI/Player Loading Panel"]
 layout_mode = 1
@@ -6849,37 +6852,37 @@ fit_content = true
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Player Info Panel" type="Panel" parent="UI/Player Loading Panel"]
+[node name="Player Panel" type="Panel" parent="UI/Player Loading Panel"]
 visible = false
 custom_minimum_size = Vector2(550, 130)
-layout_mode = 2
-offset_left = 71.0
-offset_top = 562.0
-offset_right = 621.0
-offset_bottom = 692.0
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
 
-[node name="Info Profile" type="TextureRect" parent="UI/Player Loading Panel/Player Info Panel"]
+[node name="Info Profile" type="TextureRect" parent="UI/Player Loading Panel/Player Panel"]
 layout_mode = 1
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_top = -35.5
-offset_right = 71.0
-offset_bottom = 35.5
+offset_left = 23.0
+offset_top = -50.0
+offset_right = 94.0
+offset_bottom = 21.0
 grow_vertical = 2
 texture = ExtResource("12_h23dp")
 expand_mode = 1
 
-[node name="Info Player Name" type="RichTextLabel" parent="UI/Player Loading Panel/Player Info Panel"]
+[node name="Info Player Name" type="RichTextLabel" parent="UI/Player Loading Panel/Player Panel"]
 layout_mode = 1
 anchors_preset = 6
 anchor_left = 1.0
 anchor_top = 0.5
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_left = -420.0
-offset_top = -35.0
-offset_bottom = 36.0
+offset_left = -438.0
+offset_top = -46.0
+offset_right = -18.0
+offset_bottom = 25.0
 grow_horizontal = 0
 grow_vertical = 2
 theme_override_fonts/normal_font = ExtResource("8_r1is2")
@@ -6889,7 +6892,7 @@ fit_content = true
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Player Loading" type="ProgressBar" parent="UI/Player Loading Panel/Player Info Panel"]
+[node name="Player Loading" type="ProgressBar" parent="UI/Player Loading Panel/Player Panel"]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
