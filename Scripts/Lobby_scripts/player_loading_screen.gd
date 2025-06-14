@@ -7,20 +7,29 @@ extends Node
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
 @export var loading_modal: Control
+var player_loading_value = 0.0
+var player_panel_reference: Control
 
 var player_list = {}
 var is_player_load = false
-var is_loading = false
+var is_start_loading = false
 
 func _ready() -> void:
 	$".".visible = false
 
 func _process(_delta: float) -> void:
-	if is_player_load and not is_loading:
+	if is_player_load and not is_start_loading:
 		for key in player_list:
-			await load_player_panel(key, player_list[key])
+			load_player_panel(key, player_list[key].get("class"), player_list[key].get("profile"))
+		is_start_loading = true
+		
+	if player_panel_reference:
+		player_loading_value += 1
+		
+		if player_loading_value >= 100:
+			is_player_load = false
 			
-		is_loading = true
+		player_panel_reference.get_node("Player Loading").value = player_loading_value
 
 """
 						SocketClient.send_data({
@@ -33,32 +42,31 @@ func _process(_delta: float) -> void:
 						loading_modal.load("res://Scenes/game_scene.tscn")
 						"""
 						
-func load_player_panel(username: String, class_type):
+func load_player_panel(ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
 	player_panel_instance.visible = true
-	player_panel_instance.name = "%s_instance" % [username]
+	player_panel_instance.name = "%s_instance" % [ign]
+	player_panel_instance.get_node("Info Player Name").text = ign
 	
-	var player_data = await get_player_data(username)
+	if ign == PlayerGlobalScript.player_in_game_name:
+		player_panel_reference = player_panel_instance
 	
-	if player_data["status"] == "Success":
-		player_panel_instance.get_node("Info Player Name").text = player_data["player_IGN"]
-		
-		var profile = await load_player_profile(username, player_data["player_profile"])
-		
-		if profile:
-			player_panel_instance.get_node("Info Profile").texture = profile
+	if not player_panel_instance.is_inside_tree():
+		if class_type.to_upper() == "DEFENDER":
+			defender_container.add_child(player_panel_instance)
 		else:
-			player_panel_instance.get_node("Info Profile").texture = no_profile
+			raider_container.add_child(player_panel_instance)
 	
-
-	if class_type.to_upper() == "DEFENDER":
-		defender_container.add_child(player_panel_instance)
+	var profile_req = await load_player_profile(ign, profile)
+	
+	if profile_req:
+		player_panel_instance.get_node("Info Profile").texture = profile_req
 	else:
-		raider_container.add_child(player_panel_instance)	
+		player_panel_instance.get_node("Info Profile").texture = no_profile
 
-func load_player_profile(username: String, profile_url: String):
+func load_player_profile(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()
-	player_http_req.name = "Player_info_%s" % [username]
+	player_http_req.name = "Player_info_%s" % [ign]
 	
 	$".".add_child(player_http_req)
 	
@@ -80,18 +88,3 @@ func load_player_profile(username: String, profile_url: String):
 		return null
 		
 	player_http_req.queue_free()
-		
-
-func get_player_data(username: String):
-	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/playerData", { "username": username })
-	
-	if result.has("status") and result["status"] == "Success":
-		return {
-			"status": result["status"],
-			"player_IGN": result["inGameName"],
-			"player_profile": result["profile"]
-		}
-	else:
-		return {
-			"status": "Failed"
-		}

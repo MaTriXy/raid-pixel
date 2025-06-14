@@ -168,22 +168,20 @@ func _process(_delta: float) -> void:
 				
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
 			prev_data = data
-			
-			if data.has("Player_Username") and data.has("Match_RoomID") and data.has("class_type"):
-				for username in data.get("Player_Username"):
-					if username == PlayerGlobalScript.player_username:
-						PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
-						PlayerGlobalScript.game_scene_name = data.get("game_scene")
-						
-						for entry in data.get("class_type"):
-							if entry.get("Player_Username") == PlayerGlobalScript.player_username:
-								PlayerGlobalScript.player_class_game_type = entry.get("class")
-							player_loading_modal.player_list[entry.get("Player_Username")] = entry.get("class")
-						
+
+			if data.has("player_map") and data.has("Match_RoomID") and data.has("game_scene"):
+				for map in data.get("player_map"):
+					if map.ign == PlayerGlobalScript.player_in_game_name:
+						PlayerGlobalScript.player_class_game_type = map.class
+					
+					player_loading_modal.player_list[map.ign] = { "profile": map.profile, "class": map.class }
+					
+				PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
+				PlayerGlobalScript.game_scene_name = data.get("game_scene")
+
 				player_loading_modal.visible = true
 				player_loading_modal.is_player_load = true
-				
-				print(player_loading_modal.player_list)
+
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

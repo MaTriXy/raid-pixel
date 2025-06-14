@@ -91,7 +91,8 @@ module.exports = (wss, pool)=>{
 
             //for finding match
             else if(socket_name == "find_match"){
-                var data = { "Player_Username": [parsed_message.Player_Username], "matchID": parsed_message.match_ID }
+                var player_data = { ign: parsed_message.player_ign, profile: parsed_message.player_profile}
+                var data = { "players": [player_data], "matchID": parsed_message.match_ID }
                 let match_to_remove = []
                 
                 if(queue_match.length === 0 && parsed_message.status != "leave"){
@@ -102,13 +103,13 @@ module.exports = (wss, pool)=>{
                 for(let queue of queue_match){
                     //this is where if a player cancel a match, it will be removed to a queue array
                     if(parsed_message.status == "leave"){
-                        let playerUsername_index = queue.Player_Username.indexOf(parsed_message.Player_Username)
+                        let players_index = queue.players.findIndex(q => q.ign == parsed_message.player_ign);
 
-                        if(playerUsername_index > -1){
+                        if(players_index > -1){
                             isMatchFound = false
-                            queue.Player_Username.splice(playerUsername_index, 1)
+                            queue.players.splice(players_index, 1)
 
-                            if(queue.Player_Username.length <= 1){
+                            if(queue.players.length <= 1){
                                 match_to_remove.push(queue.matchID)
                             }
                             break;
@@ -116,28 +117,28 @@ module.exports = (wss, pool)=>{
                     }
 
                     //this is where the match if the array is filled with designated numbers of players
-                    if(queue.Player_Username.length < max_players && !queue.Player_Username.includes(parsed_message.Player_Username)){
-                        queue.Player_Username.push(parsed_message.Player_Username)
+                    if(queue.players.length < max_players && !queue.players.some(q => q.ign == parsed_message.player_ign)){
+                        queue.players.push(player_data)
                         isMatchFound = true
                     }
 
                     //start the match now
-                    if(isMatchFound && queue.Player_Username.length === max_players){
+                    if(isMatchFound && queue.players.length === max_players){
                         let game_scene = ["grassy_land"]
-                        let class_type = []
 
-                        queue.Player_Username.forEach((player, index) => {
-                            class_type.push({ Player_Username: player, class: (index % 2 === 0) ? "Defender" : "Attacker" }) 
-                        });
+                        let player_map = queue.players.map((player, index) => ({
+                            "ign": player.ign,
+                            "profile": player.profile,
+                            "class": (index % 2 === 0) ? "Defender" : "Attacker"
+                        }))
 
                         broadcastSocket(
                             wss,
                             {
                                 "Socket_Name": socket_name,
-                                "Player_Username": queue.Player_Username,
+                                "player_map": player_map,
                                 "Match_RoomID": queue.matchID,
-                                "game_scene": game_scene[0],
-                                "class_type": class_type
+                                "game_scene": game_scene[0]
                             }
                         )
 
@@ -153,10 +154,7 @@ module.exports = (wss, pool)=>{
                     queue_match = queue_match.filter(entry => !match_to_remove.includes(entry.matchID))
                 }
 
-                //for cleaning up the empty matches
-                queue_match = queue_match.filter(queue => queue.Player_Username.length > 0);
-
-                console.table(queue_match)
+                console.log(JSON.stringify(queue_match))
             }
 
             //for player spawn code

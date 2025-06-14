@@ -37,7 +37,7 @@ func _process(delta: float) -> void:
 func cancel_match():
 	SocketClient.send_data({
 		"Socket_Name": "find_match",
-		"Player_Username": PlayerGlobalScript.player_username,
+		"player_ign": PlayerGlobalScript.player_in_game_name,
 		"status": "leave"
 	})
 		
@@ -62,7 +62,8 @@ func head_to_game():
 		
 		SocketClient.send_data({
 			"Socket_Name": "find_match",
-			"Player_Username": PlayerGlobalScript.player_username,
+			"player_ign": PlayerGlobalScript.player_in_game_name,
+			"player_profile": PlayerGlobalScript.player_profile,
 			"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
 			"status": "joined"
 		})
