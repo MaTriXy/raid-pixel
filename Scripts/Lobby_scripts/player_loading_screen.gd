@@ -14,22 +14,48 @@ var player_list = {}
 var is_player_load = false
 var is_start_loading = false
 
+var player_progress_instance_dic = {}
+
+var prev_value = 0
+var prev_data = {}
+
+#this is for the fallback
+var player_map: Array
+var match_roomID: String
+var game_scene: String
+
 func _ready() -> void:
 	$".".visible = false
 
 func _process(_delta: float) -> void:
 	if is_player_load and not is_start_loading:
+		SocketClient.send_data({
+			"Socket_Name": "start_match",
+			"player_map": player_map,
+			"Match_RoomID": match_roomID,
+			"game_scene": game_scene
+		})
+		print("Fall back send on other player")
 		for key in player_list:
 			load_player_panel(key, player_list[key].get("class"), player_list[key].get("profile"))
 		is_start_loading = true
 		
 	if player_panel_reference:
-		player_loading_value += 1
+		player_loading_value += _delta
 		
 		if player_loading_value >= 100:
 			is_player_load = false
+		
+		if prev_value != player_loading_value:
+			SocketClient.send_data({
+				"Socket_Name": "player_progress_interface",
+				"Player_IGN": PlayerGlobalScript.player_in_game_name,
+				"loading_value": player_loading_value
+			})
+			prev_value = player_loading_value
 			
 		player_panel_reference.get_node("Player Loading").value = player_loading_value
+		player_loading_progress()
 
 """
 						SocketClient.send_data({
@@ -41,12 +67,26 @@ func _process(_delta: float) -> void:
 						
 						loading_modal.load("res://Scenes/game_scene.tscn")
 						"""
+func player_loading_progress():
+	var data = SocketClient.received_data()
+	var connection_status = WebsocketsConnection.socket_connection_status
+	
+	if connection_status == "Connected":
+		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_progress_interface":
+			prev_data = data
+	
+			if data.has("Player_IGN") and data.has("loading_value"):
+				for key in player_progress_instance_dic:
+					if key == data.get("Player_IGN") and not key == PlayerGlobalScript.player_in_game_name:
+						player_progress_instance_dic[key].value = data.get("loading_value")
 						
 func load_player_panel(ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
 	player_panel_instance.visible = true
 	player_panel_instance.name = "%s_instance" % [ign]
 	player_panel_instance.get_node("Info Player Name").text = ign
+	
+	player_progress_instance_dic[ign] = player_panel_instance
 	
 	if ign == PlayerGlobalScript.player_in_game_name:
 		player_panel_reference = player_panel_instance

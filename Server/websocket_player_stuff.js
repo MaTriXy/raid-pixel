@@ -65,6 +65,18 @@ module.exports = (wss)=>{
                 }
             }
 
+            //for player loading progress in player interface
+            else if(socket_name === "player_progress_interface"){
+                broadcastSocket(
+                    wss,
+                    {
+                        Socket_Name: socket_name,
+                        Player_IGN: parsed_message.Player_IGN,
+                        loading_value: parsed_message.loading_value
+                    }
+                )
+            }
+
             //for playing leave lobby
             else if(socket_name === "leave_lobby"){
                 let player_index = player_active.findIndex(key => key["Player_GameID"] == parsed_message.Player_GameID)

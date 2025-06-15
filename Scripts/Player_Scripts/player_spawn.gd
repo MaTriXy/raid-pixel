@@ -168,6 +168,10 @@ func _process(_delta: float) -> void:
 				
 		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
 			prev_data = data
+			
+			player_loading_modal.player_map = data.get("player_map")
+			player_loading_modal.match_roomID = data.get("Match_RoomID")
+			player_loading_modal.game_scene = data.get("game_scene")
 
 			if data.has("player_map") and data.has("Match_RoomID") and data.has("game_scene"):
 				for map in data.get("player_map"):
@@ -178,10 +182,15 @@ func _process(_delta: float) -> void:
 					
 				PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
 				PlayerGlobalScript.game_scene_name = data.get("game_scene")
-
-				player_loading_modal.visible = true
-				player_loading_modal.is_player_load = true
-
+				
+				if not player_loading_modal.visible:
+					player_loading_modal.visible = true
+					player_loading_modal.is_player_load = true
+				
+		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "start_match":
+			prev_data = data
+			print(PlayerGlobalScript.player_in_game_name)
+			print(data)
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

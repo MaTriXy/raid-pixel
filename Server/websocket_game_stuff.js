@@ -90,7 +90,7 @@ module.exports = (wss, pool)=>{
             }
 
             //for finding match
-            else if(socket_name == "find_match"){
+            else if(socket_name === "find_match"){
                 var player_data = { ign: parsed_message.player_ign, profile: parsed_message.player_profile}
                 var data = { "players": [player_data], "matchID": parsed_message.match_ID }
                 let match_to_remove = []
@@ -155,6 +155,20 @@ module.exports = (wss, pool)=>{
                 }
 
                 console.log(JSON.stringify(queue_match))
+            }
+
+            //for start match
+            else if(socket_name === "start_match"){
+                broadcastSocket(
+                    wss,
+                    {
+                        Socket_Name: socket_name,
+					    player_map: parsed_message.player_map,
+					    Match_RoomID: parsed_message.Match_RoomID,
+					    game_scene: parsed_message.game_scene
+                    }
+                )
+                console.log(parsed_message)
             }
 
             //for player spawn code
