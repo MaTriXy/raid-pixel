@@ -141,7 +141,7 @@ func _process(_delta: float) -> void:
 							"isFetched": false
 						}
 					
-		elif data.get("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Disconnect" or data.get("Socket_Name") == "leave_lobby"):
+		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
 			prev_data = data
 			
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
@@ -165,15 +165,16 @@ func _process(_delta: float) -> void:
 				player_key_list.Player_IGN = data.get("Player_inGameName")
 				joined_player.name = data.get("Player_GameID")
 				joined_player.playerIGN = data.get("Player_inGameName")
-				
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "find_match":
+		
+		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
 			prev_data = data
-			
-			player_loading_modal.player_map = data.get("player_map")
-			player_loading_modal.match_roomID = data.get("Match_RoomID")
-			player_loading_modal.game_scene = data.get("game_scene")
 
-			if data.has("player_map") and data.has("Match_RoomID") and data.has("game_scene"):
+			await get_tree().process_frame
+			if data.has("player_map") and data.has("Match_RoomID") and data.has("game_scene"):		
+				player_loading_modal.player_map = data.get("player_map")
+				player_loading_modal.match_roomID = data.get("Match_RoomID")
+				player_loading_modal.game_scene = data.get("game_scene")
+			
 				for map in data.get("player_map"):
 					if map.ign == PlayerGlobalScript.player_in_game_name:
 						PlayerGlobalScript.player_class_game_type = map.class
@@ -186,11 +187,6 @@ func _process(_delta: float) -> void:
 				if not player_loading_modal.visible:
 					player_loading_modal.visible = true
 					player_loading_modal.is_player_load = true
-				
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "start_match":
-			prev_data = data
-			print(PlayerGlobalScript.player_in_game_name)
-			print(data)
 
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:

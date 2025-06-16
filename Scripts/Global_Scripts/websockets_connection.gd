@@ -14,6 +14,8 @@ var socket_data: Dictionary
 #connection status
 var socket_connection_status: String
 
+var isConnected = false
+
 func _ready():
 	established_connection()
 
@@ -34,20 +36,31 @@ func _process(_delta):
 			if PlayerGlobalScript.player_username:
 				if not PlayerGlobalScript.player_game_id:
 					PlayerGlobalScript.player_game_id = "GameID_%s" % [PlayerInfoStuff.string_generator(2)]
+				
+				if not isConnected:
+					SocketClient.send_data(
+						{
+							"Socket_Name": "Player_Server_Connected"
+						}
+					)
+				isConnected = true
 			
 		#for connecting
 		WebSocketPeer.STATE_CONNECTING:
 			socket_connection_status = "Connecting to server";
+			isConnected = false
 
 		# WebSocketPeer.STATE_CLOSING means the socket is closing.
 		# It is important to keep polling for a clean close.
 		WebSocketPeer.STATE_CLOSING:
 			socket_connection_status = "Closing"
+			isConnected = false
 
 		# WebSocketPeer.STATE_CLOSED means the connection has fully closed.
 		# It is now safe to stop polling.
 		WebSocketPeer.STATE_CLOSED:
 			socket_connection_status = "Disconnected";
+			isConnected = false
 			
 			# The code will be -1 if the disconnection was not properly notified by the remote peer.
 			var code = socket.get_close_code()

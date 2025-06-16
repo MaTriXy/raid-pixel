@@ -6,18 +6,19 @@ extends Node
 
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
-@export var loading_modal: Control
-var player_loading_value = 0.0
-var player_panel_reference: Control
-
 var player_list = {}
 var is_player_load = false
 var is_start_loading = false
 
-var player_progress_instance_dic = {}
-
 var prev_value = 0
 var prev_data = {}
+
+#for progress bar
+var player_progress_instance_dic = {}
+var finished_players = {}
+var max_players = 0
+var player_loading_value = 0.0
+var began_to_load = false
 
 #this is for the fallback
 var player_map: Array
@@ -27,25 +28,24 @@ var game_scene: String
 func _ready() -> void:
 	$".".visible = false
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if is_player_load and not is_start_loading:
+		PlayerGlobalScript.isModalOpen = true
+		PlayerGlobalScript.current_modal_open = true
+		
 		SocketClient.send_data({
 			"Socket_Name": "start_match",
 			"player_map": player_map,
 			"Match_RoomID": match_roomID,
 			"game_scene": game_scene
 		})
-		print("Fall back send on other player")
+		
 		for key in player_list:
+			max_players += 1
 			load_player_panel(key, player_list[key].get("class"), player_list[key].get("profile"))
 		is_start_loading = true
 		
-	if player_panel_reference:
-		player_loading_value += _delta
-		
-		if player_loading_value >= 100:
-			is_player_load = false
-		
+	if began_to_load:	
 		if prev_value != player_loading_value:
 			SocketClient.send_data({
 				"Socket_Name": "player_progress_interface",
@@ -54,19 +54,47 @@ func _process(_delta: float) -> void:
 			})
 			prev_value = player_loading_value
 			
-		player_panel_reference.get_node("Player Loading").value = player_loading_value
 		player_loading_progress()
+		
+		for key in player_progress_instance_dic:
+			var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+			
+			if key == PlayerGlobalScript.player_in_game_name:
+				load_game_scene_resource(progress_bar, delta)
+				
+			if progress_bar.value >= 100.0:
+				finished_players[key] = true
+				
+		if finished_players.size() == max_players:
+			SocketClient.send_data({
+				"Socket_Name": "leave_lobby",
+				"Player_GameID": PlayerGlobalScript.player_game_id
+			})
+			
+			PlayerGlobalScript.isModalOpen = false
+			PlayerGlobalScript.current_modal_open = false
+			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			
+func start_to_load():
+	began_to_load = true
+	ResourceLoader.load_threaded_request("res://Scenes/game_scene.tscn")
+			
+func load_game_scene_resource(progress_bar: Control, delta: float):
+	var progress = []
+	var status = ResourceLoader.load_threaded_get_status("res://Scenes/game_scene.tscn", progress)
 
-"""
-						SocketClient.send_data({
-							"Socket_Name": "leave_lobby",
-							"Player_GameID": playerID
-						})
-						PlayerGlobalScript.isModalOpen = true
-						PlayerGlobalScript.current_modal_open = true
-						
-						loading_modal.load("res://Scenes/game_scene.tscn")
-						"""
+	if status == ResourceLoader.ThreadLoadStatus.THREAD_LOAD_IN_PROGRESS:
+		player_loading_value = progress[0] * 100
+		progress_bar.value = move_toward(progress_bar.value, player_loading_value, delta * 20)
+
+	if status == ResourceLoader.ThreadLoadStatus.THREAD_LOAD_LOADED:
+		# zip the progress bar to 100% so we don't get weird visuals
+		progress_bar.value = move_toward(progress_bar.value, 100.0, delta * 150)
+
+		# "done" loading :)
+		if progress_bar.value >= 99:
+			is_player_load = false
+
 func player_loading_progress():
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
@@ -78,7 +106,7 @@ func player_loading_progress():
 			if data.has("Player_IGN") and data.has("loading_value"):
 				for key in player_progress_instance_dic:
 					if key == data.get("Player_IGN") and not key == PlayerGlobalScript.player_in_game_name:
-						player_progress_instance_dic[key].value = data.get("loading_value")
+						player_progress_instance_dic[key].get_node("Player Loading").value = float(data.get("loading_value"))
 						
 func load_player_panel(ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
@@ -89,7 +117,7 @@ func load_player_panel(ign: String, class_type: String, profile: String):
 	player_progress_instance_dic[ign] = player_panel_instance
 	
 	if ign == PlayerGlobalScript.player_in_game_name:
-		player_panel_reference = player_panel_instance
+		start_to_load()
 	
 	if not player_panel_instance.is_inside_tree():
 		if class_type.to_upper() == "DEFENDER":

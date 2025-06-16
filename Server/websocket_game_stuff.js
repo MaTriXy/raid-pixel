@@ -30,12 +30,13 @@ module.exports = (wss, pool)=>{
             let parsed_message = JSON.parse(message);
             let socket_name = parsed_message.Socket_Name;
 
-            //for connected player
-            if(socket_name === "Player_Connected"){
-                if(!ws.connected){
-                    await modifyPlayerCount(1, pool);
-                }
+            //for connected player in server
+            if(socket_name === "Player_Server_Connected"){
+                await modifyPlayerCount(1, pool);
+            }
 
+            //for connected player in game
+            else if(socket_name === "Player_Connected"){
                 broadcastSocket(
                     wss,
                     {
@@ -45,7 +46,6 @@ module.exports = (wss, pool)=>{
                 )
                 ws.GameID = parsed_message.Player_GameID;
                 ws.username = parsed_message.Player_username;
-                ws.connected = true
             }
 
             //for disconnected player
@@ -168,7 +168,6 @@ module.exports = (wss, pool)=>{
 					    game_scene: parsed_message.game_scene
                     }
                 )
-                console.log(parsed_message)
             }
 
             //for player spawn code
@@ -217,7 +216,6 @@ module.exports = (wss, pool)=>{
                         "Player_GameID": ws.GameID
                     }
                 )
-                ws.connected = false
                 await deleteGuestPlayer_account(ws.username, pool);
 
                 ws.GameID = ""
