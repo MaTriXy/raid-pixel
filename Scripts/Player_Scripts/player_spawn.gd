@@ -16,7 +16,7 @@ var isRespawn = false
 @onready var spawn_timer = $"UI/Death Screen Panel/Spawn Timer"
 
 var game_scene_spawn_coords = { 
-	"grassy_land": { 
+	"Grassy Land": { 
 		"allied_spawn_coords": Vector2(5147.0, 867.0), 
 		"enemy_spawn_coords": Vector2(-633.66, 867.0)
 	} 
@@ -108,7 +108,7 @@ func _process(_delta: float) -> void:
 						"Position": Vector2(spawn_coords.x, spawn_coords.y),
 					}
 		
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "populate_scene_%s" % [spawn_code]:
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "populate_scene_%s" % [spawn_code]:
 			prev_data = data
 			
 			for populate_data in data.get("player_data"):
@@ -141,7 +141,7 @@ func _process(_delta: float) -> void:
 							"isFetched": false
 						}
 					
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
 			prev_data = data
 			
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
@@ -153,7 +153,7 @@ func _process(_delta: float) -> void:
 					stored_players.erase(data.get("Player_GameID"))
 					GetPlayerInfo.active_player_dic.erase(data.get("Player_GameID"))
 					
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ModifyProfile":
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ModifyProfile":
 			prev_data = data
 			
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")) and GetPlayerInfo.active_player_dic.has(data.get("Player_GameID")):
@@ -166,7 +166,7 @@ func _process(_delta: float) -> void:
 				joined_player.name = data.get("Player_GameID")
 				joined_player.playerIGN = data.get("Player_inGameName")
 		
-		elif data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
 			prev_data = data
 
 			await get_tree().process_frame
@@ -187,7 +187,16 @@ func _process(_delta: float) -> void:
 				if not player_loading_modal.visible:
 					player_loading_modal.visible = true
 					player_loading_modal.is_player_load = true
-
+		
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game":
+			prev_data = data
+			
+			if data.has("match_roomID") and PlayerGlobalScript.match_roomID == data.get("match_roomID"):
+				if not PlayerGlobalScript.is_game_scene_loaded:
+					PlayerGlobalScript.isModalOpen = false
+					PlayerGlobalScript.current_modal_open = false
+					get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:
 			respawn_button.disabled = true

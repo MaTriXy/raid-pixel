@@ -55,25 +55,15 @@ func _ready() -> void:
 		max_scene_height_top = world_rect.position.y
 		
 func spawn_player_on_scene():
-	await get_tree().process_frame
-	if is_instance_valid(main_player):
-		if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
-			main_player.position = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
-		else:
-			main_player.position = spawn_machine.spawn_coords
-			
-		ySort.add_child(main_player)
-	else:
-		var new_player = main_player_scene.instantiate()
+	if not is_instance_valid(main_player):
+		main_player = main_player_scene.instantiate()
 		
-		if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
-			new_player.position = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDERS" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
-		else:
-			new_player.position = spawn_machine.spawn_coords
-		
-		main_player = new_player
-		ySort.add_child(new_player)
-		
+	var spawn_coordinates = spawn_machine.spawn_coords
+	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+		spawn_coordinates = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
+	
+	main_player.position = spawn_coordinates
+	ySort.add_child(main_player)
 	spawn_machine.spawner_animation.play("spawner_spawn")
 		
 func send_scene_data():

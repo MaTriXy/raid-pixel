@@ -40,6 +40,7 @@ func player_logout(validation_modal: Control, loading_modal: Control, gameID: St
 	PlayerGlobalScript.match_roomID = ""
 	PlayerGlobalScript.player_class_game_type = ""
 	PlayerGlobalScript.game_scene_name = ""
+	PlayerGlobalScript.is_game_scene_loaded = false
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")

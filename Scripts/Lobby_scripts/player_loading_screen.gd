@@ -3,6 +3,7 @@ extends Node
 @onready var defender_container = $"Defender Container"
 @onready var raider_container = $"Raider Container"
 @onready var player_panel_scene = $"Player Panel"
+@onready var location_label = $"Versus Label"
 
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
@@ -32,6 +33,8 @@ func _process(delta: float) -> void:
 	if is_player_load and not is_start_loading:
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
+		
+		location_label.text = "Vs\nLocation: %s" % [game_scene]
 		
 		SocketClient.send_data({
 			"Socket_Name": "start_match",
@@ -112,7 +115,9 @@ func load_player_panel(ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
 	player_panel_instance.visible = true
 	player_panel_instance.name = "%s_instance" % [ign]
-	player_panel_instance.get_node("Info Player Name").text = ign
+	
+	var label_text = " (You)" if ign == PlayerGlobalScript.player_in_game_name else ""
+	player_panel_instance.get_node("Info Player Name").text = "%s%s" % [ign, label_text]
 	
 	player_progress_instance_dic[ign] = player_panel_instance
 	

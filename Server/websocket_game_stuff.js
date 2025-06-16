@@ -124,7 +124,7 @@ module.exports = (wss, pool)=>{
 
                     //start the match now
                     if(isMatchFound && queue.players.length === max_players){
-                        let game_scene = ["grassy_land"]
+                        let game_scene = ["Grassy Land"]
 
                         let player_map = queue.players.map((player, index) => ({
                             "ign": player.ign,
@@ -170,6 +170,17 @@ module.exports = (wss, pool)=>{
                 )
             }
 
+            //for start game
+            else if(socket_name === "start_game"){
+                broadcastSocket(
+                    wss,
+                    {
+                        Socket_Name: socket_name,
+                        match_roomID: parsed_message.match_roomID
+                    }
+                )
+            }
+
             //for player spawn code
             else if(socket_name == "scene_code"){
                 broadcastSocket(
@@ -189,9 +200,10 @@ module.exports = (wss, pool)=>{
                     {
                         "Socket_Name": socket_name,
                         "health": parsed_message.health,
-                        "Player_IGN": parsed_message.Player_IGN
+                        "max_health": parsed_message.max_health
                     }
                 )
+                console.log(parsed_message)
             }
 
             //for receiving ping
