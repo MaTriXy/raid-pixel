@@ -52,17 +52,28 @@ func game_end():
 	print("Game ended")
 
 func _process(_delta: float) -> void:
+	var data = SocketClient.received_data()
+	var connection_status = WebsocketsConnection.socket_connection_status
+
+	if connection_status == "Connected":
+		if data.has("Socket_Name") and data != prev_data and data.get("Socket_Name") == "core_health_%s" % [PlayerGlobalScript.spawn_player_code]:
+			prev_data = data
+			
+			print(data)
+			if data.has("health") and data.has("max_health"):
+				core_ui_hp = float(data["health"])
+				core_ui_max_hp = float(data["max_health"])
+				
 	var seconds := int(game_timer.time_left) % 60
 	var minutes := int(game_timer.time_left) / 60
 	game_label.text = "Battle time: %02d:%02d" % [minutes, seconds]
-
-	#receive_data()
 	
 	if prev_hp != core_ui_hp:
 		sprite_core.value = core_ui_hp
 		core_hp_label.text = "%s/%s" % [core_ui_hp, core_ui_max_hp]
 		
 		prev_hp = core_ui_hp
+	#receive_data()
 
 #TODO: fix this one, coudln't receive socket.
 func receive_data():

@@ -31,7 +31,7 @@ func output_ping():
 	var data = received_data()
 	
 	if WebsocketsConnection.socket_connection_status == "Connected":
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ping":
 			prev_data = data
 			var sent_time = data.get("timestamp", 0)
 			var current_time = Time.get_ticks_msec()

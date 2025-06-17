@@ -81,7 +81,7 @@ var player_profile_class = PlayerProfile.new()
 var game_data_class = GameData.new()
 
 func _ready() -> void:
-	ping_timer.wait_time = 2.0
+	ping_timer.wait_time = 4.0
 	ping_timer.timeout.connect(SocketClient.send_ping)
 	ping_timer.start()
 	
