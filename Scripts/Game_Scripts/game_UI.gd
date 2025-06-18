@@ -16,16 +16,18 @@ var enemy_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Enemy
 
 @export var core: StaticBody2D
 
-var prev_data = {}
 var prev_hp = 0
-var core_ui_hp = 0
-var core_ui_max_hp = 0
+var prev_data = {}
+
+var ui_core_hp = 0
+var ui_core_max_hp = 0
 
 func _ready() -> void:
 	PlayerGlobalScript.is_game_scene_loaded = true
-	sprite_core.value = core.core_hp
-	core_ui_hp = core.core_hp
-	core_ui_max_hp = core.core_max_hp
+	ui_core_hp = core.core_hp
+	ui_core_max_hp = core.core_max_hp
+	
+	sprite_core.value = ui_core_hp
 	
 	if PlayerGlobalScript.player_class_game_type == "Defender":
 		sprite_core.texture_progress = allied_core_hp_render
@@ -52,39 +54,27 @@ func game_end():
 	print("Game ended")
 
 func _process(_delta: float) -> void:
-	var data = SocketClient.received_data()
-	var connection_status = WebsocketsConnection.socket_connection_status
-
-	if connection_status == "Connected":
-		if data.has("Socket_Name") and data != prev_data and data.get("Socket_Name") == "core_health_%s" % [PlayerGlobalScript.spawn_player_code]:
-			prev_data = data
-			
-			print(data)
-			if data.has("health") and data.has("max_health"):
-				core_ui_hp = float(data["health"])
-				core_ui_max_hp = float(data["max_health"])
-				
+	#receive_dmg_core()
+	
+	if prev_hp != ui_core_hp:
+		sprite_core.value = ui_core_hp
+		core_hp_label.text = "%s/%s" % [ui_core_hp, ui_core_max_hp]
+		
+		prev_hp = core.core_hp
+	
 	var seconds := int(game_timer.time_left) % 60
 	var minutes := int(game_timer.time_left) / 60
 	game_label.text = "Battle time: %02d:%02d" % [minutes, seconds]
 	
-	if prev_hp != core_ui_hp:
-		sprite_core.value = core_ui_hp
-		core_hp_label.text = "%s/%s" % [core_ui_hp, core_ui_max_hp]
-		
-		prev_hp = core_ui_hp
-	#receive_data()
-
-#TODO: fix this one, coudln't receive socket.
-func receive_data():
+func receive_dmg_core():
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 
 	if connection_status == "Connected":
-		if data.has("Socket_Name") and data != prev_data and data.get("Socket_Name") == "core_health_%s" % [PlayerGlobalScript.spawn_player_code]:
-			prev_data = data
-			
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "damage_core_update":
 			print(data)
+			prev_data = data
+		
 			if data.has("health") and data.has("max_health"):
-				core_ui_hp = float(data["health"])
-				core_ui_max_hp = float(data["max_health"])
+				ui_core_hp = float(data["health"])
+				ui_core_max_hp = float(data["max_health"])

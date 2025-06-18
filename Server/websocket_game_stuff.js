@@ -194,11 +194,11 @@ module.exports = (wss, pool)=>{
             }
 
             //for core health
-            else if(socket_name === "core_health_" + ws.Spawn_Code){
+            else if(socket_name === "core_health"){
                 broadcastSocket(
                     wss,
                     {
-                        "Socket_Name": socket_name,
+                        "Socket_Name": "damage_core_update",
                         "health": parsed_message.health,
                         "max_health": parsed_message.max_health
                     }

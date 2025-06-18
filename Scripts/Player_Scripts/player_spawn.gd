@@ -197,6 +197,12 @@ func _process(_delta: float) -> void:
 					PlayerGlobalScript.current_modal_open = false
 					get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 			
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "damage_core_update":
+			prev_data = data
+			
+			print("in spawn stuff")
+			print(data)
+			
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:
 			respawn_button.disabled = true
