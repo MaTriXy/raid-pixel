@@ -54,7 +54,7 @@ func game_end():
 	print("Game ended")
 
 func _process(_delta: float) -> void:
-	#receive_dmg_core()
+	receive_dmg_core()
 	
 	if prev_hp != ui_core_hp:
 		sprite_core.value = ui_core_hp
@@ -66,6 +66,7 @@ func _process(_delta: float) -> void:
 	var minutes := int(game_timer.time_left) / 60
 	game_label.text = "Battle time: %02d:%02d" % [minutes, seconds]
 	
+#TODO: this couldn't receive its sockets.
 func receive_dmg_core():
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
