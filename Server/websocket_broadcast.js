@@ -1,5 +1,3 @@
-//TODO: modify this as a async
-
 // Broadcast message to all clients
 function broadcastSocket(wss, data){
     wss.clients.forEach((client) => {

@@ -11,7 +11,14 @@ cloudinary.config({
 
 let queue_match = []
 let isMatchFound = false
+let game_time_start = false
+
+let game_minutes = 2
+let game_seconds = 0
+
 const max_players = 2
+
+let queue_core_dmg = {}
 async function delete_image(profile_hash){
     try{
         if(profile_hash && profile_hash != "default_profile_vw2q2o"){
@@ -172,6 +179,10 @@ module.exports = (wss, pool)=>{
 
             //for start game
             else if(socket_name === "start_game"){
+                if(!game_time_start){
+                    start_battle_time(parsed_message.spawn_code, wss)
+                    game_time_start = true
+                }
                 broadcastSocket(
                     wss,
                     {
@@ -194,15 +205,28 @@ module.exports = (wss, pool)=>{
             }
 
             //for core health
-            else if(socket_name === "core_health"){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "health": parsed_message.health,
-                        "max_health": parsed_message.max_health
+            else if(socket_name === "core_health_" + ws.Spawn_Code){
+                const key = ws.Spawn_Code
+                queue_core_dmg[key] = parsed_message
+
+                if(queue_core_dmg[key].wait_for_data) return;
+
+                queue_core_dmg[key].wait_for_data = setTimeout(() => {
+                    const latest_data = queue_core_dmg[key];
+
+                    if(latest_data){
+                        broadcastSocket(
+                            wss,
+                            {
+                                "Socket_Name": socket_name,
+                                "health": latest_data.health,
+                                "max_health": latest_data.max_health
+                            }
+                        )    
                     }
-                )
+
+                    delete queue_core_dmg[key]
+                }, 1000);
             }
 
             //for receiving ping
@@ -239,6 +263,39 @@ module.exports = (wss, pool)=>{
             console.error(err);
         });
     });
+}
+
+//for starting the game timer
+function start_battle_time(spawn_code, wss){
+    var game_start = setInterval(function(){
+        game_seconds--
+
+        if(game_seconds <= 0){
+            game_seconds = 59
+            game_minutes--
+        }
+
+        if(game_minutes <= 0){
+            game_minutes = 0
+        }
+
+        if(game_minutes <= 0 && game_seconds <= 0){
+            game_minutes = 0
+            game_seconds = 0
+            game_time_start = false
+            clearInterval(game_start)
+        }
+
+        broadcastSocket(
+            wss, 
+            {
+                Socket_Name: "battle_time_" + spawn_code,
+                seconds: game_seconds,
+                minutes: game_minutes
+            }
+        )
+
+    }, 1000)
 }
 
 async function deleteGuestPlayer_account(username, pool) {

@@ -32,7 +32,7 @@ func damage_core():
 	
 func _on_send_damage_to_server(new_health: float):
 	SocketClient.send_data({
-		"Socket_Name": "core_health",
+		"Socket_Name": "core_health_%s" % PlayerGlobalScript.spawn_player_code,
 		"health": new_health,
 		"max_health": core_max_hp
 	})
