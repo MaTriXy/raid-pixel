@@ -144,6 +144,11 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 		send_player_data()
 		
 		await get_tree().process_frame
+		SocketClient.send_data({
+			"Socket_Name": "kill_notify_%s" % PlayerGlobalScript.spawn_player_code,
+			"Message": "%s is killed" % PlayerGlobalScript.player_in_game_name
+		})
+		
 		queue_free()
 
 func _on_attack_timer_timeout() -> void:

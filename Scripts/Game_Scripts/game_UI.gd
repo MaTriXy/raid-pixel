@@ -66,15 +66,14 @@ func _process(_delta: float) -> void:
 	var minutes := int(game_timer.time_left) / 60
 	game_label.text = "Battle time: %02d:%02d" % [minutes, seconds]
 	
-#TODO: this couldn't receive its sockets.
 func receive_dmg_core():
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 
 	if connection_status == "Connected":
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "damage_core_update":
-			print(data)
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "core_health":
 			prev_data = data
+			print(data)
 		
 			if data.has("health") and data.has("max_health"):
 				ui_core_hp = float(data["health"])

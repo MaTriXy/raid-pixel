@@ -21,6 +21,17 @@ module.exports = (wss)=>{
                     }
                 );
             }
+
+            //for notify player kill
+            else if(socket_name == "kill_notify_" + ws.Spawn_Code){
+                broadcastSocket(
+                    wss, 
+                    {
+                        "Socket_Name": socket_name,
+                        "Message": parsed_message.Message
+                    }
+                );
+            }
            
             //for spawn players
             else if(socket_name === "Player_Spawn_" + ws.Spawn_Code){

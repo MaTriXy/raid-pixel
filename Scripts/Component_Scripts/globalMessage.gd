@@ -64,12 +64,21 @@ func message_render_display():
 
 	if connection_status == "Connected":
 		#sending global messages
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "GlobalMessage":
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["GlobalMessage", "kill_notify_%s" % PlayerGlobalScript.spawn_player_code]:
 			prev_data = data
 			
-			var receiver = data.get("Receiver") + "(You)" if data.get("Receiver") == PlayerGlobalScript.player_in_game_name else data.get("Receiver")
+			var receiver = ""
+			
+			if data.has("Receiver"):
+				receiver = data.get("Receiver") + "(You)" if data.get("Receiver") == PlayerGlobalScript.player_in_game_name else data.get("Receiver")
+			
 			var message_clone = message_label.duplicate()
 			message_clone.visible = true
+			message_clone.add_theme_color_override("default_color", Color("#ffffff"))
+			
+			if data.get("Socket_Name") == "kill_notify_%s" % PlayerGlobalScript.spawn_player_code:
+				receiver = "System"
+				message_clone.add_theme_color_override("default_color", Color("#004a04"))
 			
 			message_clone.text = receiver + ": " + data.get("Message")
 			message_container.add_child(message_clone)

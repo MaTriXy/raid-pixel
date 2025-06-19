@@ -198,12 +198,11 @@ module.exports = (wss, pool)=>{
                 broadcastSocket(
                     wss,
                     {
-                        "Socket_Name": "damage_core_update",
+                        "Socket_Name": socket_name,
                         "health": parsed_message.health,
                         "max_health": parsed_message.max_health
                     }
                 )
-                console.log(parsed_message)
             }
 
             //for receiving ping
