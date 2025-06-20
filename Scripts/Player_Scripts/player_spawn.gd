@@ -17,8 +17,8 @@ var isRespawn = false
 
 var game_scene_spawn_coords = { 
 	"Grassy Land": { 
-		"allied_spawn_coords": Vector2(5573.66, 867.0), 
-		"enemy_spawn_coords": Vector2(-633.66, 867.0)
+		"allied_spawn_coords": Vector2(5733.66, 440.33), 
+		"enemy_spawn_coords": Vector2(-879.60, 267.33)
 	} 
 }
 
