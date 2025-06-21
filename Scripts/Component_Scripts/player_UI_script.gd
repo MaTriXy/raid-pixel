@@ -14,6 +14,7 @@ extends Global_Message
 @onready var ping_label = $"Signal Strength/Signal Label"
 @onready var ping_render = $"Signal Strength"
 @onready var playerCount_timer = $"Player Count Timer"
+@onready var view_profile_btn = $"Profile button"
 
 #for player hp
 @onready var player_hp = $"Player Health Bar"
@@ -111,8 +112,14 @@ func _ready() -> void:
 	loading_modal.visible = false
 	guest_warning_text.visible = false
 	
-	guest_warning_panel.visible = true if PlayerGlobalScript.player_account_type == "Guest" else false
-	guestAccountButton.visible =  true if PlayerGlobalScript.player_account_type == "Guest" else false
+	if PlayerGlobalScript.game_scene_name == "Lobby" and PlayerGlobalScript.player_account_type == "Guest":
+		guest_warning_panel.visible = true
+		guestAccountButton.visible =  true
+	else:
+		guest_warning_panel.visible = false
+		guestAccountButton.visible = false
+		
+	view_profile_btn.visible = PlayerGlobalScript.game_scene_name == "Lobby"
 	
 	guestAccountButton.focus_mode = Control.FOCUS_NONE
 	guestAccountButton.connect("pressed", func(): status_panel(true, guest_connect_account_panel))

@@ -32,6 +32,7 @@ func _ready() -> void:
 	ui_core_max_hp = int(core.core_max_hp)
 	
 	sprite_core.value = ui_core_hp
+	sprite_core.max_value = ui_core_max_hp
 	
 	if PlayerGlobalScript.player_class_game_type == "Defender":
 		sprite_core.texture_progress = allied_core_hp_render

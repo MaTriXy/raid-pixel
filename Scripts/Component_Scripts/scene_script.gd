@@ -59,7 +59,7 @@ func spawn_player_on_scene():
 		main_player = main_player_scene.instantiate()
 		
 	var spawn_coordinates = spawn_machine.spawn_coords
-	if PlayerGlobalScript.game_scene_name and PlayerGlobalScript.player_class_game_type:
+	if PlayerGlobalScript.game_scene_name != "Lobby" and PlayerGlobalScript.player_class_game_type:
 		spawn_coordinates = spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER" else spawn_machine.game_scene_spawn_coords.get(PlayerGlobalScript.game_scene_name).enemy_spawn_coords
 	
 	main_player.position = spawn_coordinates

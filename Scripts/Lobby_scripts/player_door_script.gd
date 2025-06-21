@@ -20,6 +20,7 @@ func _ready() -> void:
 	go_to_scene_button.connect("pressed", head_to_game)
 	find_match_cancel_button.connect("pressed", cancel_match)
 	
+	PlayerGlobalScript.game_scene_name = "Lobby"
 	PlayerGlobalScript.player_class_game_type = "Defender"
 	PlayerGlobalScript.is_game_scene_loaded = false
 	

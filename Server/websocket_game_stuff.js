@@ -13,7 +13,7 @@ let queue_match = []
 let isMatchFound = false
 let game_time_start = false
 
-let game_minutes = 2
+let game_minutes = 10
 let game_seconds = 0
 
 const max_players = 2
