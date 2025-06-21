@@ -179,10 +179,6 @@ module.exports = (wss, pool)=>{
 
             //for start game
             else if(socket_name === "start_game"){
-                if(!game_time_start){
-                    start_battle_time(parsed_message.spawn_code, wss)
-                    game_time_start = true
-                }
                 broadcastSocket(
                     wss,
                     {
@@ -190,6 +186,14 @@ module.exports = (wss, pool)=>{
                         match_roomID: parsed_message.match_roomID
                     }
                 )
+            }
+
+            //fall back for start game
+            else if(socket_name == "game_is_start_" + ws.Spawn_Code){
+                if(!game_time_start){
+                    start_battle_time(parsed_message.spawn_code, wss)
+                    game_time_start = true
+                }
             }
 
             //for player spawn code
@@ -270,7 +274,7 @@ function start_battle_time(spawn_code, wss){
     var game_start = setInterval(function(){
         game_seconds--
 
-        if(game_seconds <= 0){
+        if(game_seconds <= 0 && game_minutes > 0){
             game_seconds = 59
             game_minutes--
         }

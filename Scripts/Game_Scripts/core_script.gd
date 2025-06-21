@@ -3,8 +3,8 @@ extends Node
 @export var damage_per_tick = 10
 @export var damage_cooldown = 0.5
 
-var core_hp = 1000
-var core_max_hp = 1000
+var core_hp: float
+var core_max_hp: float
 var is_inside_core = false
 
 var prev_hp = 0
@@ -38,7 +38,7 @@ func send_damage_to_server():
 			"health": core_hp,
 			"max_health": core_max_hp
 		})
-	prev_hp = core_hp
+		prev_hp = core_hp
 
 func _on_core_area_area_entered(area: Area2D) -> void:
 	if area.name == "Main Player Area":

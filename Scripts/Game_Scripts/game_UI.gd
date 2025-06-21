@@ -23,8 +23,13 @@ var ui_core_max_hp = 0
 
 func _ready() -> void:
 	PlayerGlobalScript.is_game_scene_loaded = true
-	ui_core_hp = core.core_hp
-	ui_core_max_hp = core.core_max_hp
+	
+	if PlayerGlobalScript.game_scene_name == "Grassy Land":
+		core.core_hp = 500
+		core.core_max_hp = 500
+	
+	ui_core_hp = int(core.core_hp)
+	ui_core_max_hp = int(core.core_max_hp)
 	
 	sprite_core.value = ui_core_hp
 	
@@ -37,11 +42,28 @@ func _ready() -> void:
 
 	game_info_panel.visible = true
 	game_info_button.connect("pressed", func(): game_info_panel.visible = false)
-
-	await get_tree().process_frame
+	
+	await get_tree().create_timer(1.0).timeout
 	SocketClient.send_data({
 		"Socket_Name": "start_game",
 		"match_roomID": PlayerGlobalScript.match_roomID,
+		"spawn_code": PlayerGlobalScript.spawn_player_code
+	})
+	
+	#this is for the timer at battle game timer
+	var battle_timer = Timer.new()
+	battle_timer.name = "Battle Timer"
+	
+	if not battle_timer.is_inside_tree():
+		add_child(battle_timer)
+	
+	battle_timer.wait_time = 1.0
+	battle_timer.timeout.connect(start_timer)
+	battle_timer.start()
+	
+func start_timer():
+	SocketClient.send_data({
+		"Socket_Name": "game_is_start_%s" % PlayerGlobalScript.spawn_player_code,
 		"spawn_code": PlayerGlobalScript.spawn_player_code
 	})
 
