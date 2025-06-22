@@ -10,24 +10,13 @@ module.exports = (wss)=>{
             let socket_name = parsed_message.Socket_Name;
 
             //Global Messages
-            if(socket_name == "GlobalMessage"){
+            if(socket_name == "SceneMessage_" + ws.Spawn_Code){
                 broadcastSocket(
                     wss, 
                     {
                         "Socket_Name": socket_name,
                         "Receiver": parsed_message.Sender,
                         "GameID": parsed_message.GameID,
-                        "Message": parsed_message.Message
-                    }
-                );
-            }
-
-            //for notify player kill
-            else if(socket_name == "kill_notify_" + ws.Spawn_Code){
-                broadcastSocket(
-                    wss, 
-                    {
-                        "Socket_Name": socket_name,
                         "Message": parsed_message.Message
                     }
                 );

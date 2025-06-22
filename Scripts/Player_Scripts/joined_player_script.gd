@@ -113,6 +113,13 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
+		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
+		
+		if ui_nodes_grp.size() > 0:
+			var message_append = ui_nodes_grp[0]
+			message_append.append_msg_on_msg_container("System", "%s is killed by %s" % [playerIGN, PlayerGlobalScript.player_in_game_name], Color("#004a04"))
+		
+		await get_tree().process_frame
 		queue_free()
 
 func _on_player_area_area_entered(area: Area2D) -> void:

@@ -143,12 +143,13 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		send_player_data()
 		
-		await get_tree().process_frame
-		SocketClient.send_data({
-			"Socket_Name": "kill_notify_%s" % PlayerGlobalScript.spawn_player_code,
-			"Message": "%s is killed" % PlayerGlobalScript.player_in_game_name
-		})
+		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
+		if ui_nodes_grp.size() > 0:
+			var message_append = ui_nodes_grp[0]
+			message_append.append_msg_on_msg_container("System", "You have been killed", Color("#004a04"))
+		
+		await get_tree().process_frame
 		queue_free()
 
 func _on_attack_timer_timeout() -> void:

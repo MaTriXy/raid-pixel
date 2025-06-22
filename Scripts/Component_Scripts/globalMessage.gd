@@ -51,7 +51,7 @@ func connection_notify_main_player():
 func message_append_on_container():
 	if global_message_input.text:		
 		SocketClient.send_data({
-			"Socket_Name": "GlobalMessage",
+			"Socket_Name": "SceneMessage_%s" % PlayerGlobalScript.spawn_player_code,
 			"Sender": PlayerGlobalScript.player_in_game_name,
 			"GameID": PlayerGlobalScript.player_game_id,
 			"Message": global_message_input.text
@@ -63,39 +63,34 @@ func message_render_display():
 	var connection_status = WebsocketsConnection.socket_connection_status
 
 	if connection_status == "Connected":
-		#sending global messages
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["GlobalMessage", "kill_notify_%s" % PlayerGlobalScript.spawn_player_code]:
+		#sending scene messages
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["SceneMessage_%s" % PlayerGlobalScript.spawn_player_code]:
 			prev_data = data
 			
-			var receiver
+			var receiver = data.get("Receiver") + "(You)" if data.get("Receiver") == PlayerGlobalScript.player_in_game_name else data.get("Receiver")
 			
-			if data.has("Receiver"):
-				receiver = data.get("Receiver") + "(You)" if data.get("Receiver") == PlayerGlobalScript.player_in_game_name else data.get("Receiver")
-			
-			var message_clone = message_label.duplicate()
-			message_clone.visible = true
-			message_clone.add_theme_color_override("default_color", Color("#ffffff"))
-			
-			if data.get("Socket_Name") == "kill_notify_%s" % PlayerGlobalScript.spawn_player_code:
-				receiver = "System"
-				message_clone.add_theme_color_override("default_color", Color("#004a04"))
-			
-			message_clone.text = receiver + ": " + data.get("Message")
-			message_container.add_child(message_clone)
-			
-			#remove old messages
-			if display_message_panel.get_child_count() >= 5:
-				var oldest = display_message_panel.get_child(0)
-				oldest.queue_free()
-			
-			#add a new one
-			var display_msg = message_clone.duplicate()
-			display_message_panel.add_child(display_msg)
+			append_msg_on_msg_container(receiver, data.get("Message"), Color("#ffffff"))
 		
 		#for player connected and disconnected
 		elif data.has("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Connected" or data.get("Socket_Name") == "Player_Disconnect") and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 			prev_data = data
 			append_connection_notify(data.get("Player_GameID"), data.get("Socket_Name"))
+			
+func append_msg_on_msg_container(receiver: String, msg: String, color: Color):
+	var message_clone = message_label.duplicate()
+	message_clone.visible = true
+	message_clone.add_theme_color_override("default_color", color)
+	message_clone.text = receiver + ": " + msg
+	message_container.add_child(message_clone)
+	
+	#remove old messages
+	if display_message_panel.get_child_count() >= 5:
+		var oldest = display_message_panel.get_child(0)
+		oldest.queue_free()
+	
+	#add a new one
+	var display_msg = message_clone.duplicate()
+	display_message_panel.add_child(display_msg)
 				
 func append_connection_notify(gameID, status):
 	#remove old messages
