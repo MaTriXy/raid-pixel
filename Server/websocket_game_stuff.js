@@ -19,6 +19,9 @@ let game_seconds = 0
 const max_players = 2
 
 let queue_core_dmg = {}
+
+let battle_player_info_map;
+
 async function delete_image(profile_hash){
     try{
         if(profile_hash && profile_hash != "default_profile_vw2q2o"){
@@ -148,6 +151,7 @@ module.exports = (wss, pool)=>{
                                 "game_scene": game_scene[0]
                             }
                         )
+                        battle_player_info_map = player_map
 
                         //add the match for removal
                         match_to_remove.push(queue.matchID)
@@ -206,6 +210,31 @@ module.exports = (wss, pool)=>{
                     }
                 )
                 ws.Spawn_Code = parsed_message.Spawn_Player_Code
+            }
+
+            //for battle info socket
+            else if(socket_name === "battle_info_" + ws.Spawn_Code){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "players": battle_player_info_map
+                    }
+                )
+            }
+
+            //for battle info status when player kills/dies
+            else if(socket_name === "battle_info_status_" + ws.Spawn_Code){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "ign": parsed_message.ign,
+                        "kills": parsed_message.kills,
+                        "deaths": parsed_message.deaths,
+                        "class": parsed_message.class
+                    }
+                )
             }
 
             //for core health

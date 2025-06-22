@@ -15,6 +15,12 @@ var enemy_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Enemy
 
 @export var core: StaticBody2D
 
+#for battle info
+@export var battle_info_player_panel: Panel
+@export var battle_info_defender_container: VBoxContainer
+@export var battle_info_attacker_container: VBoxContainer
+var no_profile_texture = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
+
 var prev_hp = 0
 var prev_data = {}
 
@@ -62,6 +68,11 @@ func _ready() -> void:
 	battle_timer.timeout.connect(start_timer)
 	battle_timer.start()
 	
+	await get_tree().create_timer(1.0).timeout
+	SocketClient.send_data({
+		"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
+	})
+	
 func start_timer():
 	SocketClient.send_data({
 		"Socket_Name": "game_is_start_%s" % PlayerGlobalScript.spawn_player_code,
@@ -102,3 +113,69 @@ func game_scene_socket_data():
 				
 				if minutes <= 0 and seconds <= 0:
 					game_end()
+		
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_%s" % PlayerGlobalScript.spawn_player_code:
+			prev_data = data
+			
+			if data.has("players"):
+				for entry in data.get("players"):
+					var player_panel_instance = battle_info_player_panel.duplicate()
+					player_panel_instance.name = entry.ign
+					player_panel_instance.visible = true
+					
+					var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
+					var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
+					
+					player_panel_instance_ign.text = entry.ign
+					
+					if entry.ign == PlayerGlobalScript.player_in_game_name:
+						player_panel_instance_ign.text = "%s (You)" % entry.ign
+					
+					if not player_panel_instance.is_inside_tree():
+						if entry.class == "Defender":
+							battle_info_defender_container.add_child(player_panel_instance)
+						else:
+							battle_info_attacker_container.add_child(player_panel_instance)
+					
+					var player_profile_texture = await load_player_profile_battle_info(entry.ign, entry.profile)
+					
+					if player_profile_texture:
+						player_panel_instantce_profile.texture = player_profile_texture
+					else:
+						player_panel_instantce_profile.texture = no_profile_texture
+						
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_status_%s" % PlayerGlobalScript.spawn_player_code:
+			prev_data = data
+			
+			print(data)
+			if data.has("ign") and data.has("kills") and data.has("deaths") and data.has("class"):
+				var container = battle_info_defender_container if data.get("class") == "Defender" else battle_info_attacker_container
+	
+				for child in container.get_children():
+					if child.name == data.get("ign"):
+						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [int(data.get("kills")), int(data.get("deaths"))]
+			
+func load_player_profile_battle_info(ign: String, profile_url: String):
+	var player_http_req = HTTPRequest.new()
+	player_http_req.name = "Player_info_%s" % [ign]
+	
+	add_child(player_http_req)
+	
+	var request_status = player_http_req.request(profile_url)
+	if request_status != OK:
+		player_http_req.queue_free()
+		return null
+	
+	var result = await player_http_req.request_completed
+	var response_code = result[1]
+	var body = result[3]
+
+	if response_code == 200:
+		var image = Image.new()
+		var err = image.load_png_from_buffer(body)
+		if err == OK:
+			return ImageTexture.create_from_image(image)
+	else:
+		return null
+		
+	player_http_req.queue_free()

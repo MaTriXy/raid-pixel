@@ -16,6 +16,8 @@ var prev_coordinates = Vector2.ZERO
 var isDead = false
 
 func _ready() -> void:
+	PlayerGlobalScript.battle_deaths = 0
+	PlayerGlobalScript.battle_kills = 0
 	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.player_health = 100
 	PlayerGlobalScript.player_max_health = 100
@@ -148,6 +150,16 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 		if ui_nodes_grp.size() > 0:
 			var message_append = ui_nodes_grp[0]
 			message_append.append_msg_on_msg_container("System", "You have been killed", Color("#004a04"))
+			
+			PlayerGlobalScript.battle_deaths+=1
+			
+			SocketClient.send_data({
+				"Socket_Name": "battle_info_status_%s" % PlayerGlobalScript.spawn_player_code,
+				"ign": PlayerGlobalScript.player_in_game_name,
+				"class": PlayerGlobalScript.player_class_game_type,
+				"kills": PlayerGlobalScript.battle_kills,
+				"deaths": PlayerGlobalScript.battle_deaths
+			})
 		
 		await get_tree().process_frame
 		queue_free()
