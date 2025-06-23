@@ -6,6 +6,7 @@ extends Node
 @onready var game_info_anim = $"Game Info Mechanics Panel/AnimationPlayer"
 @onready var game_info_button = $"Game Info Mechanics Panel/Panel/Lets go button"
 @onready var game_instruction_label = $"Game Info Mechanics Panel/Panel/Player Label instruction"
+@onready var core_hp_status_label = $"Core HP name status"
 
 @onready var sprite_core = $"Core HP"
 @onready var core_hp_label = $"Core HP/Core HP Label"
@@ -43,9 +44,13 @@ func _ready() -> void:
 	if PlayerGlobalScript.player_class_game_type == "Defender":
 		sprite_core.texture_progress = allied_core_hp_render
 		game_instruction_label.text = "Defend the core before the battle time runs out, or you lose."
+		core_hp_status_label.text = "Core HP (Protect this)"
+		core_hp_status_label.add_theme_color_override("default_color", Color("#007cb5"))
 	else:
 		sprite_core.texture_progress = enemy_core_hp_render
 		game_instruction_label.text = "Destroy the core before the battle time runs out, or you lose."
+		core_hp_status_label.text = "Core HP (Destroy this)"
+		core_hp_status_label.add_theme_color_override("default_color", Color("#ad0202"))
 
 	game_info_panel.visible = true
 	game_info_button.connect("pressed", func(): game_info_panel.visible = false)
@@ -144,7 +149,7 @@ func game_scene_socket_data():
 					else:
 						player_panel_instantce_profile.texture = no_profile_texture
 						
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_status_%s" % PlayerGlobalScript.spawn_player_code:
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["battle_info_death_status_%s" % PlayerGlobalScript.spawn_player_code, "battle_info_kill_status_%s" % PlayerGlobalScript.spawn_player_code]:
 			prev_data = data
 			
 			print(data)
@@ -154,6 +159,7 @@ func game_scene_socket_data():
 				for child in container.get_children():
 					if child.name == data.get("ign"):
 						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [int(data.get("kills")), int(data.get("deaths"))]
+						
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()

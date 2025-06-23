@@ -19,7 +19,7 @@ let game_seconds = 0
 const max_players = 2
 
 let queue_core_dmg = {}
-
+let kill_death_notify = {}
 let battle_player_info_map;
 
 async function delete_image(profile_hash){
@@ -224,17 +224,31 @@ module.exports = (wss, pool)=>{
             }
 
             //for battle info status when player kills/dies
-            else if(socket_name === "battle_info_status_" + ws.Spawn_Code){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "ign": parsed_message.ign,
-                        "kills": parsed_message.kills,
-                        "deaths": parsed_message.deaths,
-                        "class": parsed_message.class
-                    }
-                )
+            else if(socket_name === "battle_info_death_status_" + ws.Spawn_Code || socket_name === "battle_info_kill_status_" + ws.Spawn_Code){
+                const key = ws.Spawn_Code
+
+                if(kill_death_notify[key]){
+                    clearTimeout(kill_death_notify[key].wait_for_timeout)   
+                }
+
+                kill_death_notify[key] = parsed_message;
+
+                kill_death_notify[key].wait_for_timeout = setTimeout(() => {
+                    broadcastSocket(
+                        wss,
+                        {
+                            "Socket_Name": socket_name,
+                            "ign": parsed_message.ign,
+                            "kills": parsed_message.kills,
+                            "deaths": parsed_message.deaths,
+                            "class": parsed_message.class
+                        }
+                    )
+    
+                    console.log(parsed_message)
+
+                    delete kill_death_notify[key]
+                }, 500);
             }
 
             //for core health
