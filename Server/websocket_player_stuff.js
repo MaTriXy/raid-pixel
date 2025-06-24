@@ -1,6 +1,5 @@
 const broadcastSocket = require("./websocket_broadcast");
 const player_active = []
-let prev_state = {}
 
 module.exports = (wss)=>{
     wss.on('connection', (ws) => {
@@ -40,7 +39,7 @@ module.exports = (wss)=>{
                     "isDead": parsed_message.isDead,
                     "player_health": parsed_message.player_health
                 }
-                
+
                 //send to everyone player
                 broadcastSocket(wss, data_state)
                 const index = player_active.findIndex(p => p.Player_GameID === parsed_message.Player_GameID);
@@ -57,12 +56,7 @@ module.exports = (wss)=>{
                     "Socket_Name": "populate_scene_" + ws.Spawn_Code,
                     "player_data": player_active
                 }
-                
-                if(prev_state != populate_state){
-                    ws.send(JSON.stringify(populate_state));
-
-                    prev_state = populate_state;
-                }
+                ws.send(JSON.stringify(populate_state));
             }
 
             //for player loading progress in player interface

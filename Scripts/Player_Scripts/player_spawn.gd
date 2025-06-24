@@ -68,13 +68,14 @@ func _process(_delta: float) -> void:
 						joined_player.last_direction_value = Vector2(data.get("last_direction_value")["x"], data.get("last_direction_value")["y"])
 						joined_player.isMoving = data.get("isMoving")
 						joined_player.isAttacking = data.get("isAttacking")
+						joined_player.player_game_id = data.get("Player_GameID")
 						joined_player.player_health = float(data.get("player_health"))
 					else:
 						var newPlayer = joined_player_scene.instantiate()
 						newPlayer.name = data.get("Player_GameID")
 						newPlayer.playerIGN = data.get("Player_inGameName")
-						newPlayer.player_class = data.get("player_class_type")
-						newPlayer.player_game_id = data.get("player_GameID")
+						newPlayer.player_class = data.get("player_class")
+						newPlayer.player_game_id = data.get("Player_GameID")
 						newPlayer.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						
 						if newPlayer.get_parent() != ySort:
@@ -100,7 +101,7 @@ func _process(_delta: float) -> void:
 						player.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						player.playerIGN = data.get("Player_inGameName")
 						player.player_class = data.get("player_class")
-						player.player_game_id = data.get("player_GameID")
+						player.player_game_id = data.get("Player_GameID")
 						
 						if str(data.get("spawn_code")) == spawn_code and player.get_parent() != ySort:
 							spawner_animation.play("spawner_spawn")
@@ -127,7 +128,7 @@ func _process(_delta: float) -> void:
 					newPlayer.playerIGN = populate_data.get("Player_inGameName")
 					newPlayer.player_health = float(populate_data.get("player_health"))
 					newPlayer.player_class = populate_data.get("player_class")
-					newPlayer.player_game_id = populate_data.get("player_GameID")
+					newPlayer.player_game_id = populate_data.get("Player_GameID")
 					
 					if newPlayer.get_parent() != ySort and not bool(populate_data.get("isDead")):
 						if str(populate_data.get("spawn_code")) == spawn_code and populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:

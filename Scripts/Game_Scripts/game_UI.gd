@@ -30,6 +30,8 @@ var ui_core_max_hp = 0
 
 var player_score_dic = {}
 
+var isPlayerScore_populate = false
+
 func _ready() -> void:
 	PlayerGlobalScript.is_game_scene_loaded = true
 	
@@ -57,12 +59,15 @@ func _ready() -> void:
 	game_info_panel.visible = true
 	game_info_button.connect("pressed", func(): game_info_panel.visible = false)
 	
-	await get_tree().create_timer(1.0).timeout
-	SocketClient.send_data({
-		"Socket_Name": "start_game",
-		"match_roomID": PlayerGlobalScript.match_roomID,
-		"spawn_code": PlayerGlobalScript.spawn_player_code
-	})
+	var start_game_notify = Timer.new()
+	start_game_notify.name = "start game timer"
+	
+	if not start_game_notify.is_inside_tree():
+		add_child(start_game_notify)
+	
+	start_game_notify.wait_time = 1.0
+	start_game_notify.timeout.connect(start_game)
+	start_game_notify.start()
 	
 	#this is for the timer at battle game timer
 	var battle_timer = Timer.new()
@@ -79,6 +84,24 @@ func _ready() -> void:
 	SocketClient.send_data({
 		"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
 	})
+	
+func start_game():
+	if not isPlayerScore_populate:
+		SocketClient.send_data({
+			"Socket_Name": "start_game",
+			"match_roomID": PlayerGlobalScript.match_roomID,
+			"spawn_code": PlayerGlobalScript.spawn_player_code
+		})
+		
+		SocketClient.send_data({
+			"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
+		})
+		
+func populate_score_board():
+	if not isPlayerScore_populate:
+		SocketClient.send_data({
+			"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
+		})
 	
 func start_timer():
 	SocketClient.send_data({
@@ -110,7 +133,9 @@ func game_scene_socket_data():
 				ui_core_hp = int(data["health"])
 				ui_core_max_hp = int(data["max_health"])
 				
+		#TODO: fix this not working properly
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_time_%s" % PlayerGlobalScript.spawn_player_code:
+			isPlayerScore_populate = true
 			prev_data = data
 			
 			if data.has("minutes") and data.has("seconds"):
@@ -129,6 +154,12 @@ func game_scene_socket_data():
 					var player_panel_instance = battle_info_player_panel.duplicate()
 					player_panel_instance.name = entry.id
 					player_panel_instance.visible = true
+					
+					if not player_score_dic.has(entry.id):
+						player_score_dic[entry.id] = {
+							"kills": 0,
+							"deaths": 0
+						}
 					
 					var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
 					var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
@@ -151,38 +182,26 @@ func game_scene_socket_data():
 					else:
 						player_panel_instantce_profile.texture = no_profile_texture
 						
+		#TODO: fix this not working properly
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code:
 			prev_data = data
 			
-			print(data)
-			if data.has("killer_game_id") and data.has("killer_class") and data.has("dead_game_id") and data.has("dead_class"):
+			if data.has_all(["killer_game_id", "killer_class", "dead_game_id", "dead_class"]):
 				var killer_container = battle_info_defender_container if data.get("killer_class") == "Defender" else battle_info_attacker_container
 				var dead_container = battle_info_defender_container if data.get("dead_class") == "Defender" else battle_info_attacker_container
 	
-				for child in killer_container.get_children():
-					if child.name == data.get("killer_game_id"):
-						if not player_score_dic.has(child.name):
-							player_score_dic[child.name] = {
-								"kills": 0,
-								"deaths": 0
-							}
-						else:
-							player_score_dic[child.name]["kills"]+=1
-							
-						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[child.name]["kills"], player_score_dic[child.name]["deaths"]]
-						
-				for child in dead_container.get_children():
-					if child.name == data.get("dead_game_id"):
-						if not player_score_dic.has(child.name):
-							player_score_dic[child.name] = {
-								"Kills": 0,
-								"deaths": 0
-							}
-						else:
-							player_score_dic[child.name]["deaths"]+=1
-							
-						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[child.name]["kills"], player_score_dic[child.name]["deaths"]]
-						
+				update_score_board(killer_container, data.get("killer_game_id"), true)
+				update_score_board(dead_container, data.get("dead_game_id"), false)
+				
+func update_score_board(container: VBoxContainer, player_ID: String, isKill: bool):
+	for child in container.get_children():
+		if child.name == player_ID:
+			if isKill:
+				player_score_dic[player_ID]["kills"]+=1
+			else:
+				player_score_dic[player_ID]["deaths"]+=1
+				
+			child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[player_ID]["kills"], player_score_dic[player_ID]["deaths"]]
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()

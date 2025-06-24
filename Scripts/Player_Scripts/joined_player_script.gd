@@ -30,6 +30,7 @@ var player_enemy_asset = preload("res://Assets/UI_Components/Sprite_Health_Enemy
 
 func _ready() -> void:
 	player_health_bar.value = 100
+
 	player_health_bar.texture_progress = player_enemy_asset if player_class.to_upper() != PlayerGlobalScript.player_class_game_type.to_upper() else player_ally_asset
 	
 	player_anim.play("side_idle_anim")
@@ -101,7 +102,15 @@ func play_anim(anim_name):
 		player_anim.play(anim_name)
 
 func player_health_bar_status():
-	if player_health <= 0.0:
+	if player_health <= 0.0 and not isDead:
+		SocketClient.send_data({
+			"Socket_Name": "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code,
+			"killer_game_id": PlayerGlobalScript.player_game_id,
+			"killer_class": PlayerGlobalScript.player_class_game_type,
+			"dead_game_id": player_game_id,
+			"dead_class": player_class
+		})
+		
 		isDead = true
 		player_anim.play("death_anim")
 		player_health = 0.0
@@ -114,15 +123,6 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code,
-			"killer_game_id": PlayerGlobalScript.player_game_id,
-			"killer_class": PlayerGlobalScript.player_class_game_type,
-			"dead_game_id": player_game_id,
-			"dead_class": player_class
-		})
-			
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
 		if ui_nodes_grp.size() > 0:
