@@ -28,6 +28,8 @@ var prev_data = {}
 var ui_core_hp = 0
 var ui_core_max_hp = 0
 
+var player_score_dic = {}
+
 func _ready() -> void:
 	PlayerGlobalScript.is_game_scene_loaded = true
 	
@@ -125,7 +127,7 @@ func game_scene_socket_data():
 			if data.has("players"):
 				for entry in data.get("players"):
 					var player_panel_instance = battle_info_player_panel.duplicate()
-					player_panel_instance.name = entry.ign
+					player_panel_instance.name = entry.id
 					player_panel_instance.visible = true
 					
 					var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
@@ -149,16 +151,37 @@ func game_scene_socket_data():
 					else:
 						player_panel_instantce_profile.texture = no_profile_texture
 						
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["battle_info_death_status_%s" % PlayerGlobalScript.spawn_player_code, "battle_info_kill_status_%s" % PlayerGlobalScript.spawn_player_code]:
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code:
 			prev_data = data
 			
 			print(data)
-			if data.has("ign") and data.has("kills") and data.has("deaths") and data.has("class"):
-				var container = battle_info_defender_container if data.get("class") == "Defender" else battle_info_attacker_container
+			if data.has("killer_game_id") and data.has("killer_class") and data.has("dead_game_id") and data.has("dead_class"):
+				var killer_container = battle_info_defender_container if data.get("killer_class") == "Defender" else battle_info_attacker_container
+				var dead_container = battle_info_defender_container if data.get("dead_class") == "Defender" else battle_info_attacker_container
 	
-				for child in container.get_children():
-					if child.name == data.get("ign"):
-						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [int(data.get("kills")), int(data.get("deaths"))]
+				for child in killer_container.get_children():
+					if child.name == data.get("killer_game_id"):
+						if not player_score_dic.has(child.name):
+							player_score_dic[child.name] = {
+								"kills": 0,
+								"deaths": 0
+							}
+						else:
+							player_score_dic[child.name]["kills"]+=1
+							
+						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[child.name]["kills"], player_score_dic[child.name]["deaths"]]
+						
+				for child in dead_container.get_children():
+					if child.name == data.get("dead_game_id"):
+						if not player_score_dic.has(child.name):
+							player_score_dic[child.name] = {
+								"Kills": 0,
+								"deaths": 0
+							}
+						else:
+							player_score_dic[child.name]["deaths"]+=1
+							
+						child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[child.name]["kills"], player_score_dic[child.name]["deaths"]]
 						
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):

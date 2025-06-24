@@ -16,8 +16,6 @@ var prev_coordinates = Vector2.ZERO
 var isDead = false
 
 func _ready() -> void:
-	PlayerGlobalScript.battle_deaths = 0
-	PlayerGlobalScript.battle_kills = 0
 	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.player_health = 100
 	PlayerGlobalScript.player_max_health = 100
@@ -112,7 +110,7 @@ func send_player_data():
 			"direction_value": { "x": direction_value.x, "y": direction_value.y },
 			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
 			"isMoving": isMoving,
-			"player_class_type": PlayerGlobalScript.player_class_game_type,
+			"player_class": PlayerGlobalScript.player_class_game_type,
 			"isAttacking": isAttacking,
 			"isDead": PlayerGlobalScript.isMainPlayerDead,
 			"spawn_code": PlayerGlobalScript.spawn_player_code,
@@ -144,16 +142,6 @@ func player_health_bar_status():
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		send_player_data()
-		
-		PlayerGlobalScript.battle_deaths+=1
-
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_death_status_%s" % PlayerGlobalScript.spawn_player_code,
-			"ign": PlayerGlobalScript.player_in_game_name,
-			"class": PlayerGlobalScript.player_class_game_type,
-			"kills": PlayerGlobalScript.battle_kills,
-			"deaths": PlayerGlobalScript.battle_deaths
-		})
 		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		

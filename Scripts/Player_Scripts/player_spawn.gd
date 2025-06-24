@@ -73,17 +73,19 @@ func _process(_delta: float) -> void:
 						var newPlayer = joined_player_scene.instantiate()
 						newPlayer.name = data.get("Player_GameID")
 						newPlayer.playerIGN = data.get("Player_inGameName")
-						newPlayer.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
+						newPlayer.player_class = data.get("player_class_type")
+						newPlayer.player_game_id = data.get("player_GameID")
 						newPlayer.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						
-						if newPlayer.get_parent() != ySort and not bool(data.get("isDead")):
-							spawner_animation.play("spawner_spawn")
-							ySort.add_child(newPlayer)
+						if newPlayer.get_parent() != ySort:
+							if str(data.get("spawn_code")) == spawn_code and newPlayer.get_parent() != ySort and not bool(data.get("isDead")):
+								spawner_animation.play("spawner_spawn")
+								ySort.add_child(newPlayer)
 
-						stored_players[data.get("Player_GameID")] = {
-							"Player": newPlayer,
-							"Position": newPlayer.position,
-						}
+								stored_players[data.get("Player_GameID")] = {
+									"Player": newPlayer,
+									"Position": newPlayer.position,
+								}
 					
 				if not stored_players.has(data.get("Player_GameID")):
 					var player = joined_player_scene.instantiate()
@@ -94,19 +96,20 @@ func _process(_delta: float) -> void:
 					}
 					
 					if player.get_parent() != ySort and not bool(data.get("isDead")):
-						spawner_animation.play("spawner_spawn")
-				
 						player.name = data.get("Player_GameID")
 						player.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						player.playerIGN = data.get("Player_inGameName")
-						player.player_type = "ally" if data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
-
-						ySort.add_child(player)
+						player.player_class = data.get("player_class")
+						player.player_game_id = data.get("player_GameID")
 						
-					stored_players[data.get("Player_GameID")] = {
-						"Player": player,
-						"Position": Vector2(spawn_coords.x, spawn_coords.y),
-					}
+						if str(data.get("spawn_code")) == spawn_code and player.get_parent() != ySort:
+							spawner_animation.play("spawner_spawn")
+							ySort.add_child(player)
+						
+							stored_players[data.get("Player_GameID")] = {
+								"Player": player,
+								"Position": Vector2(spawn_coords.x, spawn_coords.y),
+							}
 		
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "populate_scene_%s" % [spawn_code]:
 			prev_data = data
@@ -115,7 +118,7 @@ func _process(_delta: float) -> void:
 				if bool(populate_data.get("isDead")):
 					stored_players.erase(populate_data.get("Player_GameID"))
 						
-				if populate_data.get("Player_username") != PlayerGlobalScript.player_username and not stored_players.has(populate_data.get("Player_GameID")):
+				if not stored_players.has(populate_data.get("Player_GameID")):
 					var newPlayer = joined_player_scene.instantiate()
 					newPlayer.name = populate_data.get("Player_GameID")
 					newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))
@@ -123,23 +126,24 @@ func _process(_delta: float) -> void:
 					newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
 					newPlayer.playerIGN = populate_data.get("Player_inGameName")
 					newPlayer.player_health = float(populate_data.get("player_health"))
-					newPlayer.player_type = "ally" if populate_data.get("player_class_type").to_upper() == PlayerGlobalScript.player_class_game_type.to_upper() else "enemy"
+					newPlayer.player_class = populate_data.get("player_class")
+					newPlayer.player_game_id = populate_data.get("player_GameID")
 					
 					if newPlayer.get_parent() != ySort and not bool(populate_data.get("isDead")):
-						if str(populate_data.get("spawn_code")) == spawn_code:
+						if str(populate_data.get("spawn_code")) == spawn_code and populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
 							spawner_animation.play("spawner_spawn")
 							ySort.add_child(newPlayer)
 						
-						stored_players[populate_data.get("Player_GameID")] = {
-							"Player": newPlayer,
-							"Position": newPlayer.position,
-						}
-						
-						GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
-							"Player_username": populate_data.get("Player_username"),
-							"Player_IGN": populate_data.get("Player_inGameName"),
-							"isFetched": false
-						}
+							stored_players[populate_data.get("Player_GameID")] = {
+								"Player": newPlayer,
+								"Position": newPlayer.position,
+							}
+					
+					GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
+						"Player_username": populate_data.get("Player_username"),
+						"Player_IGN": populate_data.get("Player_inGameName"),
+						"isFetched": false
+					}
 					
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
 			prev_data = data
@@ -176,10 +180,10 @@ func _process(_delta: float) -> void:
 				player_loading_modal.game_scene = data.get("game_scene")
 			
 				for map in data.get("player_map"):
-					if map.ign == PlayerGlobalScript.player_in_game_name:
+					if map.id == PlayerGlobalScript.player_game_id:
 						PlayerGlobalScript.player_class_game_type = map.class
 					
-					player_loading_modal.player_list[map.ign] = { "profile": map.profile, "class": map.class }
+					player_loading_modal.player_list[map.id] = { "ign": map.ign, "profile": map.profile, "class": map.class }
 					
 				PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
 				PlayerGlobalScript.game_scene_name = data.get("game_scene")

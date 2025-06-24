@@ -45,14 +45,14 @@ func _process(delta: float) -> void:
 		
 		for key in player_list:
 			max_players += 1
-			load_player_panel(key, player_list[key].get("class"), player_list[key].get("profile"))
+			load_player_panel(key, player_list[key].get("ign"), player_list[key].get("class"), player_list[key].get("profile"))
 		is_start_loading = true
 		
 	if began_to_load:	
 		if prev_value != player_loading_value:
 			SocketClient.send_data({
 				"Socket_Name": "player_progress_interface",
-				"Player_IGN": PlayerGlobalScript.player_in_game_name,
+				"Player_ID": PlayerGlobalScript.player_game_id,
 				"loading_value": player_loading_value
 			})
 			prev_value = player_loading_value
@@ -62,7 +62,7 @@ func _process(delta: float) -> void:
 		for key in player_progress_instance_dic:
 			var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
 			
-			if key == PlayerGlobalScript.player_in_game_name:
+			if key == PlayerGlobalScript.player_game_id:
 				load_game_scene_resource(progress_bar, delta)
 				
 			if progress_bar.value >= 100.0:
@@ -106,22 +106,22 @@ func player_loading_progress():
 		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_progress_interface":
 			prev_data = data
 	
-			if data.has("Player_IGN") and data.has("loading_value"):
+			if data.has("Player_ID") and data.has("loading_value"):
 				for key in player_progress_instance_dic:
-					if key == data.get("Player_IGN") and not key == PlayerGlobalScript.player_in_game_name:
+					if key == data.get("Player_ID") and not key == PlayerGlobalScript.player_game_id:
 						player_progress_instance_dic[key].get_node("Player Loading").value = float(data.get("loading_value"))
 						
-func load_player_panel(ign: String, class_type: String, profile: String):
+func load_player_panel(id: String, ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
 	player_panel_instance.visible = true
-	player_panel_instance.name = "%s_instance" % [ign]
+	player_panel_instance.name = "%s_instance" % [id]
 	
-	var label_text = " (You)" if ign == PlayerGlobalScript.player_in_game_name else ""
+	var label_text = " (You)" if id == PlayerGlobalScript.player_game_id else ""
 	player_panel_instance.get_node("Info Player Name").text = "%s%s" % [ign, label_text]
 	
-	player_progress_instance_dic[ign] = player_panel_instance
+	player_progress_instance_dic[id] = player_panel_instance
 	
-	if ign == PlayerGlobalScript.player_in_game_name:
+	if id == PlayerGlobalScript.player_game_id:
 		start_to_load()
 	
 	if not player_panel_instance.is_inside_tree():
@@ -130,16 +130,16 @@ func load_player_panel(ign: String, class_type: String, profile: String):
 		else:
 			raider_container.add_child(player_panel_instance)
 	
-	var profile_req = await load_player_profile(ign, profile)
+	var profile_req = await load_player_profile(id, profile)
 	
 	if profile_req:
 		player_panel_instance.get_node("Info Profile").texture = profile_req
 	else:
 		player_panel_instance.get_node("Info Profile").texture = no_profile
 
-func load_player_profile(ign: String, profile_url: String):
+func load_player_profile(id: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()
-	player_http_req.name = "Player_info_%s" % [ign]
+	player_http_req.name = "Player_info_%s" % [id]
 	
 	$".".add_child(player_http_req)
 	

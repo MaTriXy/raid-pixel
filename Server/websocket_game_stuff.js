@@ -19,7 +19,6 @@ let game_seconds = 0
 const max_players = 2
 
 let queue_core_dmg = {}
-let kill_death_notify = {}
 let battle_player_info_map;
 
 async function delete_image(profile_hash){
@@ -101,7 +100,7 @@ module.exports = (wss, pool)=>{
 
             //for finding match
             else if(socket_name === "find_match"){
-                var player_data = { ign: parsed_message.player_ign, profile: parsed_message.player_profile}
+                var player_data = { id: parsed_message.player_id, ign: parsed_message.player_ign, profile: parsed_message.player_profile}
                 var data = { "players": [player_data], "matchID": parsed_message.match_ID }
                 let match_to_remove = []
                 
@@ -113,7 +112,7 @@ module.exports = (wss, pool)=>{
                 for(let queue of queue_match){
                     //this is where if a player cancel a match, it will be removed to a queue array
                     if(parsed_message.status == "leave"){
-                        let players_index = queue.players.findIndex(q => q.ign == parsed_message.player_ign);
+                        let players_index = queue.players.findIndex(q => q.id == parsed_message.player_id);
 
                         if(players_index > -1){
                             isMatchFound = false
@@ -127,7 +126,7 @@ module.exports = (wss, pool)=>{
                     }
 
                     //this is where the match if the array is filled with designated numbers of players
-                    if(queue.players.length < max_players && !queue.players.some(q => q.ign == parsed_message.player_ign)){
+                    if(queue.players.length < max_players && !queue.players.some(q => q.id == parsed_message.player_id)){
                         queue.players.push(player_data)
                         isMatchFound = true
                     }
@@ -137,6 +136,7 @@ module.exports = (wss, pool)=>{
                         let game_scene = ["Grassy Land"]
 
                         let player_map = queue.players.map((player, index) => ({
+                            "id": player.id,
                             "ign": player.ign,
                             "profile": player.profile,
                             "class": (index % 2 === 0) ? "Defender" : "Attacker"
@@ -224,31 +224,19 @@ module.exports = (wss, pool)=>{
             }
 
             //for battle info status when player kills/dies
-            else if(socket_name === "battle_info_death_status_" + ws.Spawn_Code || socket_name === "battle_info_kill_status_" + ws.Spawn_Code){
-                const key = ws.Spawn_Code
+            else if(socket_name === "battle_info_player_score_status_" + ws.Spawn_Code){
+                broadcastSocket(
+                    wss,
+                    {
+                        "Socket_Name": socket_name,
+                        "killer_game_id": parsed_message.killer_game_id,
+                        "killer_class": parsed_message.killer_class,
+                        "dead_game_id": parsed_message.dead_game_id,
+                        "dead_class": parsed_message.dead_class
+                    }
+                )
 
-                if(kill_death_notify[key]){
-                    clearTimeout(kill_death_notify[key].wait_for_timeout)   
-                }
-
-                kill_death_notify[key] = parsed_message;
-
-                kill_death_notify[key].wait_for_timeout = setTimeout(() => {
-                    broadcastSocket(
-                        wss,
-                        {
-                            "Socket_Name": socket_name,
-                            "ign": parsed_message.ign,
-                            "kills": parsed_message.kills,
-                            "deaths": parsed_message.deaths,
-                            "class": parsed_message.class
-                        }
-                    )
-    
-                    console.log(parsed_message)
-
-                    delete kill_death_notify[key]
-                }, 500);
+                console.log(parsed_message)
             }
 
             //for core health

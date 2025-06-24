@@ -32,7 +32,7 @@ module.exports = (wss)=>{
                     "Player_posY": parsed_message.Player_posY,
                     "direction_value": parsed_message.direction_value,
                     "last_direction_value": parsed_message.last_direction_value,
-                    "player_class_type": parsed_message.player_class_type,
+                    "player_class": parsed_message.player_class,
                     "isAttacking": parsed_message.isAttacking,
                     "isMoving": parsed_message.isMoving,
                     "Player_username": parsed_message.Player_username,
@@ -71,7 +71,7 @@ module.exports = (wss)=>{
                     wss,
                     {
                         Socket_Name: socket_name,
-                        Player_IGN: parsed_message.Player_IGN,
+                        Player_ID: parsed_message.Player_ID,
                         loading_value: parsed_message.loading_value
                     }
                 )
