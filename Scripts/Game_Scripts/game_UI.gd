@@ -80,25 +80,14 @@ func _ready() -> void:
 	battle_timer.timeout.connect(start_timer)
 	battle_timer.start()
 	
-	await get_tree().create_timer(1.0).timeout
-	SocketClient.send_data({
-		"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
-	})
-	
 func start_game():
 	if not isPlayerScore_populate:
 		SocketClient.send_data({
-			"Socket_Name": "start_game",
+			"Socket_Name": "start_game_%s" % PlayerGlobalScript.spawn_player_code,
 			"match_roomID": PlayerGlobalScript.match_roomID,
 			"spawn_code": PlayerGlobalScript.spawn_player_code
 		})
 		
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
-		})
-		
-func populate_score_board():
-	if not isPlayerScore_populate:
 		SocketClient.send_data({
 			"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
 		})
@@ -135,7 +124,6 @@ func game_scene_socket_data():
 				
 		#TODO: fix this not working properly
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_time_%s" % PlayerGlobalScript.spawn_player_code:
-			isPlayerScore_populate = true
 			prev_data = data
 			
 			if data.has("minutes") and data.has("seconds"):
@@ -147,6 +135,7 @@ func game_scene_socket_data():
 					game_end()
 		
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_%s" % PlayerGlobalScript.spawn_player_code:
+			isPlayerScore_populate = true
 			prev_data = data
 			
 			if data.has("players"):
@@ -186,6 +175,7 @@ func game_scene_socket_data():
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code:
 			prev_data = data
 			
+			print(data)
 			if data.has_all(["killer_game_id", "killer_class", "dead_game_id", "dead_class"]):
 				var killer_container = battle_info_defender_container if data.get("killer_class") == "Defender" else battle_info_attacker_container
 				var dead_container = battle_info_defender_container if data.get("dead_class") == "Defender" else battle_info_attacker_container
@@ -200,7 +190,8 @@ func update_score_board(container: VBoxContainer, player_ID: String, isKill: boo
 				player_score_dic[player_ID]["kills"]+=1
 			else:
 				player_score_dic[player_ID]["deaths"]+=1
-				
+			
+			await get_tree().process_frame
 			child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[player_ID]["kills"], player_score_dic[player_ID]["deaths"]]
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):

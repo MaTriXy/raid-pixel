@@ -70,6 +70,7 @@ func _process(_delta: float) -> void:
 						joined_player.isAttacking = data.get("isAttacking")
 						joined_player.player_game_id = data.get("Player_GameID")
 						joined_player.player_health = float(data.get("player_health"))
+						joined_player.player_class = data.get("player_class")
 					else:
 						var newPlayer = joined_player_scene.instantiate()
 						newPlayer.name = data.get("Player_GameID")
@@ -193,7 +194,7 @@ func _process(_delta: float) -> void:
 					player_loading_modal.visible = true
 					player_loading_modal.is_player_load = true
 		
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game":
+		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game_%s" % PlayerGlobalScript.spawn_player_code:
 			prev_data = data
 			
 			if data.has("match_roomID") and PlayerGlobalScript.match_roomID == data.get("match_roomID"):

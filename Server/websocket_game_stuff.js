@@ -182,7 +182,7 @@ module.exports = (wss, pool)=>{
             }
 
             //for start game
-            else if(socket_name === "start_game"){
+            else if(socket_name === "start_game_" + ws.Spawn_Code){
                 broadcastSocket(
                     wss,
                     {
@@ -235,6 +235,8 @@ module.exports = (wss, pool)=>{
                         "dead_class": parsed_message.dead_class
                     }
                 )
+
+                console.log(parsed_message)
             }
 
             //for core health

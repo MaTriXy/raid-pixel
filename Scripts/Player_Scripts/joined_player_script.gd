@@ -17,6 +17,8 @@ var isDead = false
 
 var isMainPlayerInArea = false
 
+var isSendScoreDone = false
+
 var playerIGN = ""
 
 var prev_pos = Vector2.ZERO
@@ -54,6 +56,16 @@ func play_punch_animation():
 			play_anim("front_punch_anim")
 	
 func _process(_delta: float) -> void:
+	if isSendScoreDone:
+		isSendScoreDone = false
+		SocketClient.send_data({
+			"Socket_Name": "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code,
+			"killer_game_id": PlayerGlobalScript.player_game_id,
+			"killer_class": PlayerGlobalScript.player_class_game_type,
+			"dead_game_id": player_game_id,
+			"dead_class": player_class
+		})
+		
 	if prev_ign != playerIGN:
 		prev_ign = playerIGN
 		player_ign.text = playerIGN
@@ -102,15 +114,8 @@ func play_anim(anim_name):
 		player_anim.play(anim_name)
 
 func player_health_bar_status():
-	if player_health <= 0.0 and not isDead:
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code,
-			"killer_game_id": PlayerGlobalScript.player_game_id,
-			"killer_class": PlayerGlobalScript.player_class_game_type,
-			"dead_game_id": player_game_id,
-			"dead_class": player_class
-		})
-		
+	if player_health <= 0.0:
+		isSendScoreDone = true
 		isDead = true
 		player_anim.play("death_anim")
 		player_health = 0.0
