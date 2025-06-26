@@ -1,7 +1,6 @@
 extends Node
 
 @onready var game_label = $"Game Timer Label"
-
 @onready var game_info_panel = $"Game Info Mechanics Panel"
 @onready var game_info_anim = $"Game Info Mechanics Panel/AnimationPlayer"
 @onready var game_info_button = $"Game Info Mechanics Panel/Panel/Lets go button"
@@ -28,7 +27,7 @@ var prev_data = {}
 var ui_core_hp = 0
 var ui_core_max_hp = 0
 
-var player_score_dic = {}
+var player_populate_size = 0
 
 var isPlayerScore_populate = false
 
@@ -82,15 +81,13 @@ func _ready() -> void:
 	
 func start_game():
 	if not isPlayerScore_populate:
-		SocketClient.send_data({
-			"Socket_Name": "start_game_%s" % PlayerGlobalScript.spawn_player_code,
-			"match_roomID": PlayerGlobalScript.match_roomID,
-			"spawn_code": PlayerGlobalScript.spawn_player_code
-		})
-		
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_%s" % PlayerGlobalScript.spawn_player_code
-		})
+		player_populate_battle_info()
+	
+	SocketClient.send_data({
+		"Socket_Name": "start_game_%s" % PlayerGlobalScript.spawn_player_code,
+		"match_roomID": PlayerGlobalScript.match_roomID,
+		"spawn_code": PlayerGlobalScript.spawn_player_code
+	})
 	
 func start_timer():
 	SocketClient.send_data({
@@ -104,11 +101,55 @@ func game_end():
 func _process(_delta: float) -> void:
 	game_scene_socket_data()
 	
+	if GameBattleInfo.update_render:
+		update_score_board()
+		GameBattleInfo.update_render = false
+	
 	if prev_hp != ui_core_hp:
 		sprite_core.value = ui_core_hp
 		core_hp_label.text = "%s/%s" % [ui_core_hp, ui_core_max_hp]
 		
 		prev_hp = core.core_hp
+		
+func update_score_board():
+	for key in GameBattleInfo.player_score_info_dic:
+		var player = GameBattleInfo.player_score_info_dic[key]
+		var container = battle_info_defender_container if player.class == "Defender" else battle_info_attacker_container
+	
+		GameBattleInfo.render_score_board(container, player.game_id)
+		
+func player_populate_battle_info():
+	if player_populate_size < GameBattleInfo.player_populate_size:
+		for key in GameBattleInfo.player_populate_dic:
+			var player = GameBattleInfo.player_populate_dic[key]
+			
+			var player_panel_instance = battle_info_player_panel.duplicate()
+			player_panel_instance.name = key
+			player_panel_instance.visible = true
+						
+			var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
+			var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
+						
+			player_panel_instance_ign.text = player.ign
+						
+			if player.ign == PlayerGlobalScript.player_in_game_name:
+				player_panel_instance_ign.text = "%s (You)" % player.ign
+						
+			if not player_panel_instance.is_inside_tree():
+				if player.class == "Defender":
+					battle_info_defender_container.add_child(player_panel_instance)
+				else:
+					battle_info_attacker_container.add_child(player_panel_instance)
+				player_populate_size+=1
+			
+			var player_profile_texture = await load_player_profile_battle_info(player.ign, player.profile)
+			
+			if player_profile_texture:
+				player_panel_instantce_profile.texture = player_profile_texture
+			else:
+				player_panel_instantce_profile.texture = no_profile_texture		
+	else:
+		isPlayerScore_populate = true
 	
 func game_scene_socket_data():
 	var data = SocketClient.received_data()
@@ -133,66 +174,6 @@ func game_scene_socket_data():
 				
 				if minutes <= 0 and seconds <= 0:
 					game_end()
-		
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_%s" % PlayerGlobalScript.spawn_player_code:
-			isPlayerScore_populate = true
-			prev_data = data
-			
-			if data.has("players"):
-				for entry in data.get("players"):
-					var player_panel_instance = battle_info_player_panel.duplicate()
-					player_panel_instance.name = entry.id
-					player_panel_instance.visible = true
-					
-					if not player_score_dic.has(entry.id):
-						player_score_dic[entry.id] = {
-							"kills": 0,
-							"deaths": 0
-						}
-					
-					var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
-					var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
-					
-					player_panel_instance_ign.text = entry.ign
-					
-					if entry.ign == PlayerGlobalScript.player_in_game_name:
-						player_panel_instance_ign.text = "%s (You)" % entry.ign
-					
-					if not player_panel_instance.is_inside_tree():
-						if entry.class == "Defender":
-							battle_info_defender_container.add_child(player_panel_instance)
-						else:
-							battle_info_attacker_container.add_child(player_panel_instance)
-					
-					var player_profile_texture = await load_player_profile_battle_info(entry.ign, entry.profile)
-					
-					if player_profile_texture:
-						player_panel_instantce_profile.texture = player_profile_texture
-					else:
-						player_panel_instantce_profile.texture = no_profile_texture
-						
-		#TODO: fix this not working properly
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code:
-			prev_data = data
-			
-			print(data)
-			if data.has_all(["killer_game_id", "killer_class", "dead_game_id", "dead_class"]):
-				var killer_container = battle_info_defender_container if data.get("killer_class") == "Defender" else battle_info_attacker_container
-				var dead_container = battle_info_defender_container if data.get("dead_class") == "Defender" else battle_info_attacker_container
-	
-				update_score_board(killer_container, data.get("killer_game_id"), true)
-				update_score_board(dead_container, data.get("dead_game_id"), false)
-				
-func update_score_board(container: VBoxContainer, player_ID: String, isKill: bool):
-	for child in container.get_children():
-		if child.name == player_ID:
-			if isKill:
-				player_score_dic[player_ID]["kills"]+=1
-			else:
-				player_score_dic[player_ID]["deaths"]+=1
-			
-			await get_tree().process_frame
-			child.get_node("Player status").text = "Kill/s: %s		Death/s: %s" % [player_score_dic[player_ID]["kills"], player_score_dic[player_ID]["deaths"]]
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()

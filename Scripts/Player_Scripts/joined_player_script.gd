@@ -17,8 +17,6 @@ var isDead = false
 
 var isMainPlayerInArea = false
 
-var isSendScoreDone = false
-
 var playerIGN = ""
 
 var prev_pos = Vector2.ZERO
@@ -26,6 +24,9 @@ var prev_ign = ""
 var prev_health = 0
 var player_class = ""
 var player_game_id = ""
+
+var damage_timer = 0
+var damage_cooldown = 0.5
 
 var player_ally_asset = preload("res://Assets/UI_Components/Sprite_Health_Ally_player.png")
 var player_enemy_asset = preload("res://Assets/UI_Components/Sprite_Health_Enemy_player.png")
@@ -55,17 +56,7 @@ func play_punch_animation():
 		elif y >= 1:
 			play_anim("front_punch_anim")
 	
-func _process(_delta: float) -> void:
-	if isSendScoreDone:
-		isSendScoreDone = false
-		SocketClient.send_data({
-			"Socket_Name": "battle_info_player_score_status_%s" % PlayerGlobalScript.spawn_player_code,
-			"killer_game_id": PlayerGlobalScript.player_game_id,
-			"killer_class": PlayerGlobalScript.player_class_game_type,
-			"dead_game_id": player_game_id,
-			"dead_class": player_class
-		})
-		
+func _process(delta: float) -> void:
 	if prev_ign != playerIGN:
 		prev_ign = playerIGN
 		player_ign.text = playerIGN
@@ -73,9 +64,12 @@ func _process(_delta: float) -> void:
 	if isAttacking:
 		if not isDead:
 			play_punch_animation()
-	
+			
 		if isMainPlayerInArea and player_class.to_upper() != PlayerGlobalScript.player_class_game_type.to_upper():
-			PlayerGlobalScript.player_health -= 5.0
+			damage_timer -= delta
+			if damage_timer <= 0:
+				PlayerGlobalScript.player_health -= 10
+				damage_timer = damage_cooldown
 		
 	else:
 		if not isDead:
@@ -115,7 +109,8 @@ func play_anim(anim_name):
 
 func player_health_bar_status():
 	if player_health <= 0.0:
-		isSendScoreDone = true
+		GameBattleInfo.update_score_board(player_game_id, player_class)
+
 		isDead = true
 		player_anim.play("death_anim")
 		player_health = 0.0
@@ -128,6 +123,10 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
+		await get_tree().create_timer(0.5).timeout
+		#TODO: do something on this one bruh
+		GameBattleInfo.update_score_board(player_game_id, player_class)
+		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
 		if ui_nodes_grp.size() > 0:

@@ -212,33 +212,6 @@ module.exports = (wss, pool)=>{
                 ws.Spawn_Code = parsed_message.Spawn_Player_Code
             }
 
-            //for battle info socket
-            else if(socket_name === "battle_info_" + ws.Spawn_Code){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "players": battle_player_info_map
-                    }
-                )
-            }
-
-            //for battle info status when player kills/dies
-            else if(socket_name === "battle_info_player_score_status_" + ws.Spawn_Code){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "killer_game_id": parsed_message.killer_game_id,
-                        "killer_class": parsed_message.killer_class,
-                        "dead_game_id": parsed_message.dead_game_id,
-                        "dead_class": parsed_message.dead_class
-                    }
-                )
-
-                console.log(parsed_message)
-            }
-
             //for core health
             else if(socket_name === "core_health_" + ws.Spawn_Code){
                 const key = ws.Spawn_Code

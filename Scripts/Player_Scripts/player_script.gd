@@ -12,6 +12,7 @@ var isDataSend = false
 
 var prev_state = {}
 var prev_ign = ""
+var prev_health = 0
 var prev_coordinates = Vector2.ZERO
 var isDead = false
 
@@ -122,12 +123,13 @@ func send_player_data():
 			await get_tree().create_timer(1.0).timeout
 			SocketClient.send_data(current_state)
 			prev_state = current_state.duplicate()
-			
+			prev_health = PlayerGlobalScript.player_health
 			isDataSend = true
 			
-		if (isMoving or isAttacking or prev_state != current_state) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
+		if (isMoving or isAttacking or prev_state != current_state or prev_health != PlayerGlobalScript.player_health) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
 			SocketClient.send_data(current_state)
 			prev_state = current_state.duplicate()
+			prev_health = PlayerGlobalScript.player_health
 	else:
 		isDataSend = false
 		prev_state = {}
@@ -147,6 +149,8 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
+		await get_tree().create_timer(0.5).timeout
+		GameBattleInfo.update_score_board(PlayerGlobalScript.player_game_id, PlayerGlobalScript.player_class_game_type)
 		send_player_data()
 		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")

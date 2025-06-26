@@ -69,7 +69,7 @@ func _process(_delta: float) -> void:
 						joined_player.isMoving = data.get("isMoving")
 						joined_player.isAttacking = data.get("isAttacking")
 						joined_player.player_game_id = data.get("Player_GameID")
-						joined_player.player_health = float(data.get("player_health"))
+						joined_player.player_health = int(data.get("player_health"))
 						joined_player.player_class = data.get("player_class")
 					else:
 						var newPlayer = joined_player_scene.instantiate()
@@ -77,6 +77,7 @@ func _process(_delta: float) -> void:
 						newPlayer.playerIGN = data.get("Player_inGameName")
 						newPlayer.player_class = data.get("player_class")
 						newPlayer.player_game_id = data.get("Player_GameID")
+						newPlayer.player_health = int(data.get("player_health"))
 						newPlayer.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
 						
 						if newPlayer.get_parent() != ySort:
@@ -127,7 +128,7 @@ func _process(_delta: float) -> void:
 					newPlayer.direction_value = Vector2(populate_data.get("direction_value")["x"], populate_data.get("direction_value")["y"])
 					newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
 					newPlayer.playerIGN = populate_data.get("Player_inGameName")
-					newPlayer.player_health = float(populate_data.get("player_health"))
+					newPlayer.player_health = int(populate_data.get("player_health"))
 					newPlayer.player_class = populate_data.get("player_class")
 					newPlayer.player_game_id = populate_data.get("Player_GameID")
 					
@@ -141,11 +142,12 @@ func _process(_delta: float) -> void:
 								"Position": newPlayer.position,
 							}
 					
-					GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
-						"Player_username": populate_data.get("Player_username"),
-						"Player_IGN": populate_data.get("Player_inGameName"),
-						"isFetched": false
-					}
+					if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
+						GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
+							"Player_username": populate_data.get("Player_username"),
+							"Player_IGN": populate_data.get("Player_inGameName"),
+							"isFetched": false
+						}
 					
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
 			prev_data = data
@@ -186,6 +188,15 @@ func _process(_delta: float) -> void:
 						PlayerGlobalScript.player_class_game_type = map.class
 					
 					player_loading_modal.player_list[map.id] = { "ign": map.ign, "profile": map.profile, "class": map.class }
+					
+					GameBattleInfo.player_populate_dic[map.id] = {
+						"ign": map.ign,
+						"profile": map.profile,
+						"class": map.class,
+						"kills": 0,
+						"deaths": 0
+					}
+					GameBattleInfo.player_populate_size = GameBattleInfo.player_populate_dic.size()
 					
 				PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
 				PlayerGlobalScript.game_scene_name = data.get("game_scene")
