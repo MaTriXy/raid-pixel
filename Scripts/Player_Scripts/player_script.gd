@@ -121,13 +121,19 @@ func send_player_data():
 	if WebsocketsConnection.socket_connection_status == "Connected":
 		if not isDataSend:
 			await get_tree().create_timer(1.0).timeout
-			SocketClient.send_data(current_state)
+			if  SocketClient.enet_client_node:
+				SocketClient.enet_client_node.send_client_data(current_state)
+			#SocketClient.send_data(current_state)
+			
 			prev_state = current_state.duplicate()
 			prev_health = PlayerGlobalScript.player_health
 			isDataSend = true
 			
 		if (isMoving or isAttacking or prev_state != current_state or prev_health != PlayerGlobalScript.player_health) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
-			SocketClient.send_data(current_state)
+			if SocketClient.enet_client_node:
+				SocketClient.enet_client_node.send_client_data(current_state)
+			#SocketClient.send_data(current_state)
+			
 			prev_state = current_state.duplicate()
 			prev_health = PlayerGlobalScript.player_health
 	else:

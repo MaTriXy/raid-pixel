@@ -5,6 +5,8 @@ var socket_data = WebsocketsConnection.socket_data
 var ping = 0
 var prev_data = {}
 
+var enet_client_node: Node
+
 func send_data(data):
 	if socket.get_ready_state() == WebSocketPeer.STATE_OPEN:
 		var json_string = JSON.stringify(data)

@@ -17,3 +17,6 @@ mono_crash.*.json
 # backend stuff
 /node_modules
 *.env
+
+# godot exe
+/Godot4.exe
