@@ -16,36 +16,8 @@ var socket_connection_status: String
 
 var isConnected = false
 
-var enet_client = preload("res://Server_Scene/client_server.tscn")
-var enet_server = preload("res://Server_Scene/server_scene.tscn")
-var server_instantce: Node
-
 func _ready():
 	established_connection()
-	
-	server_instantce = enet_server.instantiate()
-	get_tree().get_root().add_child.call_deferred(server_instantce)
-	
-	#for enet
-	var godot_client_timer = Timer.new()
-	godot_client_timer.one_shot = false
-	
-	add_child(godot_client_timer)
-	
-	godot_client_timer.wait_time = 1.0
-	godot_client_timer.timeout.connect(connect_to_godot_client)
-	godot_client_timer.start()
-	
-func connect_to_godot_client():
-	if socket_connection_status.to_upper() == "CONNECTED" and SocketClient.enet_client_node == null and PlayerGlobalScript.isLobby and server_instantce != null:
-		SocketClient.enet_client_node = enet_client.instantiate()
-		if not SocketClient.enet_client_node.is_inside_tree():
-			SocketClient.enet_client_node.name = "Godot Client Node"
-			get_tree().get_root().add_child(SocketClient.enet_client_node)
-			
-	elif socket_connection_status.to_upper() != "CONNECTED" and SocketClient.enet_client_node != null:
-		SocketClient.enet_client_node.queue_free()
-		SocketClient.enet_client_node = null
 
 func _process(_delta):
 	# Call this in _process or _physics_process. Data transfer and state updates

@@ -10,7 +10,7 @@ extends PlayerMovement
 var can_attack = true
 var isDataSend = false
 
-var prev_state = {}
+var last_data_send = false
 var prev_ign = ""
 var prev_health = 0
 var prev_coordinates = Vector2.ZERO
@@ -101,44 +101,27 @@ func play_anim(anim_name):
 		player_anim.play(anim_name)
 
 func send_player_data():
-	var current_state = {
-			"Socket_Name": "Player_Spawn_%s" % [PlayerGlobalScript.spawn_player_code],
-			"Player_username": PlayerGlobalScript.player_username,
-			"Player_inGameName": PlayerGlobalScript.player_in_game_name,
-			"Player_GameID": PlayerGlobalScript.player_game_id,
-			"Player_posX": PlayerGlobalScript.player_pos_X,
-			"Player_posY": PlayerGlobalScript.player_pos_Y,
-			"direction_value": { "x": direction_value.x, "y": direction_value.y },
-			"last_direction_value": { "x": last_direction_value.x, "y": last_direction_value.y },
-			"isMoving": isMoving,
-			"player_class": PlayerGlobalScript.player_class_game_type,
-			"isAttacking": isAttacking,
-			"isDead": PlayerGlobalScript.isMainPlayerDead,
-			"spawn_code": PlayerGlobalScript.spawn_player_code,
-			"player_health": PlayerGlobalScript.player_health,
-		}
-	
+	var player_pos = Vector2(PlayerGlobalScript.player_pos_X, PlayerGlobalScript.player_pos_Y)
+	var directional_val = direction_value
+
 	if WebsocketsConnection.socket_connection_status == "Connected":
 		if not isDataSend:
 			await get_tree().create_timer(1.0).timeout
-			if  SocketClient.enet_client_node:
-				SocketClient.enet_client_node.send_client_data(current_state)
-			#SocketClient.send_data(current_state)
-			
-			prev_state = current_state.duplicate()
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, PlayerGlobalScript.isMainPlayerDead, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
+
 			prev_health = PlayerGlobalScript.player_health
 			isDataSend = true
 			
-		if (isMoving or isAttacking or prev_state != current_state or prev_health != PlayerGlobalScript.player_health) and PlayerGlobalScript.player_in_game_name and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
-			if SocketClient.enet_client_node:
-				SocketClient.enet_client_node.send_client_data(current_state)
-			#SocketClient.send_data(current_state)
+		if not isMoving and not last_data_send:
+			last_data_send = true
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, isMoving, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
 			
-			prev_state = current_state.duplicate()
+		if isMoving and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
+			last_data_send = false
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, isMoving, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
 			prev_health = PlayerGlobalScript.player_health
 	else:
 		isDataSend = false
-		prev_state = {}
 
 func player_health_bar_status():
 	if  PlayerGlobalScript.player_health <= 0.0:

@@ -5,6 +5,7 @@ var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
 
 @export var ySort: Control
 var prev_data: Dictionary
+var prev_player_data: Dictionary
 var spawn_code: String
 var prev_death_status = false
 var isRespawn = false
@@ -46,110 +47,80 @@ func start_timer():
 	spawn_timer.wait_time = 1.0
 	spawn_timer.timeout.connect(func(): respawn_button.disabled = false)
 	spawn_timer.start()
+	
+func player_move_receieve(player_data: Dictionary):
+	var player = player_data
+	var scene_code = player.spawn_code
+	var pos = player.player_pos
+	var last_dir_val = Vector2(player.last_direction_value.x, player.last_direction_value.y)
+	var ign = player.ign
+	var gameID = player.gameID
+	var direction_value = Vector2(player.direction_value.x, player.direction_value.y)
+	var isMoving = player.isMoving
+	
+	if spawn_code == scene_code:
+		if stored_players.has(gameID):
+			var joined_player_data = stored_players[gameID]
+			var joined_player = joined_player_data["Player"]
+				
+			if is_instance_valid(joined_player):
+				joined_player.position = pos
+				joined_player.playerIGN = ign
+				joined_player.last_direction_value = last_dir_val
+				joined_player.player_game_id = gameID
+				joined_player.direction_value = direction_value
+				joined_player.isMoving = isMoving
+			else:
+				var newPlayer = joined_player_scene.instantiate()
+				newPlayer.name = gameID
+				newPlayer.playerIGN = ign
+				newPlayer.player_game_id = gameID
+				newPlayer.last_direction_value = last_dir_val
+				newPlayer.direction_value = direction_value
+				newPlayer.position = pos
+				newPlayer.isMoving = isMoving
+				
+				if newPlayer.get_parent() != ySort and not newPlayer.is_inside_tree():
+					spawner_animation.play("spawner_spawn")
+					ySort.add_child(newPlayer)
 
+					stored_players[gameID] = {
+						"Player": newPlayer,
+						"Position": newPlayer.position,
+					}
+
+		if not stored_players.has(gameID):
+			var player_ins = joined_player_scene.instantiate()
+			player_ins.name = gameID
+			player_ins.position = pos
+			player_ins.playerIGN = ign
+			player_ins.player_game_id = gameID
+			player_ins.last_direction_value = last_dir_val
+			player_ins.direction_value = direction_value
+			player_ins.isMoving = isMoving
+			
+			if player_ins.get_parent() != ySort and not player_ins.is_inside_tree():
+				spawner_animation.play("spawner_spawn")
+				ySort.add_child(player_ins)
+			
+				stored_players[gameID] = {
+					"Player": player_ins,
+					"Position": Vector2(spawn_coords.x, spawn_coords.y),
+				}
+						
 func _process(_delta: float) -> void:
+	for key in ClientEnet.rpc_player_data_dic.keys():
+		var player_data = ClientEnet.rpc_player_data_dic[key]
+		
+		if player_data != prev_player_data:
+			player_move_receieve(player_data)
+			prev_player_data = player_data
+	
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
 	if connection_status == "Connected":		
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Spawn_%s" % [spawn_code] and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
-
-			prev_data = data
-			
-			if data.has("Player_inGameName"):
-				if stored_players.has(data.get("Player_GameID")):
-					var joined_player_data = stored_players[data.get("Player_GameID")]
-					var joined_player = joined_player_data["Player"]
-				
-					if is_instance_valid(joined_player):
-						joined_player.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
-						joined_player.playerIGN = data.get("Player_inGameName")
-						joined_player.direction_value = Vector2(data.get("direction_value")["x"], data.get("direction_value")["y"])
-						joined_player.last_direction_value = Vector2(data.get("last_direction_value")["x"], data.get("last_direction_value")["y"])
-						joined_player.isMoving = data.get("isMoving")
-						joined_player.isAttacking = data.get("isAttacking")
-						joined_player.player_game_id = data.get("Player_GameID")
-						joined_player.player_health = int(data.get("player_health"))
-						joined_player.player_class = data.get("player_class")
-					else:
-						var newPlayer = joined_player_scene.instantiate()
-						newPlayer.name = data.get("Player_GameID")
-						newPlayer.playerIGN = data.get("Player_inGameName")
-						newPlayer.player_class = data.get("player_class")
-						newPlayer.player_game_id = data.get("Player_GameID")
-						newPlayer.player_health = int(data.get("player_health"))
-						newPlayer.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
-						
-						if newPlayer.get_parent() != ySort:
-							if str(data.get("spawn_code")) == spawn_code and newPlayer.get_parent() != ySort and not bool(data.get("isDead")):
-								spawner_animation.play("spawner_spawn")
-								ySort.add_child(newPlayer)
-
-								stored_players[data.get("Player_GameID")] = {
-									"Player": newPlayer,
-									"Position": newPlayer.position,
-								}
-					
-				if not stored_players.has(data.get("Player_GameID")):
-					var player = joined_player_scene.instantiate()
-					GetPlayerInfo.active_player_dic[data.get("Player_GameID")] = {
-						"Player_username": data.get("Player_username"),
-						"Player_IGN": data.get("Player_inGameName"),
-						"isFetched": false
-					}
-					
-					if player.get_parent() != ySort and not bool(data.get("isDead")):
-						player.name = data.get("Player_GameID")
-						player.position = Vector2(data.get("Player_posX"), data.get("Player_posY"))
-						player.playerIGN = data.get("Player_inGameName")
-						player.player_class = data.get("player_class")
-						player.player_game_id = data.get("Player_GameID")
-						
-						if str(data.get("spawn_code")) == spawn_code and player.get_parent() != ySort:
-							spawner_animation.play("spawner_spawn")
-							ySort.add_child(player)
-						
-							stored_players[data.get("Player_GameID")] = {
-								"Player": player,
-								"Position": Vector2(spawn_coords.x, spawn_coords.y),
-							}
-		
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "populate_scene_%s" % [spawn_code]:
-			prev_data = data
-			
-			for populate_data in data.get("player_data"):
-				if bool(populate_data.get("isDead")):
-					stored_players.erase(populate_data.get("Player_GameID"))
-						
-				if not stored_players.has(populate_data.get("Player_GameID")):
-					var newPlayer = joined_player_scene.instantiate()
-					newPlayer.name = populate_data.get("Player_GameID")
-					newPlayer.position = Vector2(populate_data.get("Player_posX"), populate_data.get("Player_posY"))
-					newPlayer.direction_value = Vector2(populate_data.get("direction_value")["x"], populate_data.get("direction_value")["y"])
-					newPlayer.last_direction_value = Vector2(populate_data.get("last_direction_value")["x"], populate_data.get("last_direction_value")["y"])
-					newPlayer.playerIGN = populate_data.get("Player_inGameName")
-					newPlayer.player_health = int(populate_data.get("player_health"))
-					newPlayer.player_class = populate_data.get("player_class")
-					newPlayer.player_game_id = populate_data.get("Player_GameID")
-					
-					if newPlayer.get_parent() != ySort and not bool(populate_data.get("isDead")):
-						if str(populate_data.get("spawn_code")) == spawn_code and populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
-							spawner_animation.play("spawner_spawn")
-							ySort.add_child(newPlayer)
-						
-							stored_players[populate_data.get("Player_GameID")] = {
-								"Player": newPlayer,
-								"Position": newPlayer.position,
-							}
-					
-					if populate_data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
-						GetPlayerInfo.active_player_dic[populate_data.get("Player_GameID")] = {
-							"Player_username": populate_data.get("Player_username"),
-							"Player_IGN": populate_data.get("Player_inGameName"),
-							"isFetched": false
-						}
-					
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
 			prev_data = data
 			
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):

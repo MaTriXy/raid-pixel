@@ -36,7 +36,6 @@ func _ready() -> void:
 
 	player_health_bar.texture_progress = player_enemy_asset if player_class.to_upper() != PlayerGlobalScript.player_class_game_type.to_upper() else player_ally_asset
 	
-	player_anim.play("side_idle_anim")
 	player_area.name = $".".name
 	player_health_label.text = str(player_health_bar.value) + "/" + str(player_max_health)
 	
@@ -62,8 +61,7 @@ func _process(delta: float) -> void:
 		player_ign.text = playerIGN
 
 	if isAttacking:
-		if not isDead:
-			play_punch_animation()
+		play_punch_animation()
 			
 		if isMainPlayerInArea and player_class.to_upper() != PlayerGlobalScript.player_class_game_type.to_upper():
 			damage_timer -= delta
@@ -72,9 +70,10 @@ func _process(delta: float) -> void:
 				damage_timer = damage_cooldown
 		
 	else:
-		if not isDead:
-			play_movement_animation()
-	player_health_bar_status()
+		play_movement_animation()
+		
+	if not isDead:
+		player_health_bar_status()
 		
 func play_movement_animation():
 	var x = direction_value.x
