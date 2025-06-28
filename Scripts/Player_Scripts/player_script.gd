@@ -10,7 +10,8 @@ extends PlayerMovement
 var can_attack = true
 var isDataSend = false
 
-var last_data_send = false
+var last_data_mov_send = false
+var last_data_atk_send = false
 var prev_ign = ""
 var prev_health = 0
 var prev_coordinates = Vector2.ZERO
@@ -45,6 +46,7 @@ func _input(_event: InputEvent) -> void:
 		can_attack = false
 		isAttacking = true
 		PlayerGlobalScript.isPlayerAttack = true
+		
 		play_punch_animation()
 		attack_timer.start(0.5)
 	
@@ -59,7 +61,8 @@ func _process(_delta: float) -> void:
 	
 	player_sprite.visible = PlayerGlobalScript.main_player_spawned
 		
-	send_player_data()
+	send_player_mov()
+	send_player_atk()
 	player_health_bar_status()
 	
 	if prev_coordinates != Vector2($".".position.x, $".".position.y):
@@ -100,26 +103,48 @@ func play_anim(anim_name):
 	if player_anim.current_animation != anim_name:
 		player_anim.play(anim_name)
 
-func send_player_data():
+func send_player_atk():
+	var player_data = {
+		"last_direction": last_direction_value,
+		"isAttacking": isAttacking,
+		"gameID": PlayerGlobalScript.player_game_id
+	}
+	if WebsocketsConnection.socket_connection_status == "Connected":
+		if isAttacking:
+			last_data_atk_send = false
+			ClientEnet.send_to_server("player_attack", PlayerGlobalScript.player_game_id, player_data)
+		else:
+			if not last_data_atk_send:
+				last_data_atk_send = true
+				ClientEnet.send_to_server("player_attack", PlayerGlobalScript.player_game_id, player_data)
+
+func send_player_mov():
 	var player_pos = Vector2(PlayerGlobalScript.player_pos_X, PlayerGlobalScript.player_pos_Y)
-	var directional_val = direction_value
+	
+	var player_data = {
+		"spawn_code": PlayerGlobalScript.spawn_player_code,
+		"player_pos": player_pos,
+		"isMoving": isMoving,
+		"last_direction_value": last_direction_value,
+		"direction_value": direction_value,
+		"ign": PlayerGlobalScript.player_in_game_name,
+		"gameID": PlayerGlobalScript.player_game_id,
+		"player_class": PlayerGlobalScript.player_class_game_type
+	}
 
 	if WebsocketsConnection.socket_connection_status == "Connected":
 		if not isDataSend:
-			await get_tree().create_timer(1.0).timeout
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, PlayerGlobalScript.isMainPlayerDead, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
-
-			prev_health = PlayerGlobalScript.player_health
+			await get_tree().create_timer(0.5).timeout
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
 			isDataSend = true
 			
-		if not isMoving and not last_data_send:
-			last_data_send = true
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, isMoving, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
+		if not isMoving and not last_data_mov_send:
+			last_data_mov_send = true
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
 			
 		if isMoving and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
-			last_data_send = false
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.spawn_player_code, player_pos, isMoving, last_direction_value, direction_value, PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
-			prev_health = PlayerGlobalScript.player_health
+			last_data_mov_send = false
+			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
 	else:
 		isDataSend = false
 
@@ -140,7 +165,6 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		await get_tree().create_timer(0.5).timeout
 		GameBattleInfo.update_score_board(PlayerGlobalScript.player_game_id, PlayerGlobalScript.player_class_game_type)
-		send_player_data()
 		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		

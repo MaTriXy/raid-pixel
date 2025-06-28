@@ -16,6 +16,7 @@ extends Node
 @onready var player_list_panel_close_button = $"Content Panel/Close Button"
 
 var isOpen = false
+var prev_player_info: Dictionary
 
 func _ready() -> void:
 	player_list_panel.visible = false
@@ -25,11 +26,21 @@ func _ready() -> void:
 	player_list_btn.connect("pressed", load_player_list)
 	player_list_panel_close_button.connect("pressed", close_panel)
 	
+	
 func close_panel():
 	isOpen = false
 	animationPlayer.play_backwards("pop_modal")
 	
 func load_player_list():
+	for key in ClientEnet.rpc_player_active_dic.keys():
+		var data = ClientEnet.rpc_player_active_dic[key]
+		
+		if prev_player_info != data and data.spawn_code == PlayerGlobalScript.spawn_player_code:
+			GetPlayerInfo.active_player_dic[key] = data
+			prev_player_info = data
+		
+		ClientEnet.rpc_player_active_dic.erase(key)
+
 	if not PlayerGlobalScript.current_modal_open and not PlayerGlobalScript.isModalOpen:
 		player_list_panel.visible = true
 		isOpen = true
@@ -39,13 +50,15 @@ func load_player_list():
 		
 		var list = GetPlayerInfo.active_player_dic
 		
+		#clear out the list if the player already left the scene
 		for child in player_list_container.get_children():
 			if child.name not in list.keys():
 				child.queue_free()
 		
-		for gameID in list:
-			var player_username = list[gameID]["Player_username"]
-			var player_IGN = list[gameID]["Player_IGN"]
+		#iterate to all player list
+		for gameID in list.keys():
+			var player_username = list[gameID]["username"]
+			var player_IGN = list[gameID]["ign"]
 			
 			if not player_list_container.has_node(gameID):
 				var player_btn = player_name_button.duplicate()
@@ -54,28 +67,30 @@ func load_player_list():
 			
 				player_btn.visible = true
 				
-				player_btn.connect("mouse_entered", func(): get_player_data(player_username, gameID))
+				player_btn.connect("mouse_entered", func(): get_player_data(player_username, gameID, list[gameID]["isFetched"]))
 				player_btn.connect("mouse_exited", func(): player_info_panel.visible = false)
 				player_list_container.add_child(player_btn)
 				
 			else:
 				var player_btn = player_list_container.get_node(gameID)
 				player_btn.text = "%s (%s)" % [player_IGN, gameID]
-			
-			if list[gameID]["isFetched"]:
-				await get_tree().create_timer(0.5).timeout
-				list[gameID]["isFetched"] = false
-				
-func get_player_data(username, playerGameID):	
+
+func get_player_data(username, playerGameID, isFetch):	
 	player_info_panel.visible = true
 	
+	if isFetch:
+		return
+		
 	var result = await GetPlayerInfo.get_player_info(username, playerGameID)
+	isFetch = true
 	
 	if result.has("status") and result["status"] == "Success":
 		player_name.text = result["player_IGN"]
 		player_description.text = result["player_description"]
 		player_gameID.text = playerGameID
 		http_request.request(result["player_profile"])
+		
+		isFetch = false
 
 func _on_player_list_http_request_request_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code == 200:

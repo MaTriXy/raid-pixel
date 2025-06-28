@@ -86,18 +86,6 @@ module.exports = (wss, pool)=>{
                 }, 1000);
             }
 
-            //for player modify profile
-            else if(socket_name === "ModifyProfile"){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "Player_GameID": parsed_message.Player_GameID,
-                        "Player_inGameName": parsed_message.Player_inGameName
-                    }
-                )
-            }
-
             //for finding match
             else if(socket_name === "find_match"){
                 var player_data = { id: parsed_message.player_id, ign: parsed_message.player_ign, profile: parsed_message.player_profile}

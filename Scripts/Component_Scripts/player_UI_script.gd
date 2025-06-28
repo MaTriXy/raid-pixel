@@ -107,8 +107,7 @@ func _ready() -> void:
 	guest_connect_account_panel.visible = false
 	guest_connect_success_panel.visible = false
 	profile_confirmation_panel.visible = false
-	
-	timer_label.visible = false
+
 	loading_modal.visible = false
 	guest_warning_text.visible = false
 	
@@ -161,6 +160,17 @@ func _ready() -> void:
 		
 	var data = await player_profile_class.get_player_data(http_request)
 	if data["status"] == "Finished":
+		var player_data = {
+			"spawn_code": PlayerGlobalScript.spawn_player_code,
+			"ign": data["inGameName"],
+			"description": data["description"],
+			"profile": data["profile"],
+			"gameID": PlayerGlobalScript.player_game_id,
+			"username": PlayerGlobalScript.player_username,
+			"isFetched": false
+		}
+		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
+		
 		in_game_name_input.text = data["inGameName"]
 		description_input.text = data["description"]
 		IGN_last_date_change.text = "(Change again in: %s)" % [data["IGN_last_date_change"]]
@@ -251,11 +261,12 @@ func save_profile_edit():
 			
 			player_profile_class.edit_profile_status(false, in_game_name_input, description_input, cancel_edit_profile_button, save_edit_profile_button, edit_profile_button, player_in_game_name_label, player_description_label, change_profile_button, profile_preview, player_profile_view, IGN_last_date_change, profile_last_date_change, description_last_date_change)
 			
-			SocketClient.send_data({
-				"Socket_Name": "ModifyProfile",
-				"Player_GameID": PlayerGlobalScript.player_game_id,
-				"Player_inGameName": PlayerGlobalScript.player_in_game_name
-			})
+			var player_data = {
+				"spawn_code": PlayerGlobalScript.spawn_player_code,
+				"gameID": PlayerGlobalScript.player_game_id,
+				"ign": PlayerGlobalScript.player_in_game_name
+			}
+			ClientEnet.send_to_server("modify_profile", PlayerGlobalScript.player_in_game_name, player_data)
 	
 func status_panel(status: bool, panel: Panel):
 	if status:
@@ -368,8 +379,7 @@ func _input(event: InputEvent) -> void:
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			global_message_modal.visible = false
-			global_message_input.text = ""
-			timer.wait_time = 1.0
+			global_message_input.editable = false
 		else:
 			if PlayerGlobalScript.current_modal_open == false:
 				global_message_modal.visible = true
@@ -378,23 +388,8 @@ func _input(event: InputEvent) -> void:
 				
 				await get_tree().process_frame
 				scroll_message_container.scroll_vertical = scroll_message_container.get_v_scroll_bar().max_value
-				
-				if isSend:
-					timer.start()
-					timer_label.visible = true
-				else:
-					timer_label.visible = false
-					await get_tree().process_frame
-					global_message_input.grab_focus()
-					
-				global_message_input.editable = !timer_label.visible
-
-func _on_timer_timeout() -> void:
-	timer_label.visible = false
-	global_message_input.editable = true
-	
-	await get_tree().process_frame
-	global_message_input.grab_focus()
+				global_message_input.editable = true
+				global_message_input.grab_focus()
 	
 func _on_http_request_request_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
 	if response_code == 200:

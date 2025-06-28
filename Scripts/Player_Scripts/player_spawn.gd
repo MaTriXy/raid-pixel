@@ -5,7 +5,10 @@ var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
 
 @export var ySort: Control
 var prev_data: Dictionary
-var prev_player_data: Dictionary
+var prev_player_mov_data: Dictionary
+var prev_player_atk_data: Dictionary
+var prev_player_disconnect_data: Dictionary
+var prev_player_mod_prof: Dictionary
 var spawn_code: String
 var prev_death_status = false
 var isRespawn = false
@@ -57,6 +60,7 @@ func player_move_receieve(player_data: Dictionary):
 	var gameID = player.gameID
 	var direction_value = Vector2(player.direction_value.x, player.direction_value.y)
 	var isMoving = player.isMoving
+	var player_class = player.player_class
 	
 	if spawn_code == scene_code:
 		if stored_players.has(gameID):
@@ -70,6 +74,7 @@ func player_move_receieve(player_data: Dictionary):
 				joined_player.player_game_id = gameID
 				joined_player.direction_value = direction_value
 				joined_player.isMoving = isMoving
+				joined_player.player_class = player_class
 			else:
 				var newPlayer = joined_player_scene.instantiate()
 				newPlayer.name = gameID
@@ -79,6 +84,7 @@ func player_move_receieve(player_data: Dictionary):
 				newPlayer.direction_value = direction_value
 				newPlayer.position = pos
 				newPlayer.isMoving = isMoving
+				newPlayer.player_class = player_class
 				
 				if newPlayer.get_parent() != ySort and not newPlayer.is_inside_tree():
 					spawner_animation.play("spawner_spawn")
@@ -98,6 +104,7 @@ func player_move_receieve(player_data: Dictionary):
 			player_ins.last_direction_value = last_dir_val
 			player_ins.direction_value = direction_value
 			player_ins.isMoving = isMoving
+			player_ins.player_class = player_class
 			
 			if player_ins.get_parent() != ySort and not player_ins.is_inside_tree():
 				spawner_animation.play("spawner_spawn")
@@ -108,19 +115,74 @@ func player_move_receieve(player_data: Dictionary):
 					"Position": Vector2(spawn_coords.x, spawn_coords.y),
 				}
 						
-func _process(_delta: float) -> void:
-	for key in ClientEnet.rpc_player_data_dic.keys():
-		var player_data = ClientEnet.rpc_player_data_dic[key]
+func player_attack_receive(player_data: Dictionary):
+	if stored_players.has(player_data.gameID):
+		var joined_player_data = stored_players[player_data.gameID]
+		var joined_player = joined_player_data["Player"]
 		
-		if player_data != prev_player_data:
+		if is_instance_valid(joined_player_scene):
+			joined_player.isAttacking = player_data.isAttacking
+	
+func _process(_delta: float) -> void:
+	#spawn
+	for key in ClientEnet.rpc_player_spawn_dic.keys():
+		var player_data = ClientEnet.rpc_player_spawn_dic[key]
+		
+		if player_data != prev_player_mov_data:
 			player_move_receieve(player_data)
-			prev_player_data = player_data
+			prev_player_mov_data = player_data
+		
+		ClientEnet.rpc_player_spawn_dic.erase(key)
+		
+	#modify profile
+	for key in ClientEnet.rpc_player_modify_profile.keys():
+		var player_data = ClientEnet.rpc_player_modify_profile[key]
+		
+		if player_data != prev_player_mod_prof:
+			if GetPlayerInfo.active_player_dic.has(player_data.gameID):
+				var player_key_list = GetPlayerInfo.active_player_dic[player_data.gameID] 
+				var joined_player_data = stored_players[player_data.gameID]
+				var joined_player = joined_player_data["Player"]
+				
+				player_key_list.Player_IGN = player_data.ign
+				joined_player.name = player_data.gameID
+				joined_player.playerIGN = player_data.ign
+			prev_player_mod_prof = player_data
+		
+		ClientEnet.rpc_player_modify_profile.erase(key)
+	
+	#attack
+	for key in ClientEnet.rpc_player_attack_dic.keys():
+		var player_data = ClientEnet.rpc_player_attack_dic[key]
+		
+		if player_data != prev_player_atk_data:
+			player_attack_receive(player_data)
+			prev_player_atk_data = player_data
+		
+		ClientEnet.rpc_player_attack_dic.erase(key)
+	
+	#exit the game
+	for key in ClientEnet.rpc_player_disconnect.keys():
+		var player_data = ClientEnet.rpc_player_disconnect[key]
+		
+		if player_data != prev_player_disconnect_data:
+			if stored_players.has(player_data.gameID):
+				var joined_player_data = stored_players[player_data.gameID]
+				var joined_player = joined_player_data["Player"]
+				
+				if is_instance_valid(joined_player_scene):
+					joined_player.queue_free()
+					stored_players.erase(player_data.gameID)
+					GetPlayerInfo.active_player_dic.erase(player_data.gameID)
+			prev_player_disconnect_data = player_data
+		
+		ClientEnet.rpc_player_disconnect.erase(key)
 	
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
 	if connection_status == "Connected":		
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["Player_Disconnect", "leave_lobby"]:
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Disconnect":
 			prev_data = data
 			
 			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
@@ -131,19 +193,6 @@ func _process(_delta: float) -> void:
 					joined_player.queue_free()
 					stored_players.erase(data.get("Player_GameID"))
 					GetPlayerInfo.active_player_dic.erase(data.get("Player_GameID"))
-					
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "ModifyProfile":
-			prev_data = data
-			
-			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")) and GetPlayerInfo.active_player_dic.has(data.get("Player_GameID")):
-				
-				var player_key_list = GetPlayerInfo.active_player_dic[data.get("Player_GameID")] 
-				var joined_player_data = stored_players[data.get("Player_GameID")]
-				var joined_player = joined_player_data["Player"]
-				
-				player_key_list.Player_IGN = data.get("Player_inGameName")
-				joined_player.name = data.get("Player_GameID")
-				joined_player.playerIGN = data.get("Player_inGameName")
 		
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
 			prev_data = data

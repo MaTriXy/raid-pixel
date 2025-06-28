@@ -63,6 +63,7 @@ func get_player_data(http_request):
 			"status": "Finished",
 			"inGameName": result["inGameName"],
 			"description": result["description"],
+			"profile": result["profile"],
 			"IGN_last_date_change": result["ign_change_date"],
 			"profile_last_date_change": result["profile_change_date"],
 			"desc_last_date_change": result["desc_change_date"]
