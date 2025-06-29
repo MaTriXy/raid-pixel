@@ -139,14 +139,11 @@ func _process(_delta: float) -> void:
 		var player_data = ClientEnet.rpc_player_modify_profile[key]
 		
 		if player_data != prev_player_mod_prof:
-			if GetPlayerInfo.active_player_dic.has(player_data.gameID):
-				var player_key_list = GetPlayerInfo.active_player_dic[player_data.gameID] 
-				var joined_player_data = stored_players[player_data.gameID]
-				var joined_player = joined_player_data["Player"]
-				
-				player_key_list.Player_IGN = player_data.ign
-				joined_player.name = player_data.gameID
-				joined_player.playerIGN = player_data.ign
+			var joined_player_data = stored_players[player_data.gameID]
+			var joined_player = joined_player_data["Player"]
+			
+			joined_player.name = player_data.gameID
+			joined_player.playerIGN = player_data.ign
 			prev_player_mod_prof = player_data
 		
 		ClientEnet.rpc_player_modify_profile.erase(key)
@@ -170,10 +167,9 @@ func _process(_delta: float) -> void:
 				var joined_player_data = stored_players[player_data.gameID]
 				var joined_player = joined_player_data["Player"]
 				
-				if is_instance_valid(joined_player_scene):
+				if is_instance_valid(joined_player):
 					joined_player.queue_free()
 					stored_players.erase(player_data.gameID)
-					GetPlayerInfo.active_player_dic.erase(player_data.gameID)
 			prev_player_disconnect_data = player_data
 		
 		ClientEnet.rpc_player_disconnect.erase(key)
@@ -192,7 +188,6 @@ func _process(_delta: float) -> void:
 				if is_instance_valid(joined_player_scene):
 					joined_player.queue_free()
 					stored_players.erase(data.get("Player_GameID"))
-					GetPlayerInfo.active_player_dic.erase(data.get("Player_GameID"))
 		
 		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
 			prev_data = data

@@ -160,17 +160,6 @@ func _ready() -> void:
 		
 	var data = await player_profile_class.get_player_data(http_request)
 	if data["status"] == "Finished":
-		var player_data = {
-			"spawn_code": PlayerGlobalScript.spawn_player_code,
-			"ign": data["inGameName"],
-			"description": data["description"],
-			"profile": data["profile"],
-			"gameID": PlayerGlobalScript.player_game_id,
-			"username": PlayerGlobalScript.player_username,
-			"isFetched": false
-		}
-		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
-		
 		in_game_name_input.text = data["inGameName"]
 		description_input.text = data["description"]
 		IGN_last_date_change.text = "(Change again in: %s)" % [data["IGN_last_date_change"]]
@@ -185,6 +174,15 @@ func _ready() -> void:
 		description_input.editable = today_date >= data["desc_last_date_change"]
 		change_profile_button.disabled = today_date < data["profile_last_date_change"]
 	
+		var player_data = {
+			"spawn_code": PlayerGlobalScript.spawn_player_code,
+			"ign": PlayerGlobalScript.player_in_game_name,
+			"description": data["description"],
+			"profile": player_profile_view.texture,
+			"gameID": PlayerGlobalScript.player_game_id
+		}
+		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
+		
 func renderCount():
 	var count = await game_data_class.get_player_count()
 	playerCount.text = "Active player/s: %s" % [count]
@@ -267,6 +265,15 @@ func save_profile_edit():
 				"ign": PlayerGlobalScript.player_in_game_name
 			}
 			ClientEnet.send_to_server("modify_profile", PlayerGlobalScript.player_in_game_name, player_data)
+			
+			var player_info = {
+				"spawn_code": PlayerGlobalScript.spawn_player_code,
+				"ign": result["inGameName"],
+				"description": result["description"],
+				"profile": player_profile_view.texture,
+				"gameID": PlayerGlobalScript.player_game_id
+			}
+			ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_info)
 	
 func status_panel(status: bool, panel: Panel):
 	if status:

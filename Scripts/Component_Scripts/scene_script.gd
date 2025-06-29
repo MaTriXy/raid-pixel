@@ -33,9 +33,6 @@ func _ready() -> void:
 	timer.timeout.connect(send_scene_data)
 	timer.start()
 	
-	#clean dictionary for changing scenes.
-	GetPlayerInfo.active_player_dic.clear()
-	
 	if scene_particle:
 		scene_particle.emitting = true
 	
