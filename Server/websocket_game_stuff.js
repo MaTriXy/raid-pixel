@@ -1,13 +1,4 @@
 const broadcastSocket = require("./websocket_broadcast");
-const cloudinary = require("cloudinary").v2;
-
-require("dotenv").config({ path: require("path").resolve(__dirname, "../keys.env")})
-
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-});
 
 let queue_match = []
 let isMatchFound = false
@@ -21,17 +12,6 @@ const max_players = 2
 let queue_core_dmg = {}
 let battle_player_info_map;
 
-async function delete_image(profile_hash){
-    try{
-        if(profile_hash && profile_hash != "default_profile_vw2q2o"){
-            cloudinary.uploader.destroy(profile_hash, function(result) { console.log(result) });
-        }
-    }
-    catch(err){
-        console.log(err);
-    }
-}
-
 module.exports = (wss, pool)=>{
     wss.on('connection', (ws) => {
         // Listen for messages from clients
@@ -39,39 +19,8 @@ module.exports = (wss, pool)=>{
             let parsed_message = JSON.parse(message);
             let socket_name = parsed_message.Socket_Name;
 
-            //for connected player in server
-            if(socket_name === "Player_Server_Connected"){
-                await modifyPlayerCount(1, pool);
-            }
-
-            //for connected player in game
-            else if(socket_name === "Player_Connected"){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "Player_GameID": parsed_message.Player_GameID,
-                    }
-                )
-                ws.GameID = parsed_message.Player_GameID;
-                ws.username = parsed_message.Player_username;
-            }
-
-            //for disconnected player
-            else if(socket_name == "Player_Disconnect"){
-                await modifyPlayerCount(-1, pool)
-                
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": socket_name,
-                        "Player_GameID": parsed_message.GameID
-                    }
-                )
-            }
-
             //for player logout
-            else if(socket_name === "Player_Logout"){
+            if(socket_name === "Player_Logout"){
                 broadcastSocket(
                     wss,
                     {
@@ -238,23 +187,6 @@ module.exports = (wss, pool)=>{
             }
         });
 
-        ws.on('close', async () => {
-            if(ws.GameID && ws.username){
-                broadcastSocket(
-                    wss,
-                    {
-                       "Socket_Name": "Player_Disconnect",
-                        "Player_GameID": ws.GameID
-                    }
-                )
-                await deleteGuestPlayer_account(ws.username, pool);
-
-                ws.GameID = ""
-                ws.username = ""
-                ws.Spawn_Code = ""
-            }
-        });
-
         ws.on('error', (err) => {
             console.error(err);
         });
@@ -292,46 +224,4 @@ function start_battle_time(spawn_code, wss){
         )
 
     }, 1000)
-}
-
-async function deleteGuestPlayer_account(username, pool) {
-    try{
-        const query = await pool.query('SELECT * FROM account WHERE username = $1', [username]);
-
-        if(query.rows.length === 0){
-            console.log("Account does not exist");
-            return;
-        }
-
-        if(query.rows[0].account_type == "Guest"){
-            const find_player = await pool.query('SELECT * FROM player_infos WHERE username = $1', [username]);
-
-            if(find_player.rows.length > 0){
-                const image_name = find_player.rows[0].profile_hash;
-
-                if(image_name){
-                    await delete_image(image_name);
-                }
-            }
-
-            await pool.query('DELETE FROM account WHERE username = $1', [username]);
-            await pool.query('DELETE FROM player_infos WHERE username = $1', [username]);
-        }
-        else{
-            await pool.query('UPDATE account SET isonline = $1 WHERE username = $2', [false, username]);
-        }
-        await modifyPlayerCount(-1, pool);
-    }
-    catch(err){
-        console.log(err);
-    }
-}
-
-async function modifyPlayerCount(count, pool) {
-    try{
-        await pool.query("UPDATE game_data SET player_count = GREATEST(player_count + $1, 0)", [count])
-    }
-    catch(err){
-        console.log(err)
-    }
 }

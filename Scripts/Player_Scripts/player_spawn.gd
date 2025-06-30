@@ -29,9 +29,6 @@ var game_scene_spawn_coords = {
 #for loading modal
 @export var player_loading_modal: Control
 
-#store player here
-var stored_players = {}
-
 func _ready() -> void:
 	death_panel.visible = false
 	spawner_animation.play("spawner_spawn")
@@ -61,11 +58,15 @@ func player_move_receieve(player_data: Dictionary):
 	var direction_value = Vector2(player.direction_value.x, player.direction_value.y)
 	var isMoving = player.isMoving
 	var player_class = player.player_class
+	var username = player.username
 	
 	if spawn_code == scene_code:
-		if stored_players.has(gameID):
-			var joined_player_data = stored_players[gameID]
+		if ClientEnet.stored_players.has(gameID):
+			var joined_player_data = ClientEnet.stored_players[gameID]
 			var joined_player = joined_player_data["Player"]
+			
+			ClientEnet.stored_players[gameID].ign = ign
+			ClientEnet.stored_players[gameID].gameID = gameID
 				
 			if is_instance_valid(joined_player):
 				joined_player.position = pos
@@ -90,12 +91,7 @@ func player_move_receieve(player_data: Dictionary):
 					spawner_animation.play("spawner_spawn")
 					ySort.add_child(newPlayer)
 
-					stored_players[gameID] = {
-						"Player": newPlayer,
-						"Position": newPlayer.position,
-					}
-
-		if not stored_players.has(gameID):
+		if not ClientEnet.stored_players.has(gameID):
 			var player_ins = joined_player_scene.instantiate()
 			player_ins.name = gameID
 			player_ins.position = pos
@@ -109,15 +105,18 @@ func player_move_receieve(player_data: Dictionary):
 			if player_ins.get_parent() != ySort and not player_ins.is_inside_tree():
 				spawner_animation.play("spawner_spawn")
 				ySort.add_child(player_ins)
-			
-				stored_players[gameID] = {
+				
+				ClientEnet.stored_players[gameID] = {
 					"Player": player_ins,
-					"Position": Vector2(spawn_coords.x, spawn_coords.y),
+					"gameID": gameID,
+					"ign": ign,
+					"username": username,
+					"peerID": multiplayer.get_remote_sender_id()
 				}
 						
 func player_attack_receive(player_data: Dictionary):
-	if stored_players.has(player_data.gameID):
-		var joined_player_data = stored_players[player_data.gameID]
+	if ClientEnet.stored_players.has(player_data.gameID):
+		var joined_player_data = ClientEnet.stored_players[player_data.gameID]
 		var joined_player = joined_player_data["Player"]
 		
 		if is_instance_valid(joined_player_scene):
@@ -139,7 +138,7 @@ func _process(_delta: float) -> void:
 		var player_data = ClientEnet.rpc_player_modify_profile[key]
 		
 		if player_data != prev_player_mod_prof:
-			var joined_player_data = stored_players[player_data.gameID]
+			var joined_player_data = ClientEnet.stored_players[player_data.gameID]
 			var joined_player = joined_player_data["Player"]
 			
 			joined_player.name = player_data.gameID
@@ -158,38 +157,11 @@ func _process(_delta: float) -> void:
 		
 		ClientEnet.rpc_player_attack_dic.erase(key)
 	
-	#exit the game
-	for key in ClientEnet.rpc_player_disconnect.keys():
-		var player_data = ClientEnet.rpc_player_disconnect[key]
-		
-		if player_data != prev_player_disconnect_data:
-			if stored_players.has(player_data.gameID):
-				var joined_player_data = stored_players[player_data.gameID]
-				var joined_player = joined_player_data["Player"]
-				
-				if is_instance_valid(joined_player):
-					joined_player.queue_free()
-					stored_players.erase(player_data.gameID)
-			prev_player_disconnect_data = player_data
-		
-		ClientEnet.rpc_player_disconnect.erase(key)
-	
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
 	if connection_status == "Connected":		
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") == "Player_Disconnect":
-			prev_data = data
-			
-			if data.has("Player_GameID") and stored_players.has(data.get("Player_GameID")):
-				var joined_player_data = stored_players[data.get("Player_GameID")]
-				var joined_player = joined_player_data["Player"]
-				
-				if is_instance_valid(joined_player_scene):
-					joined_player.queue_free()
-					stored_players.erase(data.get("Player_GameID"))
-		
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
 			prev_data = data
 
 			await get_tree().process_frame

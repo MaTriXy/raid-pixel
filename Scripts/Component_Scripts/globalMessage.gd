@@ -18,31 +18,28 @@ var prev_connection_status = ""
 var prev_data: Dictionary
 var prev_msg: Dictionary
 
-#this will notify player for connection, a heartbeat
+func send_clients_notify_connection(status: String, ign: String, gameID: String):
+	var info = {
+		"spawn_code": PlayerGlobalScript.spawn_player_code,
+		"gameID": gameID,
+		"ign": ign,
+		"status": status
+	}
+	ClientEnet.send_to_server("connection_notify", PlayerGlobalScript.player_game_id, info)
+	append_connection_notify(info.ign, info.gameID, info.status)
+	
 func connection_notify_main_player():
-	if prev_connection_status != WebsocketsConnection.socket_connection_status and WebsocketsConnection.socket_connection_status == "Connected":
-		prev_connection_status = WebsocketsConnection.socket_connection_status
-		append_connection_notify(PlayerGlobalScript.player_game_id, "Player_Connected")
+	for gameID in ClientEnet.rpc_player_connection_status.keys():
+		var dic = ClientEnet.rpc_player_connection_status[gameID]
+		var spawn_code = dic.spawn_code
+		var ign = dic.ign
+		var status = dic.status
 		
-		await get_tree().create_timer(0.5).timeout
-		SocketClient.send_data(
-			{
-				"Socket_Name": "Player_Connected",
-				"Player_GameID": PlayerGlobalScript.player_game_id,
-				"Player_username": PlayerGlobalScript.player_username
-			}
-		)
-		
-	else:
-		if WebsocketsConnection.socket_connection_status == "Disconnected":
-			prev_connection_status = ""
-			SocketClient.send_data(
-				{
-					"Socket_Name": "Player_Disconnected",
-					"Player_GameID": PlayerGlobalScript.player_game_id,
-					"Player_username": PlayerGlobalScript.player_username
-				}
-			)
+		if PlayerGlobalScript.spawn_player_code == spawn_code and dic != prev_data:
+			append_connection_notify(ign, gameID, status)
+			prev_data = dic
+			
+		ClientEnet.rpc_player_connection_status.erase(gameID)
 
 func message_append_on_container():
 	if global_message_input.text:
@@ -68,15 +65,6 @@ func message_render_display():
 			append_msg_on_msg_container(msg_data.sender, msg_data.message, Color("#ffffff"))
 			prev_msg = msg_data
 		ClientEnet.rpc_player_msg_dic.erase(key)
-				
-	var data = SocketClient.received_data()
-	var connection_status = WebsocketsConnection.socket_connection_status
-
-	if connection_status == "Connected":
-		#for player connected and disconnected
-		if data.has("Socket_Name") and prev_data != data and (data.get("Socket_Name") == "Player_Connected" or data.get("Socket_Name") == "Player_Disconnect") and data.get("Player_GameID") != PlayerGlobalScript.player_game_id:
-			prev_data = data
-			append_connection_notify(data.get("Player_GameID"), data.get("Socket_Name"))
 			
 func append_msg_on_msg_container(receiver: String, msg: String, color: Color):
 	var message_clone = message_label.duplicate()
@@ -94,7 +82,7 @@ func append_msg_on_msg_container(receiver: String, msg: String, color: Color):
 	var display_msg = message_clone.duplicate()
 	display_message_panel.add_child(display_msg)
 				
-func append_connection_notify(gameID, status):
+func append_connection_notify(ign, gameID, status):
 	#remove old messages
 	if display_message_panel.get_child_count() >= 5:
 		var oldest = display_message_panel.get_child(0)
@@ -104,6 +92,8 @@ func append_connection_notify(gameID, status):
 	var display_msg = message_label.duplicate()
 	display_msg.visible = true
 	
-	display_msg.text = "%s %s" % [gameID, "connected" if status == "Player_Connected" else "disconnected"]
-	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Player_Connected" else Color("#ff0000"))
+	var notify =  "connected" if status == "Connected" else "disconnected"
+	
+	display_msg.text = "%s (%s) %s" % [ign, gameID, notify]
+	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Connected" else Color("#ff0000"))
 	display_message_panel.add_child(display_msg)

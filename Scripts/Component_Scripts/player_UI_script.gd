@@ -90,16 +90,6 @@ func _ready() -> void:
 	playerCount_timer.timeout.connect(renderCount)
 	playerCount_timer.start()
 	
-	var connection_timer = Timer.new()
-	connection_timer.name = "Connection Timer"
-	
-	if not connection_timer.is_inside_tree():
-		add_child(connection_timer)
-	
-	connection_timer.wait_time = 1.0
-	connection_timer.timeout.connect(connection_notify_main_player)
-	connection_timer.start()
-	
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
 	global_message_modal.visible = false
@@ -180,6 +170,15 @@ func _ready() -> void:
 			"ign": PlayerGlobalScript.player_in_game_name
 		}
 		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
+	
+	#for sending connected notification
+	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
+	
+	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": 1 })
+	
+	if player_count_res.has("status") and not player_count_res["status"] == "Success":
+		return
+
 		
 func renderCount():
 	var count = await game_data_class.get_player_count()
@@ -346,12 +345,7 @@ func _process(_delta: float) -> void:
 		player_hp_label.text = "%s/%s" % [str(PlayerGlobalScript.player_health), str(PlayerGlobalScript.player_max_health)]
 		prev_health = PlayerGlobalScript.player_health
 		
-	if WebsocketsConnection.socket_connection_status and prev_status != WebsocketsConnection.socket_connection_status:
-		prev_status = WebsocketsConnection.socket_connection_status
-		
-		if prev_status == "Disconnected":
-			append_connection_notify(PlayerGlobalScript.player_game_id, prev_status)
-	
+	connection_notify_main_player()
 	message_render_display()
 	
 	SocketClient.output_ping()

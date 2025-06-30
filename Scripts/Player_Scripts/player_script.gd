@@ -129,7 +129,8 @@ func send_player_mov():
 		"direction_value": direction_value,
 		"ign": PlayerGlobalScript.player_in_game_name,
 		"gameID": PlayerGlobalScript.player_game_id,
-		"player_class": PlayerGlobalScript.player_class_game_type
+		"player_class": PlayerGlobalScript.player_class_game_type,
+		"username": PlayerGlobalScript.player_username
 	}
 
 	if WebsocketsConnection.socket_connection_status == "Connected":

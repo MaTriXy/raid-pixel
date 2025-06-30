@@ -38,12 +38,7 @@ func _process(_delta):
 					PlayerGlobalScript.player_game_id = "GameID_%s" % [PlayerInfoStuff.string_generator(2)]
 				
 				if not isConnected:
-					SocketClient.send_data(
-						{
-							"Socket_Name": "Player_Server_Connected"
-						}
-					)
-				isConnected = true
+					isConnected = true
 			
 		#for connecting
 		WebSocketPeer.STATE_CONNECTING:
