@@ -13,6 +13,13 @@ extends Node
 @onready var player_name_button = $"Content Panel/Player Name Button"
 @onready var animationPlayer = $"AnimationPlayer"
 @onready var player_list_panel_close_button = $"Content Panel/Close Button"
+@onready var player_http_req = $"Player List Request"
+
+@onready var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
+
+var current_username: String
+
+var hover_timer = null
 
 var player_info_dic: Dictionary
 var isOpen = false
@@ -30,6 +37,8 @@ func close_panel():
 	#clear out the list of the player for refresh
 	for child in player_list_container.get_children():
 		child.queue_free()
+		
+	current_username = ""
 		
 	isOpen = false
 	animationPlayer.play_backwards("pop_modal")
@@ -54,36 +63,71 @@ func load_player_list():
 		#iterate to all player list
 		for gameID in player_info_dic.keys():
 			var player_dic = player_info_dic[gameID]
+			var username = player_dic.username
 			var ign = player_dic.ign
-			var description = player_dic.description
-			var profile = player_dic.profile
 			
+			var player_btn = player_name_button.duplicate()
+			player_btn.name = gameID
+			player_btn.text = "%s (%s)" % [ign, gameID]
+			player_btn.visible = true
 			
 			if not player_list_container.has_node(gameID):
-				var player_btn = player_name_button.duplicate()
-				player_btn.name = gameID
-				player_btn.text = "%s (%s)" % [ign, gameID]
-				player_btn.visible = true
-				
-				player_btn.connect("mouse_entered", func(): get_player_data(gameID, description, profile, ign))
-				player_btn.connect("mouse_exited", func(): player_info_panel.visible = false)
-	
 				player_list_container.add_child(player_btn)
+			
+			player_btn.connect("mouse_entered", func(): mouse_over(gameID, username))
+			player_btn.connect("mouse_exited", mouse_out)
+			
+func mouse_out():
+	current_username = ""
+	player_info_panel.visible = false
 				
-			else:
-				var player_btn = player_list_container.get_node(gameID)
-				player_btn.text = "%s (%s)" % [ign, gameID]
-
-func get_player_data(gameID: String, description: String, profile: Texture2D, ign: String):	
+func mouse_over(gameID: String, username: String):
+	current_username = username
+	
 	player_info_panel.visible = true
 	
-	player_name.text = ign
-	player_description.text = description
-	player_gameID.text = gameID
-	player_profile.texture = profile
+	player_name.text = "Fetching..."
+	player_description.text = "Fetching..."
+	player_gameID.text = "Fetching..."
+	player_profile.texture = no_profile
+	
+	if hover_timer != null:
+		return
+
+	hover_timer = get_tree().create_timer(1.0).timeout
+	await hover_timer
+	
+	if current_username == username:
+		await get_player_data(gameID, username)
+		
+	hover_timer = null
+
+func get_player_data(gameID: String, username: String):
+	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/playerData", { "username": username })
+	
+	if result.has("status") and result["status"] == "Success":
+		player_name.text = result["inGameName"]
+		player_description.text = result["description"]
+		player_gameID.text = gameID
+	
+		player_http_req.request(result["profile"])
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "pop_modal":
 		player_list_panel.visible = isOpen
 		PlayerGlobalScript.current_modal_open = isOpen
 		PlayerGlobalScript.isModalOpen = isOpen
+
+
+func _on_player_list_request_request_completed(_result: int, response_code: int, _headers: PackedStringArray, body: PackedByteArray) -> void:
+	if response_code == 200:
+		var image = Image.new()
+		var err = image.load_png_from_buffer(body)
+		
+		if err == OK:
+			var texture = ImageTexture.create_from_image(image)
+			player_profile.texture = texture
+		else:
+			print("Failed to load image from buffer:", err)
+	else:
+		print("HTTP request failed with code:", response_code)

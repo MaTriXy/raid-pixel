@@ -176,10 +176,8 @@ func _ready() -> void:
 	
 		var player_data = {
 			"spawn_code": PlayerGlobalScript.spawn_player_code,
-			"ign": PlayerGlobalScript.player_in_game_name,
-			"description": data["description"],
-			"profile": player_profile_view.texture,
-			"gameID": PlayerGlobalScript.player_game_id
+			"username": PlayerGlobalScript.player_username,
+			"ign": PlayerGlobalScript.player_in_game_name
 		}
 		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
 		
@@ -268,10 +266,8 @@ func save_profile_edit():
 			
 			var player_info = {
 				"spawn_code": PlayerGlobalScript.spawn_player_code,
-				"ign": result["inGameName"],
-				"description": result["description"],
-				"profile": player_profile_view.texture,
-				"gameID": PlayerGlobalScript.player_game_id
+				"username": PlayerGlobalScript.player_username,
+				"ign": PlayerGlobalScript.player_in_game_name
 			}
 			ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_info)
 	
