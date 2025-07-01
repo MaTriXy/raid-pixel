@@ -19,24 +19,8 @@ module.exports = (wss, pool)=>{
             let parsed_message = JSON.parse(message);
             let socket_name = parsed_message.Socket_Name;
 
-            //for player logout
-            if(socket_name === "Player_Logout"){
-                broadcastSocket(
-                    wss,
-                    {
-                        "Socket_Name": "Player_Disconnect",
-                        "Player_GameID": parsed_message.GameID
-                    }
-                )
-                setTimeout(() => {
-                    ws.GameID = ""
-                    ws.username = ""
-                    ws.Spawn_Code = ""
-                }, 1000);
-            }
-
             //for finding match
-            else if(socket_name === "find_match"){
+            if(socket_name === "find_match"){
                 var player_data = { id: parsed_message.player_id, ign: parsed_message.player_ign, profile: parsed_message.player_profile}
                 var data = { "players": [player_data], "matchID": parsed_message.match_ID }
                 let match_to_remove = []

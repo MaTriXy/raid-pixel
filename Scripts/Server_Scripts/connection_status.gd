@@ -9,9 +9,6 @@ var isDisconnect = false
 
 func _ready() -> void:
 	PlayerGlobalScript.isLoggedOut = false
-	
-	if WebsocketsConnection.socket_connection_status == "Disconnected":
-		WebsocketsConnection.retry_connection()
 		
 	connection_panel.visible = true
 	sprite_anim.play("Connecting_Anim")
@@ -22,25 +19,18 @@ func _ready() -> void:
 func retry_socket():
 	PlayerGlobalScript.current_modal_open = false
 	PlayerGlobalScript.isModalOpen = false
-	WebsocketsConnection.retry_connection()
+	
+	ClientEnet.join_server(ClientEnet.host, ClientEnet.server_port)
 	
 func _process(_delta: float) -> void:
-	var socket_status = WebsocketsConnection.socket_connection_status
-	
-	if socket_status == "Connecting to server" or socket_status == "Reconnecting":
-		sprite_anim.play("Connecting_Anim")
-	
-	elif socket_status == "Disconnected" and isDisconnect == false:
+	if ClientEnet.enet_connection_status == "Disconnected" and isDisconnect == false:
 		sprite_anim.play("Disconnected_Anim")
 		isDisconnect = true
 	
-	connection_label.text = socket_status if socket_status == "Connected" else socket_status + "..."
-	retry_button.visible = false if socket_status == "Connected" or socket_status == "Connecting to server" or socket_status == "Reconnecting" else true
+	connection_label.text = ClientEnet.enet_connection_status if ClientEnet.enet_connection_status == "Connected" else ClientEnet.enet_connection_status + "..."
 	
-	if PlayerGlobalScript.isLoggedOut or socket_status == "Connected":
-		connection_panel.visible = false
-	else:
-		connection_panel.visible = true
+	retry_button.visible = ClientEnet.enet_connection_status == "Connected"
+	connection_panel.visible = ClientEnet.enet_connection_status == "Connected"
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "Disconnected_Anim":

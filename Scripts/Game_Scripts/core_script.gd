@@ -33,11 +33,13 @@ func damage_core():
 	
 func send_damage_to_server():
 	if prev_hp != core_hp:
+		"""
 		SocketClient.send_data({
 			"Socket_Name": "core_health_%s" % PlayerGlobalScript.spawn_player_code,
 			"health": core_hp,
 			"max_health": core_max_hp
 		})
+		"""
 		prev_hp = core_hp
 
 func _on_core_area_area_entered(area: Area2D) -> void:

@@ -24,15 +24,6 @@ func _ready() -> void:
 	
 	spawn_player_on_scene()
 	
-	var timer = Timer.new()
-	
-	if not timer.is_inside_tree():
-		add_child(timer)
-		
-	timer.wait_time = 1.0
-	timer.timeout.connect(send_scene_data)
-	timer.start()
-	
 	if scene_particle:
 		scene_particle.emitting = true
 	
@@ -62,21 +53,6 @@ func spawn_player_on_scene():
 	main_player.position = spawn_coordinates
 	ySort.add_child(main_player)
 	spawn_machine.spawner_animation.play("spawner_spawn")
-		
-func send_scene_data():
-	PlayerGlobalScript.isLobby = true if WebsocketsConnection.socket_connection_status == "Connected" else false
-	
-	var state = {
-			"Socket_Name": "scene_code",
-			"Spawn_Player_Code": PlayerGlobalScript.spawn_player_code
-		}
-		
-	if WebsocketsConnection.socket_connection_status == "Connected" and prev_data != state:
-		SocketClient.send_data(state)
-		prev_data = state
-
-	elif WebsocketsConnection.socket_connection_status == "Disconnected":
-		prev_data = {}
 	
 func _process(_delta: float):
 	if spawn_machine.isRespawn:

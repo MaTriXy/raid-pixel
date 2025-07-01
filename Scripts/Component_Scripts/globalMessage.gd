@@ -25,7 +25,7 @@ func send_clients_notify_connection(status: String, ign: String, gameID: String)
 		"ign": ign,
 		"status": status
 	}
-	ClientEnet.send_to_server("connection_notify", PlayerGlobalScript.player_game_id, info)
+	ClientEnet.send_to_server("connection_notify", multiplayer.get_unique_id(), info)
 	append_connection_notify(info.ign, info.gameID, info.status)
 	
 func connection_notify_main_player():
@@ -50,7 +50,7 @@ func message_append_on_container():
 			"gameID": PlayerGlobalScript.player_game_id,
 			"message": global_message_input.text
 		}
-		ClientEnet.send_to_server("global_message", PlayerGlobalScript.player_game_id, message_data)
+		ClientEnet.send_to_server("global_message", multiplayer.get_unique_id(), message_data)
 	
 		var receiver = PlayerGlobalScript.player_in_game_name + "(You)"
 		append_msg_on_msg_container(receiver, global_message_input.text, Color("#ffffff"))

@@ -13,7 +13,6 @@ extends Global_Message
 @onready var ping_timer = $"Ping Timer"
 @onready var ping_label = $"Signal Strength/Signal Label"
 @onready var ping_render = $"Signal Strength"
-@onready var playerCount_timer = $"Player Count Timer"
 @onready var view_profile_btn = $"Profile button"
 
 #for player hp
@@ -68,7 +67,7 @@ extends Global_Message
 @onready var profile_confirmation_panel_cancel = $"Profile Confirmation Panel/Panel/Cancel Button"
 
 #for passing data
-var prev_count = ""
+var prev_player_count = 0
 var prev_coordinates = Vector2.ZERO
 var prev_diamond = 0
 var prev_FPS = 0
@@ -82,14 +81,13 @@ var player_profile_class = PlayerProfile.new()
 var game_data_class = GameData.new()
 
 func _ready() -> void:
+	"""
 	ping_timer.wait_time = 4.0
 	ping_timer.timeout.connect(SocketClient.send_ping)
 	ping_timer.start()
-	
-	playerCount_timer.wait_time = 2.0
-	playerCount_timer.timeout.connect(renderCount)
-	playerCount_timer.start()
-	
+	"""
+	playerCount.text = "Active player/s: fetching..."
+
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
 	global_message_modal.visible = false
@@ -167,25 +165,26 @@ func _ready() -> void:
 		var player_data = {
 			"spawn_code": PlayerGlobalScript.spawn_player_code,
 			"username": PlayerGlobalScript.player_username,
-			"ign": PlayerGlobalScript.player_in_game_name
+			"ign": PlayerGlobalScript.player_in_game_name,
+			"gameID": PlayerGlobalScript.player_game_id
 		}
-		ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_data)
+		ClientEnet.send_to_server("list_active_player", multiplayer.get_unique_id(), player_data)
 	
 	#for sending connected notification
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
 	
 	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": 1 })
 	
-	if player_count_res.has("status") and not player_count_res["status"] == "Success":
-		return
-
+	if player_count_res.has("status") and player_count_res["status"] == "Success":
+		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
 		
-func renderCount():
-	var count = await game_data_class.get_player_count()
-	playerCount.text = "Active player/s: %s" % [count]
+	ClientEnet.send_to_server("player_count", multiplayer.get_unique_id(), { "count": PlayerGlobalScript.player_count_active })
+	
 		
 func log_out_action():
-	game_data_class.player_logout(validation_modal, loading_modal, PlayerGlobalScript.player_game_id, PlayerGlobalScript.player_username)
+	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_remote_sender_id() })
+	
+	game_data_class.player_logout(validation_modal, loading_modal)
 	
 func open_file_Dialog():
 	fileDialog.visible = true
@@ -261,14 +260,7 @@ func save_profile_edit():
 				"gameID": PlayerGlobalScript.player_game_id,
 				"ign": PlayerGlobalScript.player_in_game_name
 			}
-			ClientEnet.send_to_server("modify_profile", PlayerGlobalScript.player_in_game_name, player_data)
-			
-			var player_info = {
-				"spawn_code": PlayerGlobalScript.spawn_player_code,
-				"username": PlayerGlobalScript.player_username,
-				"ign": PlayerGlobalScript.player_in_game_name
-			}
-			ClientEnet.send_to_server("list_active_player", PlayerGlobalScript.player_game_id, player_info)
+			ClientEnet.send_to_server("modify_profile", multiplayer.get_unique_id(), player_data)
 	
 func status_panel(status: bool, panel: Panel):
 	if status:
@@ -327,6 +319,9 @@ func upgrade_account():
 func _process(_delta: float) -> void:
 	player_profile_class.render_player_profile_data(player_in_game_name_label, player_gameID_label, player_description_label)
 	
+	if PlayerGlobalScript.player_count_active != prev_player_count:
+		playerCount.text = "Active player/s: %s" % PlayerGlobalScript.player_count_active
+	
 	if prev_diamond != PlayerGlobalScript.player_diamond:
 		prev_diamond = PlayerGlobalScript.player_diamond
 		diamond_count_label.text = str(PlayerGlobalScript.player_diamond)
@@ -348,6 +343,7 @@ func _process(_delta: float) -> void:
 	connection_notify_main_player()
 	message_render_display()
 	
+	"""
 	SocketClient.output_ping()
 	var color = "green"
 	var frame = 0
@@ -367,6 +363,7 @@ func _process(_delta: float) -> void:
 	ping_render.frame = frame
 	ping_label.add_theme_color_override("default_color", color)
 	ping_label.text = str(SocketClient.ping) + "ms"
+	"""
 	
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("global_message"): #pressing enter

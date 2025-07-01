@@ -48,7 +48,6 @@ app.get('/', (req, res) => {
 app.use("/accountRoute", require("./accountRoutes")(pool));
 app.use("/gameData", require("./gameDataRoute")(pool));
 app.use("/playerInformation", require("./playerInformationRoute")(pool));
-app.use("/accountGuestCheck", require("./account_check_route")(pool))
 
 //websocket server
 const wss = new WebSocketServer({ server: expressServer });

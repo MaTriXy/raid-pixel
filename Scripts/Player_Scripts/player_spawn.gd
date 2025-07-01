@@ -7,8 +7,6 @@ var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
 var prev_data: Dictionary
 var prev_player_mov_data: Dictionary
 var prev_player_atk_data: Dictionary
-var prev_player_disconnect_data: Dictionary
-var prev_player_mod_prof: Dictionary
 var spawn_code: String
 var prev_death_status = false
 var isRespawn = false
@@ -59,14 +57,15 @@ func player_move_receieve(player_data: Dictionary):
 	var isMoving = player.isMoving
 	var player_class = player.player_class
 	var username = player.username
+	var peerID = player.peerID
 	
 	if spawn_code == scene_code:
-		if ClientEnet.stored_players.has(gameID):
-			var joined_player_data = ClientEnet.stored_players[gameID]
+		if ClientEnet.stored_players.has(peerID):
+			var joined_player_data = ClientEnet.stored_players[peerID]
 			var joined_player = joined_player_data["Player"]
 			
-			ClientEnet.stored_players[gameID].ign = ign
-			ClientEnet.stored_players[gameID].gameID = gameID
+			ClientEnet.stored_players[peerID].ign = ign
+			ClientEnet.stored_players[peerID].gameID = gameID
 				
 			if is_instance_valid(joined_player):
 				joined_player.position = pos
@@ -91,7 +90,7 @@ func player_move_receieve(player_data: Dictionary):
 					spawner_animation.play("spawner_spawn")
 					ySort.add_child(newPlayer)
 
-		if not ClientEnet.stored_players.has(gameID):
+		if not ClientEnet.stored_players.has(peerID):
 			var player_ins = joined_player_scene.instantiate()
 			player_ins.name = gameID
 			player_ins.position = pos
@@ -106,17 +105,16 @@ func player_move_receieve(player_data: Dictionary):
 				spawner_animation.play("spawner_spawn")
 				ySort.add_child(player_ins)
 				
-				ClientEnet.stored_players[gameID] = {
+				ClientEnet.stored_players[peerID] = {
 					"Player": player_ins,
 					"gameID": gameID,
 					"ign": ign,
 					"username": username,
-					"peerID": multiplayer.get_remote_sender_id()
 				}
 						
 func player_attack_receive(player_data: Dictionary):
 	if ClientEnet.stored_players.has(player_data.gameID):
-		var joined_player_data = ClientEnet.stored_players[player_data.gameID]
+		var joined_player_data = ClientEnet.stored_players[player_data.peerID]
 		var joined_player = joined_player_data["Player"]
 		
 		if is_instance_valid(joined_player_scene):
@@ -132,20 +130,6 @@ func _process(_delta: float) -> void:
 			prev_player_mov_data = player_data
 		
 		ClientEnet.rpc_player_spawn_dic.erase(key)
-		
-	#modify profile
-	for key in ClientEnet.rpc_player_modify_profile.keys():
-		var player_data = ClientEnet.rpc_player_modify_profile[key]
-		
-		if player_data != prev_player_mod_prof:
-			var joined_player_data = ClientEnet.stored_players[player_data.gameID]
-			var joined_player = joined_player_data["Player"]
-			
-			joined_player.name = player_data.gameID
-			joined_player.playerIGN = player_data.ign
-			prev_player_mod_prof = player_data
-		
-		ClientEnet.rpc_player_modify_profile.erase(key)
 	
 	#attack
 	for key in ClientEnet.rpc_player_attack_dic.keys():
@@ -157,8 +141,8 @@ func _process(_delta: float) -> void:
 		
 		ClientEnet.rpc_player_attack_dic.erase(key)
 	
-	var data = SocketClient.received_data()
-	var connection_status = WebsocketsConnection.socket_connection_status
+	var data = {}
+	var connection_status = "Connected"
 	
 	if connection_status == "Connected":		
 		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:

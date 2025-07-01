@@ -36,12 +36,14 @@ func _process(delta: float) -> void:
 		
 		location_label.text = "Vs\nLocation: %s" % [game_scene]
 		
+		"""
 		SocketClient.send_data({
 			"Socket_Name": "start_match",
 			"player_map": player_map,
 			"Match_RoomID": match_roomID,
 			"game_scene": game_scene
 		})
+		"""
 		
 		for key in player_list:
 			max_players += 1
@@ -50,11 +52,13 @@ func _process(delta: float) -> void:
 		
 	if began_to_load:	
 		if prev_value != player_loading_value:
+			"""
 			SocketClient.send_data({
 				"Socket_Name": "player_progress_interface",
 				"Player_ID": PlayerGlobalScript.player_game_id,
 				"loading_value": player_loading_value
 			})
+			"""
 			prev_value = player_loading_value
 			
 		player_loading_progress()
@@ -69,11 +73,12 @@ func _process(delta: float) -> void:
 				finished_players[key] = true
 				
 		if finished_players.size() == max_players:
+			"""
 			SocketClient.send_data({
 				"Socket_Name": "leave_lobby",
 				"Player_GameID": PlayerGlobalScript.player_game_id
 			})
-			
+			"""
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
@@ -99,6 +104,7 @@ func load_game_scene_resource(progress_bar: Control, delta: float):
 			is_player_load = false
 
 func player_loading_progress():
+	"""
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 	
@@ -110,6 +116,8 @@ func player_loading_progress():
 				for key in player_progress_instance_dic:
 					if key == data.get("Player_ID") and not key == PlayerGlobalScript.player_game_id:
 						player_progress_instance_dic[key].get_node("Player Loading").value = float(data.get("loading_value"))
+	"""
+	pass
 						
 func load_player_panel(id: String, ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()

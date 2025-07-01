@@ -12,6 +12,9 @@ extends Node
 #validation modal
 @onready var validation_modal = $"CanvasLayer/Validation Modal"
 
+#connection interface for validating connection
+@onready var connection_interface = $"CanvasLayer/Connection_Interface"
+
 #loading modal
 @onready var loading_modal = $"CanvasLayer/Loading Interface"
 
@@ -36,10 +39,7 @@ func _ready() -> void:
 	auto_login()
 	
 func _process(_delta: float) -> void:
-	var socket_status = WebsocketsConnection.socket_connection_status
-	
-	if not socket_status == "Connected":
-		validation_modal.visible = false
+	connection_interface.visible = ClientEnet.enet_connection_status == "Connected"
 
 func login_as_guest():
 	validation_modal.visible = true
@@ -131,6 +131,8 @@ func auto_login():
 				session_modal.visible = true
 				session_modal_anim.play("toast_anim")
 				
+	validation_modal.visible = false	
+		
 func save_username_local(username, login_token):
 	var now_unix = Time.get_unix_time_from_system()
 	var future_unix = now_unix + (30 * 86400)

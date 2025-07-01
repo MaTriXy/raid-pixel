@@ -37,9 +37,7 @@ func modal_status(status: bool):
 		PlayerGlobalScript.current_modal_open = isOpen
 	
 func _process(_delta: float) -> void:
-	var socket_status = WebsocketsConnection.socket_connection_status
-	
-	if socket_status == "Disconnected":
+	if ClientEnet.enet_connection_status == "Disconnected":
 		modal_panel.visible = false
 
 

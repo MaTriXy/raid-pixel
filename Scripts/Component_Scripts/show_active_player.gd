@@ -50,8 +50,6 @@ func load_player_list():
 		if prev_player_info != data and data.spawn_code == PlayerGlobalScript.spawn_player_code:
 			player_info_dic[key] = data
 			prev_player_info = data
-		
-		ClientEnet.rpc_player_active_dic.erase(key)
 
 	if not PlayerGlobalScript.current_modal_open and not PlayerGlobalScript.isModalOpen:
 		player_list_panel.visible = true
@@ -61,10 +59,11 @@ func load_player_list():
 		PlayerGlobalScript.isModalOpen = true
 		
 		#iterate to all player list
-		for gameID in player_info_dic.keys():
-			var player_dic = player_info_dic[gameID]
+		for peerID in player_info_dic.keys():
+			var player_dic = player_info_dic[peerID]
 			var username = player_dic.username
 			var ign = player_dic.ign
+			var gameID = player_dic.gameID
 			
 			var player_btn = player_name_button.duplicate()
 			player_btn.name = gameID

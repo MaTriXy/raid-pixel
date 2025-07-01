@@ -36,11 +36,13 @@ func _process(delta: float) -> void:
 			find_match_cancel_button.visible = true
 		
 func cancel_match():
+	"""
 	SocketClient.send_data({
 		"Socket_Name": "find_match",
 		"player_id": PlayerGlobalScript.player_game_id,
 		"status": "leave"
 	})
+	"""
 		
 	isFindMatchStart = false
 	find_match_timer = 0
@@ -61,6 +63,7 @@ func head_to_game():
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		
+		"""
 		SocketClient.send_data({
 			"Socket_Name": "find_match",
 			"player_id": PlayerGlobalScript.player_game_id,
@@ -69,6 +72,7 @@ func head_to_game():
 			"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
 			"status": "joined"
 		})
+		"""
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "door_anim":

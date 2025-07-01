@@ -24,7 +24,7 @@ module.exports = function(pool){
 
     route.post("/modifyPlayerCount", async (req, res)=>{
         try{
-            const query = await pool.query("UPDATE game_data SET player_count = GREATEST(player_count + $1, 0)", [req.body.count])
+            const query = await pool.query("UPDATE game_data SET player_count = GREATEST(player_count + $1, 0) RETURNING player_count", [req.body.count])
 
             let status = "Failed";
             let count = 0

@@ -109,14 +109,14 @@ func send_player_atk():
 		"isAttacking": isAttacking,
 		"gameID": PlayerGlobalScript.player_game_id
 	}
-	if WebsocketsConnection.socket_connection_status == "Connected":
-		if isAttacking:
-			last_data_atk_send = false
-			ClientEnet.send_to_server("player_attack", PlayerGlobalScript.player_game_id, player_data)
-		else:
-			if not last_data_atk_send:
-				last_data_atk_send = true
-				ClientEnet.send_to_server("player_attack", PlayerGlobalScript.player_game_id, player_data)
+	
+	if isAttacking:
+		last_data_atk_send = false
+		ClientEnet.send_to_server("player_attack", multiplayer.get_unique_id(), player_data)
+	else:
+		if not last_data_atk_send:
+			last_data_atk_send = true
+			ClientEnet.send_to_server("player_attack", multiplayer.get_unique_id(), player_data)
 
 func send_player_mov():
 	var player_pos = Vector2(PlayerGlobalScript.player_pos_X, PlayerGlobalScript.player_pos_Y)
@@ -130,24 +130,22 @@ func send_player_mov():
 		"ign": PlayerGlobalScript.player_in_game_name,
 		"gameID": PlayerGlobalScript.player_game_id,
 		"player_class": PlayerGlobalScript.player_class_game_type,
-		"username": PlayerGlobalScript.player_username
+		"username": PlayerGlobalScript.player_username,
+		"peerID": multiplayer.get_unique_id()
 	}
 
-	if WebsocketsConnection.socket_connection_status == "Connected":
-		if not isDataSend:
-			await get_tree().create_timer(0.5).timeout
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
-			isDataSend = true
-			
-		if not isMoving and not last_data_mov_send:
-			last_data_mov_send = true
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
-			
-		if isMoving and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
-			last_data_mov_send = false
-			ClientEnet.send_to_server("player_spawn_movement", PlayerGlobalScript.player_game_id, player_data)
-	else:
-		isDataSend = false
+	if not isDataSend:
+		await get_tree().create_timer(0.5).timeout
+		ClientEnet.send_to_server("player_spawn_movement", player_data.peerID, player_data)
+		isDataSend = true
+		
+	if not isMoving and not last_data_mov_send:
+		last_data_mov_send = true
+		ClientEnet.send_to_server("player_spawn_movement", player_data.peerID, player_data)
+		
+	if isMoving and not PlayerGlobalScript.isModalOpen and not PlayerGlobalScript.current_modal_open and not isDead:
+		last_data_mov_send = false
+		ClientEnet.send_to_server("player_spawn_movement", player_data.peerID, player_data)
 
 func player_health_bar_status():
 	if  PlayerGlobalScript.player_health <= 0.0:
