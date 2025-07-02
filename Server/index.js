@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 
 //Routers
 app.use("/accountRoute", require("./accountRoutes")(pool));
-app.use("/gameData", require("./gameDataRoute")(pool));
+app.use("/gameData", require("./gameDataRoute"));
 app.use("/playerInformation", require("./playerInformationRoute")(pool));
 
 //websocket server
@@ -59,14 +59,4 @@ require("./websocket_player_stuff")(wss);
 const PORT = process.env.PORT;
 expressServer.listen(PORT, async ()=>{
     console.log('Listening to port ' + PORT);
-    reset_playerCount(pool)
 });
-
-async function reset_playerCount(pool){
-    try{
-        await pool.query("UPDATE game_data SET player_count = $1", [0])
-    }
-    catch(err){
-        console.log(err);
-    }
-}

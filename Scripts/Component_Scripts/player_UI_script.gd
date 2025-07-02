@@ -81,13 +81,15 @@ var player_profile_class = PlayerProfile.new()
 var game_data_class = GameData.new()
 
 func _ready() -> void:
-	"""
-	ping_timer.wait_time = 4.0
-	ping_timer.timeout.connect(SocketClient.send_ping)
-	ping_timer.start()
-	"""
-	playerCount.text = "Active player/s: fetching..."
-
+	var ping_time = Timer.new()
+	ping_time.name = "ping time"
+	
+	add_child(ping_time)
+	
+	ping_time.wait_time = 2.0
+	ping_time.timeout.connect(ClientEnet.send_ping)
+	ping_time.start()
+	
 	guest_connect_success_panel_btn.connect("pressed", func(): status_panel(false, guest_connect_success_panel))
 	
 	global_message_modal.visible = false
@@ -172,15 +174,10 @@ func _ready() -> void:
 	
 	#for sending connected notification
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
-	
-	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": 1 })
-	
-	if player_count_res.has("status") and player_count_res["status"] == "Success":
-		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
 		
-	ClientEnet.send_to_server("player_count", multiplayer.get_unique_id(), { "count": PlayerGlobalScript.player_count_active })
+	PlayerGlobalScript.player_count_active = 1
+	ClientEnet.send_to_server("player_count", multiplayer.get_unique_id(), { "count": 1 })
 	
-		
 func log_out_action():
 	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_remote_sender_id() })
 	
@@ -320,6 +317,7 @@ func _process(_delta: float) -> void:
 	player_profile_class.render_player_profile_data(player_in_game_name_label, player_gameID_label, player_description_label)
 	
 	if PlayerGlobalScript.player_count_active != prev_player_count:
+		prev_player_count = PlayerGlobalScript.player_count_active
 		playerCount.text = "Active player/s: %s" % PlayerGlobalScript.player_count_active
 	
 	if prev_diamond != PlayerGlobalScript.player_diamond:
@@ -343,16 +341,17 @@ func _process(_delta: float) -> void:
 	connection_notify_main_player()
 	message_render_display()
 	
-	"""
-	SocketClient.output_ping()
+	update_ping(ClientEnet.enet_ping)
+	
+func update_ping(net_ping: int):
 	var color = "green"
 	var frame = 0
 	
-	if SocketClient.ping > 80:
+	if net_ping > 80:
 		frame = 2
 		color = "red"
 		
-	elif SocketClient.ping <= 80 and SocketClient.ping >= 30:
+	elif net_ping <= 80 and net_ping >= 30:
 		frame = 1 
 		color = "yellow"
 		
@@ -362,8 +361,7 @@ func _process(_delta: float) -> void:
 		
 	ping_render.frame = frame
 	ping_label.add_theme_color_override("default_color", color)
-	ping_label.text = str(SocketClient.ping) + "ms"
-	"""
+	ping_label.text = str(net_ping) + "ms"
 	
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("global_message"): #pressing enter

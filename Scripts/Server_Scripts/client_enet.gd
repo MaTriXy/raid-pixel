@@ -16,6 +16,10 @@ var stored_players: Dictionary
 #for connection
 var enet_connection_status: String
 
+#for ping
+var enet_ping = 0
+var enet_ping_time = 0
+
 func _ready():
 	join_server(host, server_port)
 
@@ -55,25 +59,21 @@ func remove_player_scene(id: int):
 	
 	if is_instance_valid(player_instance):
 		player_instance.queue_free()
-	
-	stored_players.erase(id)
 		
-	var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
-		
-	if ui_nodes_grp.size() > 0:
-		var node_grp = ui_nodes_grp[0]
-		node_grp.send_clients_notify_connection("Disconnected", joined_player_data["ign"], joined_player_data["gameID"])
-	
+	#check if account is guest so it will be deleted per logout or game exit
 	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": joined_player_data["username"] })
 
 	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
 		return
 	
-	await get_tree().create_timer(1.0).timeout
-	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": -1 })
+	send_to_server("player_count", multiplayer.get_unique_id(), { "count": -1 })
 	
-	if player_count_res.has("status") and player_count_res["status"] == "Success":
-		ClientEnet.send_to_server("player_count", multiplayer.get_unique_id(), { "count": int(player_count_res["count"]) })
+	var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
+	if ui_nodes_grp.size() > 0:
+		var node_grp = ui_nodes_grp[0]
+		node_grp.send_clients_notify_connection("Disconnected", joined_player_data["ign"], joined_player_data["gameID"])
+		
+	stored_players.erase(id)
 		
 func _on_connection_failed(id: int):
 	if id == multiplayer.get_unique_id():
@@ -85,14 +85,38 @@ func _on_connection_failed(id: int):
 func send_to_server(rpc_name: String, peerID: int, data: Dictionary):
 	rpc(rpc_name, peerID, data)
 	
-#recieving data
+@rpc("any_peer")
+func send_ping():
+	enet_ping_time = Time.get_ticks_msec()
+	print(enet_ping_time)
+	rpc("server_ping", enet_ping_time)
+	
+#recieving ping pong
+@rpc("any_peer", "reliable")
+func server_ping(ping_time: int):
+	var peer_id = multiplayer.get_remote_sender_id()
+	rpc_id(peer_id, "output_pong", ping_time)
+	
+@rpc("any_peer", "reliable")
+func output_pong(ping_time: int):
+	var current_time = Time.get_ticks_msec()
+	enet_ping = current_time - ping_time
+	
+#recieved data
 @rpc("any_peer", "reliable")
 func connection_notify(peerID: int, data: Dictionary):
 	rpc_player_connection_status[peerID] = data
 	
 @rpc("any_peer", "reliable")
 func player_count(peerID: int, data: Dictionary):
-	PlayerGlobalScript.player_count_active = data.count
+	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": data.count })
+	var count = 0
+	
+	if player_count_res.has("status") and player_count_res["status"] == "Success":
+		print(player_count_res["count"])
+		count = int(player_count_res["count"])
+		
+	PlayerGlobalScript.player_count_active = count
 	
 @rpc("any_peer", "reliable")
 func player_spawn_movement(peerID: int, data: Dictionary):
