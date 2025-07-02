@@ -52,7 +52,6 @@ func player_move_receieve(player_data: Dictionary):
 	var pos = player.player_pos
 	var last_dir_val = Vector2(player.last_direction_value.x, player.last_direction_value.y)
 	var ign = player.ign
-	var gameID = player.gameID
 	var direction_value = Vector2(player.direction_value.x, player.direction_value.y)
 	var isMoving = player.isMoving
 	var player_class = player.player_class
@@ -65,21 +64,18 @@ func player_move_receieve(player_data: Dictionary):
 			var joined_player = joined_player_data["Player"]
 			
 			ClientEnet.stored_players[peerID].ign = ign
-			ClientEnet.stored_players[peerID].gameID = gameID
 				
 			if is_instance_valid(joined_player):
 				joined_player.position = pos
 				joined_player.playerIGN = ign
 				joined_player.last_direction_value = last_dir_val
-				joined_player.player_game_id = gameID
 				joined_player.direction_value = direction_value
 				joined_player.isMoving = isMoving
 				joined_player.player_class = player_class
 			else:
 				var newPlayer = joined_player_scene.instantiate()
-				newPlayer.name = gameID
+				newPlayer.name = str(peerID)
 				newPlayer.playerIGN = ign
-				newPlayer.player_game_id = gameID
 				newPlayer.last_direction_value = last_dir_val
 				newPlayer.direction_value = direction_value
 				newPlayer.position = pos
@@ -92,10 +88,9 @@ func player_move_receieve(player_data: Dictionary):
 
 		if not ClientEnet.stored_players.has(peerID):
 			var player_ins = joined_player_scene.instantiate()
-			player_ins.name = gameID
+			player_ins.name = str(peerID)
 			player_ins.position = pos
 			player_ins.playerIGN = ign
-			player_ins.player_game_id = gameID
 			player_ins.last_direction_value = last_dir_val
 			player_ins.direction_value = direction_value
 			player_ins.isMoving = isMoving
@@ -107,13 +102,13 @@ func player_move_receieve(player_data: Dictionary):
 				
 				ClientEnet.stored_players[peerID] = {
 					"Player": player_ins,
-					"gameID": gameID,
 					"ign": ign,
 					"username": username,
+					"peerID": peerID
 				}
 						
 func player_attack_receive(player_data: Dictionary):
-	if ClientEnet.stored_players.has(player_data.gameID):
+	if ClientEnet.stored_players.has(player_data.peerID):
 		var joined_player_data = ClientEnet.stored_players[player_data.peerID]
 		var joined_player = joined_player_data["Player"]
 		

@@ -39,39 +39,37 @@ func join_server(ip: String, port: int):
 func _on_peer_connected(id: int):
 	if id == multiplayer.get_unique_id():
 		enet_connection_status = "Connected"
-	
-	if not PlayerGlobalScript.player_game_id:
-		PlayerGlobalScript.player_game_id = "GameID_%s" % [PlayerInfoStuff.string_generator(2)]
 		
 	print("Connected to server with ID: ", id)
 	
 func _on_peer_disconnected(id: int):
 	if id == multiplayer.get_unique_id():
 		enet_connection_status = "Disconnected"
+		
+		#check if account is guest so it will be deleted per logout or game exit
+		var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
+
+		if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
+			return
+		
+		update_player_count(-1)
+		
 	remove_player_scene(id)
 
 func remove_player_scene(id: int):
 	if not stored_players.has(id):
 		return
-		
+	
 	var joined_player_data = stored_players[id]
 	var player_instance = joined_player_data["Player"]
 	
 	if is_instance_valid(player_instance):
 		player_instance.queue_free()
-		
-	#check if account is guest so it will be deleted per logout or game exit
-	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": joined_player_data["username"] })
-
-	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
-		return
-	
-	send_to_server("player_count", multiplayer.get_unique_id(), { "count": -1 })
 	
 	var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 	if ui_nodes_grp.size() > 0:
 		var node_grp = ui_nodes_grp[0]
-		node_grp.send_clients_notify_connection("Disconnected", joined_player_data["ign"], joined_player_data["gameID"])
+		node_grp.send_clients_notify_connection("Disconnected", joined_player_data["ign"], joined_player_data["peerID"])
 		
 	stored_players.erase(id)
 		
@@ -88,7 +86,6 @@ func send_to_server(rpc_name: String, peerID: int, data: Dictionary):
 @rpc("any_peer")
 func send_ping():
 	enet_ping_time = Time.get_ticks_msec()
-	print(enet_ping_time)
 	rpc("server_ping", enet_ping_time)
 	
 #recieving ping pong
@@ -102,21 +99,29 @@ func output_pong(ping_time: int):
 	var current_time = Time.get_ticks_msec()
 	enet_ping = current_time - ping_time
 	
+#getting and updating player count
+@rpc("any_peer")
+func update_player_count(count: int):
+	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": count })
+
+	if player_count_res.has("status") and player_count_res["status"] == "Success":
+		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
+		
+	if count < 0:
+		send_player_count_to_clients()
+		
+@rpc("any_peer")
+func send_player_count_to_clients():
+	rpc("player_count", PlayerGlobalScript.player_count_active)
+
+@rpc("any_peer", "reliable")
+func player_count(count: int):
+	PlayerGlobalScript.player_count_active = count
+	
 #recieved data
 @rpc("any_peer", "reliable")
 func connection_notify(peerID: int, data: Dictionary):
 	rpc_player_connection_status[peerID] = data
-	
-@rpc("any_peer", "reliable")
-func player_count(peerID: int, data: Dictionary):
-	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": data.count })
-	var count = 0
-	
-	if player_count_res.has("status") and player_count_res["status"] == "Success":
-		print(player_count_res["count"])
-		count = int(player_count_res["count"])
-		
-	PlayerGlobalScript.player_count_active = count
 	
 @rpc("any_peer", "reliable")
 func player_spawn_movement(peerID: int, data: Dictionary):
@@ -135,13 +140,15 @@ func list_active_player(peerID: int, data: Dictionary):
 	rpc_player_active_dic[peerID] = data
 	
 @rpc("any_peer", "reliable")
+#TODO: fixthis, not updating on active player
 func modify_profile(peerID: int, data: Dictionary):		
 	var joined_player_data = stored_players[peerID]
 	var joined_player = joined_player_data["Player"]
 	
-	joined_player.name = joined_player_data.gameID
+	joined_player.name = str(peerID)
 	joined_player.playerIGN = joined_player_data.ign
 	
+	stored_players[peerID].ign = joined_player_data.ign
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
 	
 @rpc("any_peer", "reliable")

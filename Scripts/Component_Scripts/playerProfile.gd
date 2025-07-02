@@ -5,7 +5,7 @@ extends Node
 @onready var player_profile_view = $"Profile Modal/Profile View"
 
 var prev_IGN = ""
-var prev_gameID = ""
+var prev_peerID = 0
 var prev_description = ""
 
 #for profile
@@ -30,17 +30,16 @@ func edit_profile_status(status: bool, in_game_name_input: LineEdit, description
 	
 	preview_profile.texture = main_profile.texture
 
-func render_player_profile_data(player_in_game_name_label: RichTextLabel, player_gameID_label: RichTextLabel, player_description_label: RichTextLabel):
+func render_player_profile_data(player_in_game_name_label: RichTextLabel, player_peerID_label: RichTextLabel, player_description_label: RichTextLabel, peerID: int):
 	var inGameName = PlayerGlobalScript.player_in_game_name
-	var gameID = PlayerGlobalScript.player_game_id
 	
 	if prev_IGN != inGameName:
 		prev_IGN = inGameName
 		player_in_game_name_label.text = prev_IGN
 		
-	if prev_gameID != gameID:
-		prev_gameID = gameID
-		player_gameID_label.text = prev_gameID
+	if prev_peerID != peerID:
+		prev_peerID = peerID
+		player_peerID_label.text = str(prev_peerID)
 		
 	if prev_description != description_profile:
 		prev_description = description_profile

@@ -1,7 +1,6 @@
 const express = require("express");
 const route = express.Router();
-
-var server_player_count = 0
+let server_player_count = 0
 
 route.post("/modifyPlayerCount", async (req, res)=>{
     try{

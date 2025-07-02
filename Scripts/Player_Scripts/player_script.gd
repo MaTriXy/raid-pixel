@@ -107,7 +107,7 @@ func send_player_atk():
 	var player_data = {
 		"last_direction": last_direction_value,
 		"isAttacking": isAttacking,
-		"gameID": PlayerGlobalScript.player_game_id
+		"peerID": multiplayer.get_unique_id()
 	}
 	
 	if isAttacking:
@@ -128,7 +128,6 @@ func send_player_mov():
 		"last_direction_value": last_direction_value,
 		"direction_value": direction_value,
 		"ign": PlayerGlobalScript.player_in_game_name,
-		"gameID": PlayerGlobalScript.player_game_id,
 		"player_class": PlayerGlobalScript.player_class_game_type,
 		"username": PlayerGlobalScript.player_username,
 		"peerID": multiplayer.get_unique_id()

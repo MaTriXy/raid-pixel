@@ -23,7 +23,6 @@ var prev_pos = Vector2.ZERO
 var prev_ign = ""
 var prev_health = 0
 var player_class = ""
-var player_game_id = ""
 
 var damage_timer = 0
 var damage_cooldown = 0.5
@@ -108,7 +107,7 @@ func play_anim(anim_name):
 
 func player_health_bar_status():
 	if player_health <= 0.0:
-		GameBattleInfo.update_score_board(player_game_id, player_class)
+		#GameBattleInfo.update_score_board(player_game_id, player_class)
 
 		isDead = true
 		player_anim.play("death_anim")
@@ -124,7 +123,7 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
 		await get_tree().create_timer(0.5).timeout
 		#TODO: do something on this one bruh
-		GameBattleInfo.update_score_board(player_game_id, player_class)
+		#GameBattleInfo.update_score_board(player_game_id, player_class)
 		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		

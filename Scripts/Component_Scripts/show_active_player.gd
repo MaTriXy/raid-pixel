@@ -6,7 +6,7 @@ extends Node
 @export var player_name: RichTextLabel
 @export var player_description: RichTextLabel
 @export var player_profile: TextureRect
-@export var player_gameID: RichTextLabel
+@export var player_peerID: RichTextLabel
 
 @onready var player_list_panel = $"."
 @onready var player_list_container = $"Content Panel/Player's list container"
@@ -63,31 +63,30 @@ func load_player_list():
 			var player_dic = player_info_dic[peerID]
 			var username = player_dic.username
 			var ign = player_dic.ign
-			var gameID = player_dic.gameID
 			
 			var player_btn = player_name_button.duplicate()
-			player_btn.name = gameID
-			player_btn.text = "%s (%s)" % [ign, gameID]
+			player_btn.name = str(peerID)
+			player_btn.text = "%s (%s)" % [ign, peerID]
 			player_btn.visible = true
 			
-			if not player_list_container.has_node(gameID):
+			if not player_list_container.has_node(str(peerID)):
 				player_list_container.add_child(player_btn)
 			
-			player_btn.connect("mouse_entered", func(): mouse_over(gameID, username))
+			player_btn.connect("mouse_entered", func(): mouse_over(peerID, username))
 			player_btn.connect("mouse_exited", mouse_out)
 			
 func mouse_out():
 	current_username = ""
 	player_info_panel.visible = false
 				
-func mouse_over(gameID: String, username: String):
+func mouse_over(peerID: int, username: String):
 	current_username = username
 	
 	player_info_panel.visible = true
 	
 	player_name.text = "Fetching..."
 	player_description.text = "Fetching..."
-	player_gameID.text = "Fetching..."
+	player_peerID.text = "Fetching..."
 	player_profile.texture = no_profile
 	
 	if hover_timer != null:
@@ -97,17 +96,17 @@ func mouse_over(gameID: String, username: String):
 	await hover_timer
 	
 	if current_username == username:
-		await get_player_data(gameID, username)
+		await get_player_data(peerID, username)
 		
 	hover_timer = null
 
-func get_player_data(gameID: String, username: String):
+func get_player_data(peerID: int, username: String):
 	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "playerInformation/playerData", { "username": username })
 	
 	if result.has("status") and result["status"] == "Success":
 		player_name.text = result["inGameName"]
 		player_description.text = result["description"]
-		player_gameID.text = gameID
+		player_peerID.text = str(peerID)
 	
 		player_http_req.request(result["profile"])
 

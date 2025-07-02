@@ -41,7 +41,7 @@ extends Global_Message
 
 #profile panel contents
 @onready var player_in_game_name_label = $"Profile Modal/Panel/In Game Name Label"
-@onready var player_gameID_label = $"Profile Modal/Panel/Game ID Label"
+@onready var player_peerID_label = $"Profile Modal/Panel/Peer ID Label"
 @onready var player_description_label = $"Profile Modal/Panel/Description Label"
 @onready var player_profile_view = $"Profile Modal/Panel/Profile View"
 @onready var IGN_last_date_change = $"Profile Modal/Panel/IGN last date change"
@@ -168,19 +168,30 @@ func _ready() -> void:
 			"spawn_code": PlayerGlobalScript.spawn_player_code,
 			"username": PlayerGlobalScript.player_username,
 			"ign": PlayerGlobalScript.player_in_game_name,
-			"gameID": PlayerGlobalScript.player_game_id
 		}
 		ClientEnet.send_to_server("list_active_player", multiplayer.get_unique_id(), player_data)
 	
 	#for sending connected notification
-	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, PlayerGlobalScript.player_game_id)
+	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id())
 		
-	PlayerGlobalScript.player_count_active = 1
-	ClientEnet.send_to_server("player_count", multiplayer.get_unique_id(), { "count": 1 })
+	ClientEnet.update_player_count(1)
+	
+	await get_tree().create_timer(1.0).timeout
+	ClientEnet.send_player_count_to_clients()
 	
 func log_out_action():
 	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_remote_sender_id() })
 	
+	#check if account is guest so it will be deleted per logout or game exit
+	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
+
+	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
+		return
+		
+	await get_tree().create_timer(0.5).timeout
+	ClientEnet.update_player_count(-1)
+	
+	await get_tree().create_timer(0.5).timeout
 	game_data_class.player_logout(validation_modal, loading_modal)
 	
 func open_file_Dialog():
@@ -254,7 +265,6 @@ func save_profile_edit():
 			
 			var player_data = {
 				"spawn_code": PlayerGlobalScript.spawn_player_code,
-				"gameID": PlayerGlobalScript.player_game_id,
 				"ign": PlayerGlobalScript.player_in_game_name
 			}
 			ClientEnet.send_to_server("modify_profile", multiplayer.get_unique_id(), player_data)
@@ -314,7 +324,7 @@ func upgrade_account():
 		guestAccountButton.visible =  true if PlayerGlobalScript.player_account_type == "Guest" else false
 		
 func _process(_delta: float) -> void:
-	player_profile_class.render_player_profile_data(player_in_game_name_label, player_gameID_label, player_description_label)
+	player_profile_class.render_player_profile_data(player_in_game_name_label, player_peerID_label, player_description_label, multiplayer.get_unique_id())
 	
 	if PlayerGlobalScript.player_count_active != prev_player_count:
 		prev_player_count = PlayerGlobalScript.player_count_active
