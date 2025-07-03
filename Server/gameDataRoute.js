@@ -6,6 +6,10 @@ route.post("/modifyPlayerCount", async (req, res)=>{
     try{
         server_player_count += req.body.count
 
+        if(server_player_count <= 0){
+            server_player_count = 0
+        }
+
         console.log(server_player_count)
         res.status(200).json({ status: "Success", count: server_player_count })
     }

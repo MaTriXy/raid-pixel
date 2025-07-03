@@ -55,7 +55,6 @@ func player_move_receieve(player_data: Dictionary):
 	var direction_value = Vector2(player.direction_value.x, player.direction_value.y)
 	var isMoving = player.isMoving
 	var player_class = player.player_class
-	var username = player.username
 	var peerID = player.peerID
 	
 	if spawn_code == scene_code:
@@ -103,7 +102,6 @@ func player_move_receieve(player_data: Dictionary):
 				ClientEnet.stored_players[peerID] = {
 					"Player": player_ins,
 					"ign": ign,
-					"username": username,
 					"peerID": peerID
 				}
 						

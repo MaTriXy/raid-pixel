@@ -37,24 +37,29 @@ func join_server(ip: String, port: int):
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	
 func _on_peer_connected(id: int):
-	if id == multiplayer.get_unique_id():
+	if id == multiplayer.get_remote_sender_id():
 		enet_connection_status = "Connected"
 		
 	print("Connected to server with ID: ", id)
 	
 func _on_peer_disconnected(id: int):
-	if id == multiplayer.get_unique_id():
+	remove_player_scene(id)
+	
+	if id == multiplayer.get_remote_sender_id() and not PlayerGlobalScript.isLoggedOut:
+		print("is disconnect through game exit")
+		print("Removing player now with ID: %s " % id)
+		update_player_count(-1)
+	
 		enet_connection_status = "Disconnected"
 		
-		#check if account is guest so it will be deleted per logout or game exit
-		var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
+		remove_player_guest_acc()
 
-		if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
-			return
-		
-		update_player_count(-1)
-		
-	remove_player_scene(id)
+#check if account is guest so it will be deleted per logout or game exit
+func remove_player_guest_acc():
+	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
+
+	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
+		return
 
 func remove_player_scene(id: int):
 	if not stored_players.has(id):
@@ -74,7 +79,7 @@ func remove_player_scene(id: int):
 	stored_players.erase(id)
 		
 func _on_connection_failed(id: int):
-	if id == multiplayer.get_unique_id():
+	if id == multiplayer.get_remote_sender_id():
 		enet_connection_status = "Disconnected"
 	print("Failed to connect to server")
 
@@ -154,3 +159,9 @@ func modify_profile(peerID: int, data: Dictionary):
 @rpc("any_peer", "reliable")
 func player_left(peerID: int, _data: Dictionary):
 	remove_player_scene(peerID)
+	
+	if peerID == multiplayer.get_remote_sender_id():
+		print("is disconnect through logout")
+		print("Removing player now with ID: %s " % peerID)
+		update_player_count(-1)
+		remove_player_guest_acc()

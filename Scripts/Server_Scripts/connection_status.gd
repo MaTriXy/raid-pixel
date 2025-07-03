@@ -8,8 +8,6 @@ extends Node
 var isDisconnect = false
 
 func _ready() -> void:
-	PlayerGlobalScript.isLoggedOut = false
-		
 	connection_panel.visible = true
 	sprite_anim.play("Connecting_Anim")
 	retry_button.visible = false

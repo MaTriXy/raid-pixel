@@ -180,19 +180,10 @@ func _ready() -> void:
 	ClientEnet.send_player_count_to_clients()
 	
 func log_out_action():
-	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_remote_sender_id() })
-	
-	#check if account is guest so it will be deleted per logout or game exit
-	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
-
-	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
-		return
+	validation_modal.visible = true
+	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_unique_id() })
 		
-	await get_tree().create_timer(0.5).timeout
-	ClientEnet.update_player_count(-1)
-	
-	await get_tree().create_timer(0.5).timeout
-	game_data_class.player_logout(validation_modal, loading_modal)
+	game_data_class.player_logout(loading_modal)
 	
 func open_file_Dialog():
 	fileDialog.visible = true

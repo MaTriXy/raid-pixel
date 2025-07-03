@@ -129,7 +129,6 @@ func send_player_mov():
 		"direction_value": direction_value,
 		"ign": PlayerGlobalScript.player_in_game_name,
 		"player_class": PlayerGlobalScript.player_class_game_type,
-		"username": PlayerGlobalScript.player_username,
 		"peerID": multiplayer.get_unique_id()
 	}
 

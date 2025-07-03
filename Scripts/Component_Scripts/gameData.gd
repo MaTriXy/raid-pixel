@@ -1,15 +1,12 @@
 class_name GameData
-extends Node
 
 var prev_data: Dictionary
 	
-func player_logout(validation_modal: Control, loading_modal: Control):
+func player_logout(loading_modal: Control):
 	if FileAccess.file_exists("user://login_data.json"):
 		DirAccess.remove_absolute("user://login_data.json")
 		
 	PlayerGlobalScript.isLoggedOut = true
-	validation_modal.visible = true
-	
 	PlayerGlobalScript.isModalOpen = false
 	PlayerGlobalScript.isMainPlayerDead = false
 	PlayerGlobalScript.current_modal_open = false
