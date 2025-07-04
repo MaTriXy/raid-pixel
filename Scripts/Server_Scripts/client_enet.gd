@@ -23,6 +23,9 @@ var player_connected_dic: Dictionary
 var enet_ping = 0
 var enet_ping_time = 0
 
+#for player count
+var client_player_count = 0
+
 func join_server(ip: String, port: int):
 	var peer = ENetMultiplayerPeer.new()
 	var result = peer.create_client(ip, port)
@@ -37,14 +40,15 @@ func join_server(ip: String, port: int):
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	
 func _on_peer_connected(id: int):
+	client_player_count += 1
 	if id == multiplayer.get_remote_sender_id():
 		enet_connection_status = "Connected"
 		
 	print("Connected to server with ID: ", id)
 	
 func _on_peer_disconnected(id: int):
+	client_player_count -= 1
 	remove_player_scene(id)
-	update_player_count(-1)
 	
 	if player_connected_dic.has(id):
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
@@ -57,8 +61,6 @@ func _on_peer_disconnected(id: int):
 		player_connected_dic.erase(id)
 	
 	if id == multiplayer.get_remote_sender_id() and not PlayerGlobalScript.isLoggedOut:
-		print("is disconnect through game exit")
-		print("Removing player now with ID: %s " % id)
 		enet_connection_status = "Disconnected"
 
 #check if account is guest so it will be deleted per logout or game exit
@@ -82,13 +84,12 @@ func remove_player_scene(id: int):
 
 #getting and updating player count
 @rpc("any_peer")
-func update_player_count(count: int):
-	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": count })
-
-	if player_count_res.has("status") and player_count_res["status"] == "Success":
-		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
-		
-	rpc("player_count", PlayerGlobalScript.player_count_active)
+func update_player_count():
+	rpc("player_count", client_player_count)
+	
+@rpc("any_peer", "reliable")
+func player_count(count: int):
+	client_player_count = count
 	
 func _on_connection_failed(id: int):
 	if id == multiplayer.get_remote_sender_id():
@@ -115,10 +116,6 @@ func server_ping(ping_time: int):
 func output_pong(ping_time: int):
 	var current_time = Time.get_ticks_msec()
 	enet_ping = current_time - ping_time
-
-@rpc("any_peer", "reliable")
-func player_count(count: int):
-	PlayerGlobalScript.player_count_active = count
 	
 #recieved data
 @rpc("any_peer", "reliable")
@@ -144,7 +141,7 @@ func list_active_player(peerID: int, data: Dictionary):
 @rpc("any_peer", "reliable")
 func player_connected(id: int, data: Dictionary):
 	player_connected_dic[id] = { "username": data.username, "ign": data.ign }
-	rpc("player_count", PlayerGlobalScript.player_count_active)
+	rpc("player_count", client_player_count)
 	
 @rpc("any_peer", "reliable")
 #TODO: fixthis, not updating on active player

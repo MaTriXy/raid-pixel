@@ -45,8 +45,6 @@ var isMainPlayerDead: bool
 var isPlayerAttack: bool
 var is_game_scene_loaded: bool
 
-var player_count_active: int
-
 #for player match stuff
 var match_roomID: String
 var player_class_game_type: String

@@ -81,6 +81,8 @@ var player_profile_class = PlayerProfile.new()
 var game_data_class = GameData.new()
 
 func _ready() -> void:
+	ClientEnet.update_player_count()
+	
 	var ping_time = Timer.new()
 	ping_time.name = "ping time"
 	
@@ -170,16 +172,13 @@ func _ready() -> void:
 			"ign": PlayerGlobalScript.player_in_game_name,
 		}
 		ClientEnet.send_to_server("list_active_player", multiplayer.get_unique_id(), player_data)
-	
-	#for sending connected notification
+		
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id())
-	ClientEnet.update_player_count(1)
+	
 	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "username": PlayerGlobalScript.player_username, "ign": PlayerGlobalScript.player_in_game_name })
 	
 func log_out_action():
 	validation_modal.visible = true
-	multiplayer.multiplayer_peer = null
-		
 	game_data_class.player_logout(loading_modal)
 	
 func open_file_Dialog():
@@ -312,11 +311,12 @@ func upgrade_account():
 		guestAccountButton.visible =  true if PlayerGlobalScript.player_account_type == "Guest" else false
 		
 func _process(_delta: float) -> void:
-	player_profile_class.render_player_profile_data(player_in_game_name_label, player_peerID_label, player_description_label, multiplayer.get_unique_id())
+	if multiplayer.has_multiplayer_peer():
+		player_profile_class.render_player_profile_data(player_in_game_name_label, player_peerID_label, player_description_label, multiplayer.get_unique_id())
 	
-	if PlayerGlobalScript.player_count_active != prev_player_count:
-		prev_player_count = PlayerGlobalScript.player_count_active
-		playerCount.text = "Active player/s: %s" % PlayerGlobalScript.player_count_active
+	if ClientEnet.client_player_count != prev_player_count:
+		prev_player_count = ClientEnet.client_player_count
+		playerCount.text = "Active player/s: %s" % ClientEnet.client_player_count
 	
 	if prev_diamond != PlayerGlobalScript.player_diamond:
 		prev_diamond = PlayerGlobalScript.player_diamond

@@ -25,7 +25,6 @@ func player_logout(loading_modal: Control):
 	PlayerGlobalScript.player_class_game_type = ""
 	PlayerGlobalScript.game_scene_name = ""
 	PlayerGlobalScript.is_game_scene_loaded = false
-	PlayerGlobalScript.player_count_active = 0
 	
 	ClientEnet.stored_players.clear()
 	
