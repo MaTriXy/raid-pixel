@@ -60,10 +60,11 @@ func _process(_delta: float) -> void:
 			move_player_animation()
 	
 	player_sprite.visible = PlayerGlobalScript.main_player_spawned
-		
-	send_player_mov()
-	send_player_atk()
-	player_health_bar_status()
+	
+	if multiplayer.has_multiplayer_peer():
+		send_player_mov()
+		send_player_atk()
+		player_health_bar_status()
 	
 	if prev_coordinates != Vector2($".".position.x, $".".position.y):
 		PlayerGlobalScript.player_pos_X = $".".position.x

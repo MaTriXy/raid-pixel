@@ -16,12 +16,12 @@ var stored_players: Dictionary
 #for connection
 var enet_connection_status: String
 
+#for storing player connected
+var player_connected_dic: Dictionary
+
 #for ping
 var enet_ping = 0
 var enet_ping_time = 0
-
-func _ready():
-	join_server(host, server_port)
 
 func join_server(ip: String, port: int):
 	var peer = ENetMultiplayerPeer.new()
@@ -44,19 +44,26 @@ func _on_peer_connected(id: int):
 	
 func _on_peer_disconnected(id: int):
 	remove_player_scene(id)
+	update_player_count(-1)
+	
+	if player_connected_dic.has(id):
+		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
+		
+		if ui_nodes_grp.size() > 0:
+			var node_grp = ui_nodes_grp[0]
+			node_grp.send_clients_notify_connection("Disconnected", player_connected_dic[id].ign, id)
+		
+		remove_player_guest_acc(player_connected_dic[id].username)
+		player_connected_dic.erase(id)
 	
 	if id == multiplayer.get_remote_sender_id() and not PlayerGlobalScript.isLoggedOut:
 		print("is disconnect through game exit")
 		print("Removing player now with ID: %s " % id)
-		update_player_count(-1)
-	
 		enet_connection_status = "Disconnected"
-		
-		remove_player_guest_acc()
 
 #check if account is guest so it will be deleted per logout or game exit
-func remove_player_guest_acc():
-	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": PlayerGlobalScript.player_username })
+func remove_player_guest_acc(username: String):
+	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": username })
 
 	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
 		return
@@ -71,13 +78,18 @@ func remove_player_scene(id: int):
 	if is_instance_valid(player_instance):
 		player_instance.queue_free()
 	
-	var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
-	if ui_nodes_grp.size() > 0:
-		var node_grp = ui_nodes_grp[0]
-		node_grp.send_clients_notify_connection("Disconnected", joined_player_data["ign"], joined_player_data["peerID"])
-		
 	stored_players.erase(id)
+
+#getting and updating player count
+@rpc("any_peer")
+func update_player_count(count: int):
+	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": count })
+
+	if player_count_res.has("status") and player_count_res["status"] == "Success":
+		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
 		
+	rpc("player_count", PlayerGlobalScript.player_count_active)
+	
 func _on_connection_failed(id: int):
 	if id == multiplayer.get_remote_sender_id():
 		enet_connection_status = "Disconnected"
@@ -103,21 +115,6 @@ func server_ping(ping_time: int):
 func output_pong(ping_time: int):
 	var current_time = Time.get_ticks_msec()
 	enet_ping = current_time - ping_time
-	
-#getting and updating player count
-@rpc("any_peer")
-func update_player_count(count: int):
-	var player_count_res = await ServerFetch.send_post_request(ServerFetch.backend_url + "gameData/modifyPlayerCount", { "count": count })
-
-	if player_count_res.has("status") and player_count_res["status"] == "Success":
-		PlayerGlobalScript.player_count_active = int(player_count_res["count"])
-		
-	if count < 0:
-		send_player_count_to_clients()
-		
-@rpc("any_peer")
-func send_player_count_to_clients():
-	rpc("player_count", PlayerGlobalScript.player_count_active)
 
 @rpc("any_peer", "reliable")
 func player_count(count: int):
@@ -145,6 +142,11 @@ func list_active_player(peerID: int, data: Dictionary):
 	rpc_player_active_dic[peerID] = data
 	
 @rpc("any_peer", "reliable")
+func player_connected(id: int, data: Dictionary):
+	player_connected_dic[id] = { "username": data.username, "ign": data.ign }
+	rpc("player_count", PlayerGlobalScript.player_count_active)
+	
+@rpc("any_peer", "reliable")
 #TODO: fixthis, not updating on active player
 func modify_profile(peerID: int, data: Dictionary):		
 	var joined_player_data = stored_players[peerID]
@@ -154,14 +156,5 @@ func modify_profile(peerID: int, data: Dictionary):
 	joined_player.playerIGN = joined_player_data.ign
 	
 	stored_players[peerID].ign = joined_player_data.ign
+	player_connected_dic[peerID].ign = joined_player_data.ign
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
-	
-@rpc("any_peer", "reliable")
-func player_left(peerID: int, _data: Dictionary):
-	remove_player_scene(peerID)
-	
-	if peerID == multiplayer.get_remote_sender_id():
-		print("is disconnect through logout")
-		print("Removing player now with ID: %s " % peerID)
-		update_player_count(-1)
-		remove_player_guest_acc()

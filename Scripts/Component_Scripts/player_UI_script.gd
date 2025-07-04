@@ -173,15 +173,12 @@ func _ready() -> void:
 	
 	#for sending connected notification
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id())
-		
 	ClientEnet.update_player_count(1)
-	
-	await get_tree().create_timer(1.0).timeout
-	ClientEnet.send_player_count_to_clients()
+	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "username": PlayerGlobalScript.player_username, "ign": PlayerGlobalScript.player_in_game_name })
 	
 func log_out_action():
 	validation_modal.visible = true
-	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), { "peerID": multiplayer.get_unique_id() })
+	multiplayer.multiplayer_peer = null
 		
 	game_data_class.player_logout(loading_modal)
 	

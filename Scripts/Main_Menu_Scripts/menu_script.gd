@@ -36,6 +36,8 @@ func _ready() -> void:
 	login_proceed_btn.connect("pressed", proceed_login)
 	online_warn_button.connect("pressed", func(): online_warn.visible = false)
 	
+	ClientEnet.join_server(ClientEnet.host, ClientEnet.server_port)
+		
 	auto_login()
 	
 func _process(_delta: float) -> void:
