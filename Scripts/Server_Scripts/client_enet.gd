@@ -19,6 +19,10 @@ var enet_connection_status: String
 #for storing player connected
 var player_connected_dic: Dictionary
 
+#for find match player
+var player_queue_match: Dictionary
+var match_max_player = 2
+
 #for ping
 var enet_ping = 0
 var enet_ping_time = 0
@@ -155,3 +159,13 @@ func modify_profile(peerID: int, data: Dictionary):
 	stored_players[peerID].ign = joined_player_data.ign
 	player_connected_dic[peerID].ign = joined_player_data.ign
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
+
+#TODO: fix this later on
+func find_match(peerID: int, data: Dictionary):
+	var match_data = { "player_data": data }
+	
+	if not player_queue_match.has(peerID):
+		player_queue_match[peerID].match_data = match_data
+		
+		
+		

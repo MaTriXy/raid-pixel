@@ -179,6 +179,7 @@ func _ready() -> void:
 	
 func log_out_action():
 	validation_modal.visible = true
+	ClientEnet.remove_player_guest_acc(PlayerGlobalScript.player_username)
 	game_data_class.player_logout(loading_modal)
 	
 func open_file_Dialog():

@@ -34,6 +34,23 @@ func _process(delta: float) -> void:
 		
 		if seconds >= 10.0:
 			find_match_cancel_button.visible = true
+			
+func string_generator(size: int):
+	var letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l",
+	"m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+	var nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+	
+	var randomNum = RandomNumberGenerator.new()
+	var result : String = ""
+	
+	for i in range(size):
+		var char_index = randomNum.randi_range(0, len(letters) - 1)
+		var num_index = randomNum.randi_range(0, len(nums) - 1)
+		
+		var temp_name = "%s%s" % [letters[char_index], nums[num_index]]
+		result += temp_name
+	
+	return result
 		
 func cancel_match():
 	"""
@@ -63,16 +80,15 @@ func head_to_game():
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		
-		"""
-		SocketClient.send_data({
-			"Socket_Name": "find_match",
-			"player_id": PlayerGlobalScript.player_game_id,
-			"player_ign": PlayerGlobalScript.player_in_game_name,
-			"player_profile": PlayerGlobalScript.player_profile,
-			"match_ID": "match_%s" % [PlayerInfoStuff.string_generator(5)],
+		var match_info = {
+			"peerID": multiplayer.get_unique_id(),
+			"ign": PlayerGlobalScript.player_in_game_name,
+			"profile": PlayerGlobalScript.player_profile,
+			"match_ID": "match_%s" % string_generator(5),
 			"status": "joined"
-		})
-		"""
+		}
+		
+		ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "door_anim":
