@@ -26,6 +26,10 @@ extends Node
 @onready var online_warn = $"CanvasLayer/Online Panel Warning"
 @onready var online_warn_button = $"CanvasLayer/Online Panel Warning/Panel/Okay Button"
 
+#Ui components display
+@onready var playerCount = $"CanvasLayer/Player Count"
+var prev_player_count = 0
+
 func _ready() -> void:
 	warning_text.text = ""
 	session_modal.visible = false
@@ -42,11 +46,32 @@ func _ready() -> void:
 	
 func _process(_delta: float) -> void:
 	connection_interface.visible = ClientEnet.enet_connection_status == "Connected"
+	
+	if ClientEnet.client_player_count != prev_player_count:
+		prev_player_count = ClientEnet.client_player_count
+		playerCount.text = "Active player/s: %s" % ClientEnet.client_player_count
+
+func string_generator(size: int):
+	var letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l",
+	"m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
+	var nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
+	
+	var randomNum = RandomNumberGenerator.new()
+	var result : String = ""
+	
+	for i in range(size):
+		var char_index = randomNum.randi_range(0, len(letters) - 1)
+		var num_index = randomNum.randi_range(0, len(nums) - 1)
+		
+		var temp_name = "%s%s" % [letters[char_index], nums[num_index]]
+		result += temp_name
+	
+	return result
 
 func login_as_guest():
 	validation_modal.visible = true
 	
-	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % [PlayerInfoStuff.string_generator(4)] })
+	var createGuestAccount = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/createGuestAccount", { "username": "Guest_%s" % string_generator(4) })
 	
 	if createGuestAccount.has("status") and createGuestAccount["status"] == "Success":
 		PlayerGlobalScript.player_UUID = createGuestAccount["login_token"]
@@ -107,7 +132,7 @@ func auto_login():
 		
 		if typeof(parsed) == TYPE_DICTIONARY:
 			if parsed["expiration"] > current_unix:
-				var client_token = "Client_tokenID_%s" % [PlayerInfoStuff.string_generator(5)]
+				var client_token = "Client_tokenID_%s" % string_generator(5)
 				var account_validate_result = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/auth_auto_login", { "username": parsed["player_username"], "login_token": parsed["login_token"], "client_token": { "username": parsed["player_username"], "token": client_token }})
 		
 				if account_validate_result["status"] == "Success":

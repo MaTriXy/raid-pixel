@@ -5,8 +5,6 @@ const { createServer } = require('http');
 const expressServer = createServer(app);
 const bodyParser = require('body-parser')
 
-const { WebSocketServer } = require("ws");
-
 //other necessary things such as file path etc
 const path = require('path');
 
@@ -47,12 +45,6 @@ app.get('/', (req, res) => {
 //Routers
 app.use("/accountRoute", require("./accountRoutes")(pool));
 app.use("/playerInformation", require("./playerInformationRoute")(pool));
-
-//websocket server
-const wss = new WebSocketServer({ server: expressServer });
-
-require("./websocket_game_stuff")(wss, pool);
-require("./websocket_player_stuff")(wss);
 
 //listen to port
 const PORT = process.env.PORT;
