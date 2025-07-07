@@ -34,7 +34,7 @@ func _process(delta: float) -> void:
 		
 		if seconds >= 10.0:
 			find_match_cancel_button.visible = true
-		
+
 func cancel_match():
 	var match_info = {
 		"peerID": multiplayer.get_unique_id(),
@@ -43,7 +43,7 @@ func cancel_match():
 		"status": "leave"
 	}
 	
-	ClientEnet.find_match(match_info)
+	ClientEnet.queue_match(match_info.peerID, match_info)
 		
 	isFindMatchStart = false
 	find_match_timer = 0
@@ -71,7 +71,8 @@ func head_to_game():
 			"status": "joined"
 		}
 		
-		ClientEnet.find_match(match_info)
+		ClientEnet.queue_match(match_info.peerID, match_info)
+		ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "door_anim":
