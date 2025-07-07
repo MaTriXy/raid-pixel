@@ -12,7 +12,9 @@ var rpc_player_active_dic: Dictionary
 
 #for find match player
 var player_queue_match: Dictionary
-var match_player_arr: Array
+var match_player_dic: Dictionary
+var is_player_full = false
+var player_match_count = 0
 
 #collection for player spawn
 var stored_players: Dictionary
@@ -54,8 +56,8 @@ func _on_peer_disconnected(id: int):
 	client_player_count -= 1
 	remove_player_scene(id)
 	
-	if match_player_arr.has(id):
-		match_player_arr.erase(id)
+	if match_player_dic.has(id):
+		match_player_dic.erase(id)
 	
 	if player_connected_dic.has(id):
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
@@ -185,60 +187,35 @@ func string_generator(size: int):
 func find_match(peerID: int, data: Dictionary):
 	queue_match(peerID, data)
 
-#TODO: fix this later on
 func queue_match(peerID: int, data: Dictionary):
 	var match_max_player = 2
-	var already_in_list = false
 	
 	#check if players are already on temp array
-	if not match_player_arr.has(peerID):
-		match_player_arr.append(peerID)
+	if not match_player_dic.has(peerID):
+		player_match_count += 1
+		var player_class = "Defender" if player_match_count % 2 == 0 else "Attacker"
+		match_player_dic[peerID] = { "ign": data.ign, "profile": data.profile, "peerID": peerID, "class": player_class }
 		
 	#check if player cancel the queue
 	if data.status == "leave":
-		match_player_arr.erase(peerID)
-		
-	print(match_player_arr)
-	print(match_player_arr.size() >= match_max_player)
+		match_player_dic.erase(peerID)
 	
 	#check if the temp array is full
-	if match_player_arr.size() >= match_max_player:
-		var game_scene = ["Grassy Land"]
-		var match_ID = "match_%s" % string_generator(5)
-		
-		#add player to the player queue match
-		player_queue_match[match_ID] = {
-			"match_ID": match_ID,
-			"game_scene": game_scene[0],
-			"player_list": {} 
-		}
-	
-		#add player data to the player list
-		var player_list = player_queue_match[match_ID]["player_list"]
-		var player_data = { "ign": data.ign, "profile": data.profile, "peerID": peerID }
-		player_list[peerID] = player_data
-		
-		#for player class
-		if player_list.size() >= match_max_player:
-			var player_key_count = 0
-			for key in player_list.keys():
-				player_key_count += 1
-				player_list[key]["class"] = "Defender" if player_key_count % 2 == 0 else "Attacker"
-			
-			for id in player_list:
-				send_to_server("start_match", id, match_ID)
-				
-		print(player_list)
+	if match_player_dic.size() >= match_max_player:
+		send_to_server("start_match", peerID, match_player_dic)
 			
 		#clear the temporary array
-		match_player_arr.clear()
+		match_player_dic.clear()
 
 @rpc("any_peer", "reliable")
-func start_match(match_dic_key: String):
-	print(player_queue_match)
-	print("\n\n")
-	if player_queue_match.has(match_dic_key):
-		print(player_queue_match[match_dic_key])
-
-		player_queue_match.erase(match_dic_key)
+func start_match(_peerID: int, player_data: Dictionary):
+	var game_scene = ["Grassy Land"]
+	
+	#add player to the player queue match
+	player_queue_match = {
+		"game_scene": game_scene[0],
+		"player_list": player_data
+	}
+	
+	is_player_full = true
 		

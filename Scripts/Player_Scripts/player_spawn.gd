@@ -24,9 +24,6 @@ var game_scene_spawn_coords = {
 	} 
 }
 
-#for loading modal
-@export var player_loading_modal: Control
-
 func _ready() -> void:
 	death_panel.visible = false
 	spawner_animation.play("spawner_spawn")
@@ -138,38 +135,7 @@ func _process(_delta: float) -> void:
 	var connection_status = "Connected"
 	
 	if connection_status == "Connected":		
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name") in ["find_match", "start_match"]:
-			prev_data = data
-
-			await get_tree().process_frame
-			if data.has("player_map") and data.has("Match_RoomID") and data.has("game_scene"):		
-				player_loading_modal.player_map = data.get("player_map")
-				player_loading_modal.match_roomID = data.get("Match_RoomID")
-				player_loading_modal.game_scene = data.get("game_scene")
-			
-				for map in data.get("player_map"):
-					if map.id == PlayerGlobalScript.player_game_id:
-						PlayerGlobalScript.player_class_game_type = map.class
-					
-					player_loading_modal.player_list[map.id] = { "ign": map.ign, "profile": map.profile, "class": map.class }
-					
-					GameBattleInfo.player_populate_dic[map.id] = {
-						"ign": map.ign,
-						"profile": map.profile,
-						"class": map.class,
-						"kills": 0,
-						"deaths": 0
-					}
-					GameBattleInfo.player_populate_size = GameBattleInfo.player_populate_dic.size()
-					
-				PlayerGlobalScript.match_roomID = "_%s" % [data.get("Match_RoomID")]
-				PlayerGlobalScript.game_scene_name = data.get("game_scene")
-				
-				if not player_loading_modal.visible:
-					player_loading_modal.visible = true
-					player_loading_modal.is_player_load = true
-		
-		elif data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game_%s" % PlayerGlobalScript.spawn_player_code:
+		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game_%s" % PlayerGlobalScript.spawn_player_code:
 			prev_data = data
 			
 			if data.has("match_roomID") and PlayerGlobalScript.match_roomID == data.get("match_roomID"):

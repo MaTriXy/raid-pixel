@@ -7,84 +7,52 @@ extends Node
 
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
-var player_list = {}
-var is_player_load = false
-var is_start_loading = false
-
 var prev_value = 0
-var prev_data = {}
 
 #for progress bar
 var player_progress_instance_dic = {}
 var finished_players = {}
-var max_players = 0
 var player_loading_value = 0.0
-var began_to_load = false
-
-#this is for the fallback
-var player_map: Array
-var match_roomID: String
-var game_scene: String
-
-func _ready() -> void:
-	$".".visible = false
+var is_player_done_load = false
 
 func _process(delta: float) -> void:
-	if is_player_load and not is_start_loading:
+	if ClientEnet.is_player_full:
+		ClientEnet.is_player_full = false
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		
-		location_label.text = "Vs\nLocation: %s" % [game_scene]
+		var match_data = ClientEnet.player_queue_match
+		var player_list = match_data.player_list
+		location_label.text = "Vs\nLocation: %s" % [match_data.game_scene]
 		
-		"""
-		SocketClient.send_data({
-			"Socket_Name": "start_match",
-			"player_map": player_map,
-			"Match_RoomID": match_roomID,
-			"game_scene": game_scene
-		})
-		"""
-		
-		for key in player_list:
-			max_players += 1
-			load_player_panel(key, player_list[key].get("ign"), player_list[key].get("class"), player_list[key].get("profile"))
-		is_start_loading = true
-		
-	if began_to_load:	
-		if prev_value != player_loading_value:
-			"""
-			SocketClient.send_data({
-				"Socket_Name": "player_progress_interface",
-				"Player_ID": PlayerGlobalScript.player_game_id,
-				"loading_value": player_loading_value
-			})
-			"""
-			prev_value = player_loading_value
+		#for player list
+		for key in player_list.keys():
+			var data = player_list[key]
+			var player_ign = data.ign
+			var player_profile = data.profile
+			var player_class = data.class
 			
-		player_loading_progress()
+			load_player_panel(key, player_ign, player_class, player_profile)
 		
-		for key in player_progress_instance_dic:
+		#for all panel that load
+		for key in player_progress_instance_dic.keys():
 			var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
 			
-			if key == PlayerGlobalScript.player_game_id:
+			if key == multiplayer.get_unique_id():
 				load_game_scene_resource(progress_bar, delta)
 				
 			if progress_bar.value >= 100.0:
 				finished_players[key] = true
 				
-		if finished_players.size() == max_players:
-			"""
-			SocketClient.send_data({
-				"Socket_Name": "leave_lobby",
-				"Player_GameID": PlayerGlobalScript.player_game_id
-			})
-			"""
+		#for player progress
+		player_loading_progress()
+			
+		if is_player_done_load:
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
-			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 			
 func start_to_load():
-	began_to_load = true
 	ResourceLoader.load_threaded_request("res://Scenes/game_scene.tscn")
 			
 func load_game_scene_resource(progress_bar: Control, delta: float):
@@ -101,7 +69,7 @@ func load_game_scene_resource(progress_bar: Control, delta: float):
 
 		# "done" loading :)
 		if progress_bar.value >= 99:
-			is_player_load = false
+			is_player_done_load = true
 
 func player_loading_progress():
 	"""
@@ -119,17 +87,17 @@ func player_loading_progress():
 	"""
 	pass
 						
-func load_player_panel(id: String, ign: String, class_type: String, profile: String):
+func load_player_panel(id: int, ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()
 	player_panel_instance.visible = true
-	player_panel_instance.name = "%s_instance" % [id]
+	player_panel_instance.name = "%s_instance" % id
 	
-	var label_text = " (You)" if id == PlayerGlobalScript.player_game_id else ""
+	var label_text = " (You)" if id == multiplayer.get_unique_id() else ""
 	player_panel_instance.get_node("Info Player Name").text = "%s%s" % [ign, label_text]
 	
 	player_progress_instance_dic[id] = player_panel_instance
 	
-	if id == PlayerGlobalScript.player_game_id:
+	if id == multiplayer.get_unique_id():
 		start_to_load()
 	
 	if not player_panel_instance.is_inside_tree():
@@ -145,7 +113,7 @@ func load_player_panel(id: String, ign: String, class_type: String, profile: Str
 	else:
 		player_panel_instance.get_node("Info Profile").texture = no_profile
 
-func load_player_profile(id: String, profile_url: String):
+func load_player_profile(id: int, profile_url: String):
 	var player_http_req = HTTPRequest.new()
 	player_http_req.name = "Player_info_%s" % [id]
 	

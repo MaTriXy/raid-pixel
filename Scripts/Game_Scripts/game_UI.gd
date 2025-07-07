@@ -83,17 +83,8 @@ func start_game():
 	if not isPlayerScore_populate:
 		player_populate_battle_info()
 	
-	SocketClient.send_data({
-		"Socket_Name": "start_game_%s" % PlayerGlobalScript.spawn_player_code,
-		"match_roomID": PlayerGlobalScript.match_roomID,
-		"spawn_code": PlayerGlobalScript.spawn_player_code
-	})
-	
 func start_timer():
-	SocketClient.send_data({
-		"Socket_Name": "game_is_start_%s" % PlayerGlobalScript.spawn_player_code,
-		"spawn_code": PlayerGlobalScript.spawn_player_code
-	})
+	pass
 
 func game_end():
 	print("Game ended")
@@ -152,6 +143,7 @@ func player_populate_battle_info():
 		isPlayerScore_populate = true
 	
 func game_scene_socket_data():
+	"""
 	var data = SocketClient.received_data()
 	var connection_status = WebsocketsConnection.socket_connection_status
 
@@ -174,6 +166,7 @@ func game_scene_socket_data():
 				
 				if minutes <= 0 and seconds <= 0:
 					game_end()
+	"""
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()
