@@ -7,17 +7,18 @@ extends Node
 
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
-var prev_value = 0
-
 #for progress bar
 var player_progress_instance_dic = {}
 var finished_players = {}
 var player_loading_value = 0.0
-var is_player_done_load = false
+var prev_data: Dictionary
+var max_players = 0
 
 func _process(delta: float) -> void:
-	if ClientEnet.is_player_full:
+	if ClientEnet.is_player_full and ClientEnet.isMatching:
 		ClientEnet.is_player_full = false
+		ClientEnet.isMatching = false
+		
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		
@@ -34,28 +35,27 @@ func _process(delta: float) -> void:
 			
 			load_player_panel(key, player_ign, player_class, player_profile)
 		
-		#for all panel that load
-		for key in player_progress_instance_dic.keys():
-			var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+		max_players = player_list.size()
+		ClientEnet.player_queue_match.clear()
+		
+	#for all panel that load
+	for key in player_progress_instance_dic.keys():
+		var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+		
+		if key == multiplayer.get_unique_id():
+			ClientEnet.send_to_server("player_progress_bar", multiplayer.get_unique_id(), { "value": progress_bar.value })
+			load_game_scene_resource(progress_bar, delta)
 			
-			if key == multiplayer.get_unique_id():
-				load_game_scene_resource(progress_bar, delta)
-				
 			if progress_bar.value >= 100.0:
 				finished_players[key] = true
 				
-		#for player progress
-		player_loading_progress()
-			
-		if is_player_done_load:
-			PlayerGlobalScript.isModalOpen = false
-			PlayerGlobalScript.current_modal_open = false
-			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+	#for player progress
+	player_loading_progress()
 			
 func start_to_load():
 	ResourceLoader.load_threaded_request("res://Scenes/game_scene.tscn")
 			
-func load_game_scene_resource(progress_bar: Control, delta: float):
+func load_game_scene_resource(progress_bar: ProgressBar, delta: float):
 	var progress = []
 	var status = ResourceLoader.load_threaded_get_status("res://Scenes/game_scene.tscn", progress)
 
@@ -68,24 +68,25 @@ func load_game_scene_resource(progress_bar: Control, delta: float):
 		progress_bar.value = move_toward(progress_bar.value, 100.0, delta * 150)
 
 		# "done" loading :)
-		if progress_bar.value >= 99:
-			is_player_done_load = true
+		if progress_bar.value >= 99 and finished_players.size() == max_players:
+			PlayerGlobalScript.isModalOpen = false
+			PlayerGlobalScript.current_modal_open = false
+			
+			print("All players are loaded %s" % finished_players.size())
+			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 
 func player_loading_progress():
-	"""
-	var data = SocketClient.received_data()
-	var connection_status = WebsocketsConnection.socket_connection_status
-	
-	if connection_status == "Connected":
-		if data.get("Socket_Name") and prev_data != data and data.get("Socket_Name") == "player_progress_interface":
-			prev_data = data
-	
-			if data.has("Player_ID") and data.has("loading_value"):
-				for key in player_progress_instance_dic:
-					if key == data.get("Player_ID") and not key == PlayerGlobalScript.player_game_id:
-						player_progress_instance_dic[key].get_node("Player Loading").value = float(data.get("loading_value"))
-	"""
-	pass
+	for key in ClientEnet.player_progress_bar_val.keys():
+		var data = ClientEnet.player_progress_bar_val[key]
+		var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+		
+		if prev_data != data and progress_bar:
+			progress_bar.value = data.value
+			
+			if data.value >= 100.0:
+				finished_players[key] = true
+			
+		ClientEnet.player_progress_bar_val.erase(key)
 						
 func load_player_panel(id: int, ign: String, class_type: String, profile: String):
 	var player_panel_instance = player_panel_scene.duplicate()

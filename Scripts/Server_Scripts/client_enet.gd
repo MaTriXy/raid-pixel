@@ -13,8 +13,10 @@ var rpc_player_active_dic: Dictionary
 #for find match player
 var player_queue_match: Dictionary
 var match_player_dic: Dictionary
+var player_progress_bar_val: Dictionary
 var is_player_full = false
 var player_match_count = 0
+var isMatching = false
 
 #collection for player spawn
 var stored_players: Dictionary
@@ -166,26 +168,13 @@ func modify_profile(peerID: int, data: Dictionary):
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
 	
 #for find match only
-func string_generator(size: int):
-	var letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l",
-	"m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"]
-	var nums = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
-	
-	var randomNum = RandomNumberGenerator.new()
-	var result : String = ""
-	
-	for i in range(size):
-		var char_index = randomNum.randi_range(0, len(letters) - 1)
-		var num_index = randomNum.randi_range(0, len(nums) - 1)
-		
-		var temp_name = "%s%s" % [letters[char_index], nums[num_index]]
-		result += temp_name
-	
-	return result
-	
 @rpc("any_peer", "reliable")
 func find_match(peerID: int, data: Dictionary):
 	queue_match(peerID, data)
+	
+@rpc("any_peer", "reliable")
+func player_progress_bar(peerID: int, data: Dictionary):
+	player_progress_bar_val[peerID] = data
 
 func queue_match(peerID: int, data: Dictionary):
 	var match_max_player = 2
@@ -203,19 +192,17 @@ func queue_match(peerID: int, data: Dictionary):
 	#check if the temp array is full
 	if match_player_dic.size() >= match_max_player:
 		send_to_server("start_match", peerID, match_player_dic)
-			
-		#clear the temporary array
-		match_player_dic.clear()
 
 @rpc("any_peer", "reliable")
 func start_match(_peerID: int, player_data: Dictionary):
 	var game_scene = ["Grassy Land"]
 	
 	#add player to the player queue match
-	player_queue_match = {
-		"game_scene": game_scene[0],
-		"player_list": player_data
-	}
-	
-	is_player_full = true
+	if isMatching:
+		player_queue_match = {
+			"game_scene": game_scene[0],
+			"player_list": player_data
+		}
+		
+		is_player_full = true
 		

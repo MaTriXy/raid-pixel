@@ -26,6 +26,8 @@ func player_logout(loading_modal: Control):
 	PlayerGlobalScript.game_scene_name = ""
 	PlayerGlobalScript.is_game_scene_loaded = false
 	
+	ClientEnet.isMatching = false
+	ClientEnet.is_player_full = false
 	ClientEnet.stored_players.clear()
 	
 	loading_modal.visible = true
