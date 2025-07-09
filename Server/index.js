@@ -4,6 +4,7 @@ const app = express();
 const { createServer } = require('http');
 const expressServer = createServer(app);
 const bodyParser = require('body-parser')
+const cron = require('node-cron');
 
 //other necessary things such as file path etc
 const path = require('path');
@@ -50,4 +51,19 @@ app.use("/playerInformation", require("./playerInformationRoute")(pool));
 const PORT = process.env.PORT;
 expressServer.listen(PORT, async ()=>{
     console.log('Listening to port ' + PORT);
+    await check_guest_account(pool)
 });
+
+//check account per 12:00 midnight
+cron.schedule('0 0 * * *', async () => {
+  console.log("Running guest cleanup at midnight...");
+  await check_guest_account(pool);
+});
+
+async function check_guest_account(pool){
+  try{
+    await pool.query("DELETE FROM account WHERE account_type = 'Guest' AND date_active::DATE < CURRENT_DATE;");
+    await pool.query("DELETE FROM player_infos WHERE account_type = 'Guest' AND date_active::DATE < CURRENT_DATE;");
+  }
+  catch(err){console.log(err)}
+}

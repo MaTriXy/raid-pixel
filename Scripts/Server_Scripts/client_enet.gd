@@ -2,6 +2,7 @@ extends Node
 
 var host = "localhost"
 var server_port = 9000
+var isConnected = false
 
 #dictionaries for player datas
 var rpc_player_connection_status: Dictionary
@@ -36,16 +37,20 @@ var client_player_count = 0
 
 func join_server(ip: String, port: int):
 	var peer = ENetMultiplayerPeer.new()
-	var result = peer.create_client(ip, port)
 	
-	if result != OK:
-		print("server is not connected")
-		return
+	if not isConnected:
+		var result = peer.create_client(ip, port)
 		
-	multiplayer.multiplayer_peer = peer
-	multiplayer.peer_connected.connect(_on_peer_connected)
-	multiplayer.connection_failed.connect(_on_connection_failed)
-	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+		if result != OK:
+			print("server is not connected")
+			return
+			
+		multiplayer.multiplayer_peer = peer
+		multiplayer.peer_connected.connect(_on_peer_connected)
+		multiplayer.connection_failed.connect(_on_connection_failed)
+		multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+		
+		isConnected = true
 	
 func _on_peer_connected(id: int):
 	client_player_count += 1
@@ -68,18 +73,10 @@ func _on_peer_disconnected(id: int):
 			var node_grp = ui_nodes_grp[0]
 			node_grp.send_clients_notify_connection("Disconnected", player_connected_dic[id].ign, id)
 		
-		remove_player_guest_acc(player_connected_dic[id].username)
 		player_connected_dic.erase(id)
 	
-	if id == multiplayer.get_remote_sender_id() and not PlayerGlobalScript.isLoggedOut:
+	if id == multiplayer.get_unique_id() and not PlayerGlobalScript.isLoggedOut:
 		enet_connection_status = "Disconnected"
-
-#check if account is guest so it will be deleted per logout or game exit
-func remove_player_guest_acc(username: String):
-	var check_guest_acc = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/check_account", { "username": username })
-
-	if check_guest_acc.has("status") and not check_guest_acc["status"] == "Success":
-		return
 
 func remove_player_scene(id: int):
 	if not stored_players.has(id):
@@ -151,7 +148,7 @@ func list_active_player(peerID: int, data: Dictionary):
 	
 @rpc("any_peer", "reliable")
 func player_connected(id: int, data: Dictionary):
-	player_connected_dic[id] = { "username": data.username, "ign": data.ign }
+	player_connected_dic[id] = { "ign": data.ign }
 	rpc("player_count", client_player_count)
 	
 @rpc("any_peer", "reliable")
@@ -166,6 +163,19 @@ func modify_profile(peerID: int, data: Dictionary):
 	stored_players[peerID].ign = joined_player_data.ign
 	player_connected_dic[peerID].ign = joined_player_data.ign
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
+
+@rpc("any_peer", "reliable")
+func player_left(peerID: int, data: Dictionary):
+	if player_connected_dic.has(peerID):
+		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
+		
+		if ui_nodes_grp.size() > 0:
+			var node_grp = ui_nodes_grp[0]
+			node_grp.send_clients_notify_connection("Disconnected", player_connected_dic[peerID].ign, peerID)
+		
+		player_connected_dic.erase(peerID)
+		
+	remove_player_scene(peerID)
 	
 #for find match only
 @rpc("any_peer", "reliable")

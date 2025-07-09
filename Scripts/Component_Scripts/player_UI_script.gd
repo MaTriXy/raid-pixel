@@ -175,11 +175,17 @@ func _ready() -> void:
 		
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id())
 	
-	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "username": PlayerGlobalScript.player_username, "ign": PlayerGlobalScript.player_in_game_name })
+	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "ign": PlayerGlobalScript.player_in_game_name })
 	
 func log_out_action():
 	validation_modal.visible = true
-	ClientEnet.remove_player_guest_acc(PlayerGlobalScript.player_username)
+	ClientEnet.send_to_server("player_left", multiplayer.get_unique_id(), {})
+	
+	var result = await ServerFetch.send_post_request(ServerFetch.backend_url + "accountRoute/logout_account", { "username": PlayerGlobalScript.player_username })
+	
+	if result.has("status") and result["status"] != "Success":
+		return
+		
 	game_data_class.player_logout(loading_modal)
 	
 func open_file_Dialog():
