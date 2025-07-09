@@ -15,28 +15,31 @@ var prev_data: Dictionary
 var max_players = 0
 
 func _process(delta: float) -> void:
-	if ClientEnet.is_player_full and ClientEnet.isMatching:
+	if ClientEnet.is_player_full and ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
 		ClientEnet.is_player_full = false
-		ClientEnet.isMatching = false
 		
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
 		
 		var match_data = ClientEnet.player_queue_match
+		
+		if not match_data.has("player_list"):
+			return
+			
 		var player_list = match_data.player_list
 		location_label.text = "Vs\nLocation: %s" % [match_data.game_scene]
 		
 		#for player list
-		for key in player_list.keys():
-			var data = player_list[key]
-			var player_ign = data.ign
-			var player_profile = data.profile
-			var player_class = data.class
-			
-			load_player_panel(key, player_ign, player_class, player_profile)
+		if max_players <= 0:
+			for key in player_list.keys():
+				var data = player_list[key]
+				var player_ign = data.ign
+				var player_profile = data.profile
+				var player_class = data.class
+				
+				load_player_panel(key, player_ign, player_class, player_profile)
 		
-		max_players = player_list.size()
-		ClientEnet.player_queue_match.clear()
+			max_players = player_list.size()
 		
 	#for all panel that load
 	for key in player_progress_instance_dic.keys():
@@ -72,19 +75,20 @@ func load_game_scene_resource(progress_bar: ProgressBar, delta: float):
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			
-			print("All players are loaded %s" % finished_players.size())
+			#print("All players are loaded %s" % finished_players.size())
 			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 
 func player_loading_progress():
 	for key in ClientEnet.player_progress_bar_val.keys():
-		var data = ClientEnet.player_progress_bar_val[key]
-		var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+		if ClientEnet.player_progress_bar_val.has(key) and player_progress_instance_dic.has(key):
+			var data = ClientEnet.player_progress_bar_val[key]
+			var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
 		
-		if prev_data != data and progress_bar:
-			progress_bar.value = data.value
-			
-			if data.value >= 100.0:
-				finished_players[key] = true
+			if prev_data != data and progress_bar:
+				progress_bar.value = data.value
+				
+				if data.value >= 100.0:
+					finished_players[key] = true
 			
 		ClientEnet.player_progress_bar_val.erase(key)
 						
@@ -101,7 +105,9 @@ func load_player_panel(id: int, ign: String, class_type: String, profile: String
 	if id == multiplayer.get_unique_id():
 		start_to_load()
 	
-	if not player_panel_instance.is_inside_tree():
+	var instance_name = str(player_panel_instance.name)
+	
+	if not defender_container.has_node(instance_name) and not raider_container.has_node(instance_name):
 		if class_type.to_upper() == "DEFENDER":
 			defender_container.add_child(player_panel_instance)
 		else:

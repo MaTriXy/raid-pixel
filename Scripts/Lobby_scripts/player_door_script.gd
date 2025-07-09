@@ -43,8 +43,9 @@ func cancel_match():
 		"status": "leave"
 	}
 	
-	ClientEnet.isMatching = false
+	ClientEnet.is_matching = false
 	ClientEnet.queue_match(match_info.peerID, match_info)
+	ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 		
 	isFindMatchStart = false
 	find_match_timer = 0
@@ -72,7 +73,8 @@ func head_to_game():
 			"status": "joined"
 		}
 		
-		ClientEnet.isMatching = true
+		ClientEnet.is_matching = true
+		ClientEnet.queue_match(match_info.peerID, match_info)
 		ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
