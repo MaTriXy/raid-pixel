@@ -7,7 +7,6 @@ var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
 var prev_data: Dictionary
 var prev_player_mov_data: Dictionary
 var prev_player_atk_data: Dictionary
-var spawn_code: String
 var prev_death_status = false
 var isRespawn = false
 
@@ -28,9 +27,6 @@ func _ready() -> void:
 	death_panel.visible = false
 	spawner_animation.play("spawner_spawn")
 	respawn_button.connect("pressed", respawn)
-	
-	await get_tree().process_frame
-	spawn_code = PlayerGlobalScript.spawn_player_code
 	
 func respawn():
 	PlayerGlobalScript.isModalOpen = false
@@ -53,36 +49,10 @@ func player_move_receieve(player_data: Dictionary):
 	var isMoving = player.isMoving
 	var player_class = player.player_class
 	var peerID = player.peerID
+	var spawn_code = PlayerGlobalScript.spawn_player_code
 	
 	if spawn_code == scene_code:
-		if ClientEnet.stored_players.has(peerID):
-			var joined_player_data = ClientEnet.stored_players[peerID]
-			var joined_player = joined_player_data["Player"]
-			
-			ClientEnet.stored_players[peerID].ign = ign
-				
-			if is_instance_valid(joined_player):
-				joined_player.position = pos
-				joined_player.playerIGN = ign
-				joined_player.last_direction_value = last_dir_val
-				joined_player.direction_value = direction_value
-				joined_player.isMoving = isMoving
-				joined_player.player_class = player_class
-			else:
-				var newPlayer = joined_player_scene.instantiate()
-				newPlayer.name = str(peerID)
-				newPlayer.playerIGN = ign
-				newPlayer.last_direction_value = last_dir_val
-				newPlayer.direction_value = direction_value
-				newPlayer.position = pos
-				newPlayer.isMoving = isMoving
-				newPlayer.player_class = player_class
-				
-				if newPlayer.get_parent() != ySort and not newPlayer.is_inside_tree():
-					spawner_animation.play("spawner_spawn")
-					ySort.add_child(newPlayer)
-
-		if not ClientEnet.stored_players.has(peerID):
+		if not ClientEnet.stored_players.has(peerID) or not is_instance_valid(ClientEnet.stored_players[peerID]["Player"]):
 			var player_ins = joined_player_scene.instantiate()
 			player_ins.name = str(peerID)
 			player_ins.position = pos
@@ -92,7 +62,9 @@ func player_move_receieve(player_data: Dictionary):
 			player_ins.isMoving = isMoving
 			player_ins.player_class = player_class
 			
-			if player_ins.get_parent() != ySort and not player_ins.is_inside_tree():
+			var new_player_ins = str(player_ins.name)
+			
+			if not ySort.has_node(new_player_ins):
 				spawner_animation.play("spawner_spawn")
 				ySort.add_child(player_ins)
 				
@@ -101,13 +73,26 @@ func player_move_receieve(player_data: Dictionary):
 					"ign": ign,
 					"peerID": peerID
 				}
+				
+		else:
+			var joined_player_data = ClientEnet.stored_players[peerID]
+			var joined_player = joined_player_data["Player"]
+			
+			ClientEnet.stored_players[peerID].ign = ign
+			
+			joined_player.position = pos
+			joined_player.playerIGN = ign
+			joined_player.last_direction_value = last_dir_val
+			joined_player.direction_value = direction_value
+			joined_player.isMoving = isMoving
+			joined_player.player_class = player_class
 						
 func player_attack_receive(player_data: Dictionary):
 	if ClientEnet.stored_players.has(player_data.peerID):
 		var joined_player_data = ClientEnet.stored_players[player_data.peerID]
 		var joined_player = joined_player_data["Player"]
 		
-		if is_instance_valid(joined_player_scene):
+		if is_instance_valid(joined_player):
 			joined_player.isAttacking = player_data.isAttacking
 	
 func _process(_delta: float) -> void:
@@ -131,19 +116,7 @@ func _process(_delta: float) -> void:
 		
 		ClientEnet.rpc_player_attack_dic.erase(key)
 	
-	var data = {}
-	var connection_status = "Connected"
-	
-	if connection_status == "Connected":		
-		if data.has("Socket_Name") and prev_data != data and data.get("Socket_Name")  == "start_game_%s" % PlayerGlobalScript.spawn_player_code:
-			prev_data = data
-			
-			if data.has("match_roomID") and PlayerGlobalScript.match_roomID == data.get("match_roomID"):
-				if not PlayerGlobalScript.is_game_scene_loaded:
-					PlayerGlobalScript.isModalOpen = false
-					PlayerGlobalScript.current_modal_open = false
-					get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
-			
+	#if player dead
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:
 			respawn_button.disabled = true

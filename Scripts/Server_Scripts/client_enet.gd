@@ -15,7 +15,6 @@ var rpc_player_active_dic: Dictionary
 var player_queue_match: Dictionary
 var match_player_dic: Dictionary
 var player_progress_bar_val: Dictionary
-var is_player_full = false
 var is_matching = false
 var player_match_count = 0
 
@@ -205,18 +204,36 @@ func queue_match(peerID: int, data: Dictionary):
 	
 	#check if the temp array is full
 	if match_player_dic.size() >= match_max_player:
-		is_player_full = true
-		
 		var player_in_match = match_player_dic.duplicate()
 		match_player_dic.clear()
 		send_to_server("start_match", peerID, player_in_match)
 
+func match_ID_generator(string_length: int):
+	var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	var random_string = ""
+	
+	for i in range(string_length):
+		var random_index = randi() % chars.length()
+		random_string += chars[random_index]
+		
+	print(random_string)
+
 @rpc("any_peer", "reliable")
 func start_match(peerID: int, player_data: Dictionary):
 	var game_scene = ["Grassy Land"]
+	var match_ID = "match_%s" % match_ID_generator(5)
 	
 	#add player to the player queue match
 	player_queue_match = {
+		"match_ID": match_ID,
 		"game_scene": game_scene[0],
 		"player_list": player_data
 	}
+	
+	remove_player_scene(peerID)
+	
+	var lobby_scene = get_tree().get_root().get_node("Lobby Scene")
+	if lobby_scene:
+		var ui_node = lobby_scene.get_node("UI")
+		if ui_node:
+			ui_node.go_to_the_player_loading()

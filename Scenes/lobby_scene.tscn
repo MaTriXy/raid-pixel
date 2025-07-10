@@ -1,4 +1,4 @@
-[gd_scene load_steps=36 format=4 uid="uid://dn723fb516qkt"]
+[gd_scene load_steps=35 format=4 uid="uid://dn723fb516qkt"]
 
 [ext_resource type="Script" uid="uid://cw2r6de5l2y5o" path="res://Scripts/Component_Scripts/scene_script.gd" id="1_3q4fp"]
 [ext_resource type="Texture2D" uid="uid://b2epnngvervp8" path="res://Assets/Tile_Maps/Lobby_TileMap.png" id="2_h23dp"]
@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://1hn556jfmqmu" path="res://Interface_Scenes/Player_ui.tscn" id="5_44aa0"]
 [ext_resource type="Script" uid="uid://duoppo2u6sqpc" path="res://Scripts/Lobby_scripts/player_door_script.gd" id="6_h23dp"]
 [ext_resource type="Texture2D" uid="uid://bdqk3x1hjfykg" path="res://Assets/Sprite_Animations/Player_vs_door_anim.png" id="6_s7ahk"]
-[ext_resource type="Script" uid="uid://dvkjex66pmdj3" path="res://Scripts/Lobby_scripts/lobby_script.gd" id="7_bku1b"]
 [ext_resource type="PackedScene" uid="uid://dno6galxv43l5" path="res://Interface_Scenes/Connection_Interface.tscn" id="7_lvc8g"]
 [ext_resource type="FontFile" uid="uid://dp78nt8a4bjaq" path="res://Assets/Fonts/Pixelify_Sans/static/PixelifySans-Regular.ttf" id="8_r1is2"]
 [ext_resource type="Theme" uid="uid://bk1fa4k76vsuj" path="res://Assets/Theme/Default_Button.tres" id="9_oohhb"]
@@ -4898,7 +4897,7 @@ tile_set = SubResource("TileSet_nr3av")
 
 [node name="UI" type="CanvasLayer" parent="."]
 layer = 2
-script = ExtResource("7_bku1b")
+script = ExtResource("12_oohhb")
 
 [node name="Connection_Interface" parent="UI" instance=ExtResource("7_lvc8g")]
 visible = false
@@ -5045,7 +5044,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxTexture_h23dp")
-script = ExtResource("12_oohhb")
 
 [node name="Defender Container" type="VBoxContainer" parent="UI/Player Loading Panel"]
 layout_mode = 1

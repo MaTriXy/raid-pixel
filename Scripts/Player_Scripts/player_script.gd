@@ -161,9 +161,6 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		await get_tree().create_timer(0.5).timeout
-		GameBattleInfo.update_score_board(PlayerGlobalScript.player_game_id, PlayerGlobalScript.player_class_game_type)
-		
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
 		if ui_nodes_grp.size() > 0:

@@ -32,7 +32,7 @@ var player_populate_size = 0
 var isPlayerScore_populate = false
 
 func _ready() -> void:
-	PlayerGlobalScript.is_game_scene_loaded = true
+	print(ClientEnet.player_queue_match)
 	
 	if PlayerGlobalScript.game_scene_name == "Grassy Land":
 		core.core_hp = 500
@@ -92,24 +92,14 @@ func game_end():
 func _process(_delta: float) -> void:
 	game_scene_socket_data()
 	
-	if GameBattleInfo.update_render:
-		update_score_board()
-		GameBattleInfo.update_render = false
-	
 	if prev_hp != ui_core_hp:
 		sprite_core.value = ui_core_hp
 		core_hp_label.text = "%s/%s" % [ui_core_hp, ui_core_max_hp]
 		
 		prev_hp = core.core_hp
 		
-func update_score_board():
-	for key in GameBattleInfo.player_score_info_dic:
-		var player = GameBattleInfo.player_score_info_dic[key]
-		var container = battle_info_defender_container if player.class == "Defender" else battle_info_attacker_container
-	
-		GameBattleInfo.render_score_board(container, player.game_id)
-		
 func player_populate_battle_info():
+	"""
 	if player_populate_size < GameBattleInfo.player_populate_size:
 		for key in GameBattleInfo.player_populate_dic:
 			var player = GameBattleInfo.player_populate_dic[key]
@@ -141,6 +131,8 @@ func player_populate_battle_info():
 				player_panel_instantce_profile.texture = no_profile_texture		
 	else:
 		isPlayerScore_populate = true
+	"""
+	pass
 	
 func game_scene_socket_data():
 	"""
@@ -167,6 +159,7 @@ func game_scene_socket_data():
 				if minutes <= 0 and seconds <= 0:
 					game_end()
 	"""
+	pass
 			
 func load_player_profile_battle_info(ign: String, profile_url: String):
 	var player_http_req = HTTPRequest.new()

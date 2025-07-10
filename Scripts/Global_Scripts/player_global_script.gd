@@ -43,7 +43,6 @@ var player_health: float
 var player_max_health: int
 var isMainPlayerDead: bool
 var isPlayerAttack: bool
-var is_game_scene_loaded: bool
 
 #for player match stuff
 var match_roomID: String

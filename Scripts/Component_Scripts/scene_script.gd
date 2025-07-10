@@ -18,10 +18,10 @@ var world_rect: Rect2
 
 var prev_data = {}
 
-func _ready() -> void:	
+func _ready() -> void:
 	PlayerGlobalScript.current_scene = scene_name
 	PlayerGlobalScript.spawn_player_code = scene_name + PlayerGlobalScript.match_roomID
-	
+
 	spawn_player_on_scene()
 	
 	if scene_particle:

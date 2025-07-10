@@ -1,9 +1,10 @@
 extends Node
 
-@onready var defender_container = $"Defender Container"
-@onready var raider_container = $"Raider Container"
-@onready var player_panel_scene = $"Player Panel"
-@onready var location_label = $"Versus Label"
+@onready var player_loading_panel = $"Player Loading Panel"
+@onready var defender_container = $"Player Loading Panel/Defender Container"
+@onready var raider_container = $"Player Loading Panel/Raider Container"
+@onready var player_panel_scene = $"Player Loading Panel/Player Panel"
+@onready var location_label = $"Player Loading Panel/Versus Label"
 
 var no_profile = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 
@@ -14,9 +15,14 @@ var player_loading_value = 0.0
 var prev_data: Dictionary
 var max_players = 0
 
-func _process(delta: float) -> void:
-	if ClientEnet.is_player_full and ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
-		ClientEnet.is_player_full = false
+func _ready() -> void:
+	player_loading_panel.visible = false
+
+func go_to_the_player_loading():
+	if ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
+		player_loading_panel.visible = true
+		
+		ClientEnet.is_matching = false
 		
 		PlayerGlobalScript.isModalOpen = true
 		PlayerGlobalScript.current_modal_open = true
@@ -27,7 +33,9 @@ func _process(delta: float) -> void:
 			return
 			
 		var player_list = match_data.player_list
-		location_label.text = "Vs\nLocation: %s" % [match_data.game_scene]
+		location_label.text = "Vs\nLocation: %s" % match_data.game_scene
+		
+		PlayerGlobalScript.game_scene_name = match_data.game_scene
 		
 		#for player list
 		if max_players <= 0:
@@ -40,10 +48,19 @@ func _process(delta: float) -> void:
 				load_player_panel(key, player_ign, player_class, player_profile)
 		
 			max_players = player_list.size()
-		
+
+func _process(delta: float) -> void:
 	#for all panel that load
 	for key in player_progress_instance_dic.keys():
-		var progress_bar = player_progress_instance_dic[key].get_node("Player Loading")
+		var instantce = player_progress_instance_dic[key]
+		
+		if not is_instance_valid(instantce):
+			break
+			
+		var progress_bar = instantce.get_node("Player Loading")
+		
+		if not progress_bar:
+			break
 		
 		if key == multiplayer.get_unique_id():
 			ClientEnet.send_to_server("player_progress_bar", multiplayer.get_unique_id(), { "value": progress_bar.value })
@@ -51,6 +68,7 @@ func _process(delta: float) -> void:
 			
 			if progress_bar.value >= 100.0:
 				finished_players[key] = true
+				break
 				
 	#for player progress
 	player_loading_progress()
@@ -75,8 +93,7 @@ func load_game_scene_resource(progress_bar: ProgressBar, delta: float):
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			
-			#print("All players are loaded %s" % finished_players.size())
-			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 
 func player_loading_progress():
 	for key in ClientEnet.player_progress_bar_val.keys():
@@ -103,6 +120,7 @@ func load_player_panel(id: int, ign: String, class_type: String, profile: String
 	player_progress_instance_dic[id] = player_panel_instance
 	
 	if id == multiplayer.get_unique_id():
+		PlayerGlobalScript.player_class_game_type = class_type
 		start_to_load()
 	
 	var instance_name = str(player_panel_instance.name)

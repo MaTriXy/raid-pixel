@@ -22,7 +22,6 @@ func _ready() -> void:
 	
 	PlayerGlobalScript.game_scene_name = "Lobby"
 	PlayerGlobalScript.player_class_game_type = "Defender"
-	PlayerGlobalScript.is_game_scene_loaded = false
 	
 func _process(delta: float) -> void:
 	if isFindMatchStart:
@@ -44,7 +43,6 @@ func cancel_match():
 	}
 	
 	ClientEnet.is_matching = false
-	ClientEnet.queue_match(match_info.peerID, match_info)
 	ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 		
 	isFindMatchStart = false
@@ -74,7 +72,6 @@ func head_to_game():
 		}
 		
 		ClientEnet.is_matching = true
-		ClientEnet.queue_match(match_info.peerID, match_info)
 		ClientEnet.send_to_server("find_match", match_info.peerID, match_info)
 	
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
