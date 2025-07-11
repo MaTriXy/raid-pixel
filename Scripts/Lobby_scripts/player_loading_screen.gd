@@ -20,6 +20,8 @@ func _ready() -> void:
 
 func go_to_the_player_loading():
 	if ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
+		print(ClientEnet.player_queue_match)
+		
 		player_loading_panel.visible = true
 		
 		ClientEnet.is_matching = false
@@ -93,7 +95,7 @@ func load_game_scene_resource(progress_bar: ProgressBar, delta: float):
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			
-			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 
 func player_loading_progress():
 	for key in ClientEnet.player_progress_bar_val.keys():

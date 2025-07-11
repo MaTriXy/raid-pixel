@@ -16,6 +16,7 @@ var player_queue_match: Dictionary
 var match_player_dic: Dictionary
 var player_progress_bar_val: Dictionary
 var is_matching = false
+var match_ID: String
 var player_match_count = 0
 
 #collection for player spawn
@@ -186,7 +187,6 @@ func player_progress_bar(peerID: int, data: Dictionary):
 	player_progress_bar_val[peerID] = data
 
 func queue_match(peerID: int, data: Dictionary):
-	player_queue_match.clear()
 	var match_max_player = 2
 	
 	if not match_player_dic.has(peerID):
@@ -206,6 +206,11 @@ func queue_match(peerID: int, data: Dictionary):
 	if match_player_dic.size() >= match_max_player:
 		var player_in_match = match_player_dic.duplicate()
 		match_player_dic.clear()
+		
+		if not match_ID:
+			match_ID = "match_%s" % match_ID_generator(5)
+	
+		send_to_server("set_matchID", peerID, { "matchID": match_ID })
 		send_to_server("start_match", peerID, player_in_match)
 
 func match_ID_generator(string_length: int):
@@ -216,24 +221,40 @@ func match_ID_generator(string_length: int):
 		var random_index = randi() % chars.length()
 		random_string += chars[random_index]
 		
-	print(random_string)
+	return random_string
+	
+@rpc("any_peer", "reliable")
+func set_matchID(peerID: int, data: Dictionary):
+	if is_matching:
+		match_ID = data.matchID
+
+@rpc("any_peer", "reliable")
+func clear_player_match_data():
+	player_queue_match.clear()
+	
+	print("Cleaning data to IGN: %s" % PlayerGlobalScript.player_in_game_name)
+	print(player_queue_match)
 
 @rpc("any_peer", "reliable")
 func start_match(peerID: int, player_data: Dictionary):
-	var game_scene = ["Grassy Land"]
-	var match_ID = "match_%s" % match_ID_generator(5)
+	remove_player_scene(peerID)
 	
 	#add player to the player queue match
+	var game_scene = ["Grassy Land"]
+
+	PlayerGlobalScript.match_roomID = match_ID
+	await get_tree().create_timer(0.5).timeout
+
 	player_queue_match = {
 		"match_ID": match_ID,
 		"game_scene": game_scene[0],
 		"player_list": player_data
 	}
 	
-	remove_player_scene(peerID)
-	
 	var lobby_scene = get_tree().get_root().get_node("Lobby Scene")
 	if lobby_scene:
 		var ui_node = lobby_scene.get_node("UI")
 		if ui_node:
 			ui_node.go_to_the_player_loading()
+			
+	rpc("clear_player_match_data")
