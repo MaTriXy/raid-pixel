@@ -16,7 +16,6 @@ var player_queue_match: Dictionary
 var match_player_dic: Dictionary
 var player_progress_bar_val: Dictionary
 var is_matching = false
-var match_ID: String
 var player_match_count = 0
 
 #collection for player spawn
@@ -187,6 +186,7 @@ func player_progress_bar(peerID: int, data: Dictionary):
 	player_progress_bar_val[peerID] = data
 
 func queue_match(peerID: int, data: Dictionary):
+	PlayerGlobalScript.match_roomID = ""
 	var match_max_player = 2
 	
 	if not match_player_dic.has(peerID):
@@ -207,11 +207,15 @@ func queue_match(peerID: int, data: Dictionary):
 		var player_in_match = match_player_dic.duplicate()
 		match_player_dic.clear()
 		
-		if not match_ID:
-			match_ID = "match_%s" % match_ID_generator(5)
-	
-		send_to_server("set_matchID", peerID, { "matchID": match_ID })
-		send_to_server("start_match", peerID, player_in_match)
+		for id in player_in_match.keys():
+			if id != multiplayer.get_unique_id():
+				
+				#add player to the player queue match
+				if not PlayerGlobalScript.match_roomID:
+					PlayerGlobalScript.match_roomID = "match_%s" % match_ID_generator(5)
+				
+				var match_data = { "match_ID": PlayerGlobalScript.match_roomID, "player_list": player_in_match }
+				rpc_id(id, "start_match", id, match_data)
 
 func match_ID_generator(string_length: int):
 	var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -222,39 +226,27 @@ func match_ID_generator(string_length: int):
 		random_string += chars[random_index]
 		
 	return random_string
-	
-@rpc("any_peer", "reliable")
-func set_matchID(peerID: int, data: Dictionary):
-	if is_matching:
-		match_ID = data.matchID
 
 @rpc("any_peer", "reliable")
-func clear_player_match_data():
+func start_match(peerID: int, data: Dictionary):
 	player_queue_match.clear()
+	match_player_dic.clear()
 	
-	print("Cleaning data to IGN: %s" % PlayerGlobalScript.player_in_game_name)
-	print(player_queue_match)
-
-@rpc("any_peer", "reliable")
-func start_match(peerID: int, player_data: Dictionary):
 	remove_player_scene(peerID)
 	
-	#add player to the player queue match
-	var game_scene = ["Grassy Land"]
+	if is_matching:
+		PlayerGlobalScript.match_roomID = data.match_ID
+		
+		var game_scene = ["Grassy Land"]
 
-	PlayerGlobalScript.match_roomID = match_ID
-	await get_tree().create_timer(0.5).timeout
-
-	player_queue_match = {
-		"match_ID": match_ID,
-		"game_scene": game_scene[0],
-		"player_list": player_data
-	}
-	
-	var lobby_scene = get_tree().get_root().get_node("Lobby Scene")
-	if lobby_scene:
-		var ui_node = lobby_scene.get_node("UI")
-		if ui_node:
-			ui_node.go_to_the_player_loading()
-			
-	rpc("clear_player_match_data")
+		player_queue_match = {
+			"match_ID": data.match_ID,
+			"game_scene": game_scene[0],
+			"player_list": data.player_list
+		}
+		
+		var lobby_scene = get_tree().get_root().get_node("Lobby Scene")
+		if lobby_scene:
+			var ui_node = lobby_scene.get_node("UI")
+			if ui_node:
+				ui_node.go_to_the_player_loading()

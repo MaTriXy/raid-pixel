@@ -22,21 +22,23 @@ func go_to_the_player_loading():
 	if ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
 		print(ClientEnet.player_queue_match)
 		
-		player_loading_panel.visible = true
-		
-		ClientEnet.is_matching = false
-		
-		PlayerGlobalScript.isModalOpen = true
-		PlayerGlobalScript.current_modal_open = true
-		
 		var match_data = ClientEnet.player_queue_match
 		
 		if not match_data.has("player_list"):
 			return
 			
 		var player_list = match_data.player_list
-		location_label.text = "Vs\nLocation: %s" % match_data.game_scene
 		
+		if not player_list.has(multiplayer.get_unique_id()):
+			print("This player isn't on the player loading screen: %s %s" % [PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id()])
+			return
+			
+		player_loading_panel.visible = true
+		ClientEnet.is_matching = false
+		PlayerGlobalScript.isModalOpen = true
+		PlayerGlobalScript.current_modal_open = true
+		
+		location_label.text = "Vs\nLocation: %s" % match_data.game_scene
 		PlayerGlobalScript.game_scene_name = match_data.game_scene
 		
 		#for player list
