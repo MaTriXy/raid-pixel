@@ -13,7 +13,7 @@ extends Node
 var allied_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Ally.png")
 var enemy_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Enemy.png")
 
-@export var core: StaticBody2D
+#@export var core: StaticBody2D
 
 #for battle info
 @export var battle_info_player_panel: Panel
@@ -32,14 +32,18 @@ var player_populate_size = 0
 var isPlayerScore_populate = false
 
 func _ready() -> void:
-	print(ClientEnet.player_queue_match)
+	print(GameClientEnet.game_client_dic_data)
+	print(PlayerGlobalScript.spawn_player_code)
+	print("\n\n")
 	
-	if PlayerGlobalScript.game_scene_name == "Grassy Land":
+	"""
+	if GameClientEnet.game_tilemap_name == "Grassy Land":
 		core.core_hp = 500
 		core.core_max_hp = 500
 	
 	ui_core_hp = int(core.core_hp)
 	ui_core_max_hp = int(core.core_max_hp)
+	"""
 	
 	sprite_core.value = ui_core_hp
 	sprite_core.max_value = ui_core_max_hp
@@ -92,11 +96,13 @@ func game_end():
 func _process(_delta: float) -> void:
 	game_scene_socket_data()
 	
+	"""
 	if prev_hp != ui_core_hp:
 		sprite_core.value = ui_core_hp
 		core_hp_label.text = "%s/%s" % [ui_core_hp, ui_core_max_hp]
 		
 		prev_hp = core.core_hp
+	"""
 		
 func player_populate_battle_info():
 	"""

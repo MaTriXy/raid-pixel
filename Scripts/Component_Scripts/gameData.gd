@@ -16,17 +16,19 @@ func player_logout(loading_modal: Control):
 	PlayerGlobalScript.player_account_type = ""
 	PlayerGlobalScript.player_username = ""
 	PlayerGlobalScript.player_diamond = 0
-	PlayerGlobalScript.current_scene = ""
 	PlayerGlobalScript.spawn_player_code = ""
 	PlayerGlobalScript.player_health = 100
 	PlayerGlobalScript.player_max_health = 100
 	PlayerGlobalScript.isPlayerAttack = false
-	PlayerGlobalScript.match_roomID = ""
 	PlayerGlobalScript.player_class_game_type = ""
-	PlayerGlobalScript.game_scene_name = ""
 	
 	ClientEnet.is_player_full = false
 	ClientEnet.stored_players.clear()
+	ClientEnet.is_matching = false
+	ClientEnet.match_player_dic.clear()
+	ClientEnet.player_queue_match.clear()
+	ClientEnet.matchID = ""
+	GameClientEnet.game_client_dic_data.clear()
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")

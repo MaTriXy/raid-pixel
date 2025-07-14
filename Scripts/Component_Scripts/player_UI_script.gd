@@ -103,14 +103,14 @@ func _ready() -> void:
 	loading_modal.visible = false
 	guest_warning_text.visible = false
 	
-	if PlayerGlobalScript.game_scene_name == "Lobby" and PlayerGlobalScript.player_account_type == "Guest":
+	if get_tree().current_scene.name.to_upper() == "LOBBY SCENE" and PlayerGlobalScript.player_account_type == "Guest":
 		guest_warning_panel.visible = true
 		guestAccountButton.visible =  true
 	else:
 		guest_warning_panel.visible = false
 		guestAccountButton.visible = false
 		
-	view_profile_btn.visible = PlayerGlobalScript.game_scene_name == "Lobby"
+	view_profile_btn.visible = get_tree().current_scene.name == "LOBBY SCENE"
 	
 	guestAccountButton.focus_mode = Control.FOCUS_NONE
 	guestAccountButton.connect("pressed", func(): status_panel(true, guest_connect_account_panel))
@@ -144,11 +144,11 @@ func _ready() -> void:
 	
 	#for setting modal, to check if player is in game.
 	await get_tree().process_frame
-	var current_scene = PlayerGlobalScript.current_scene
+	var current_scene = get_tree().current_scene.name
 	
 	logout_btn.connect("pressed", log_out_action)
-	logout_btn.visible = current_scene.to_upper() == "LOBBY"
-	surrender_btn.visible = not current_scene.to_upper() == "LOBBY"
+	logout_btn.visible = current_scene.to_upper() == "LOBBY SCENE"
+	surrender_btn.visible = not current_scene.to_upper() == "LOBBY SCENE"
 		
 	var data = await player_profile_class.get_player_data(http_request)
 	if data["status"] == "Finished":

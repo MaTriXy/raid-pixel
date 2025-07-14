@@ -17,6 +17,7 @@ var match_player_dic: Dictionary
 var player_progress_bar_val: Dictionary
 var is_matching = false
 var player_match_count = 0
+var matchID: String
 
 #collection for player spawn
 var stored_players: Dictionary
@@ -164,7 +165,7 @@ func modify_profile(peerID: int, data: Dictionary):
 	rpc_player_active_dic[peerID].ign = joined_player_data.ign
 
 @rpc("any_peer", "reliable")
-func player_left(peerID: int, data: Dictionary):
+func player_left(peerID: int, _data: Dictionary):
 	if player_connected_dic.has(peerID):
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
@@ -186,7 +187,6 @@ func player_progress_bar(peerID: int, data: Dictionary):
 	player_progress_bar_val[peerID] = data
 
 func queue_match(peerID: int, data: Dictionary):
-	PlayerGlobalScript.match_roomID = ""
 	var match_max_player = 2
 	
 	if not match_player_dic.has(peerID):
@@ -209,12 +209,13 @@ func queue_match(peerID: int, data: Dictionary):
 		
 		for id in player_in_match.keys():
 			if id != multiplayer.get_unique_id():
+				remove_player_scene(id)
 				
 				#add player to the player queue match
-				if not PlayerGlobalScript.match_roomID:
-					PlayerGlobalScript.match_roomID = "match_%s" % match_ID_generator(5)
+				if not matchID:
+					matchID = "match_%s" % match_ID_generator(5)
 				
-				var match_data = { "match_ID": PlayerGlobalScript.match_roomID, "player_list": player_in_match }
+				var match_data = { "match_ID": matchID, "player_list": player_in_match }
 				rpc_id(id, "start_match", id, match_data)
 
 func match_ID_generator(string_length: int):
@@ -228,14 +229,12 @@ func match_ID_generator(string_length: int):
 	return random_string
 
 @rpc("any_peer", "reliable")
-func start_match(peerID: int, data: Dictionary):
+func start_match(_peerID: int, data: Dictionary):
 	player_queue_match.clear()
 	match_player_dic.clear()
 	
-	remove_player_scene(peerID)
-	
 	if is_matching:
-		PlayerGlobalScript.match_roomID = data.match_ID
+		matchID = data.match_ID
 		
 		var game_scene = ["Grassy Land"]
 

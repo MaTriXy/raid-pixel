@@ -17,10 +17,14 @@ var max_players = 0
 
 func _ready() -> void:
 	player_loading_panel.visible = false
+	PlayerGlobalScript.spawn_player_code = "lobby"
 
 func go_to_the_player_loading():
 	if ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
-		print(ClientEnet.player_queue_match)
+		GameClientEnet.game_client_dic_data = ClientEnet.player_queue_match
+		GameClientEnet.game_tilemap_name = ClientEnet.player_queue_match.game_scene
+		
+		PlayerGlobalScript.spawn_player_code = "game_scene_%s" % ClientEnet.player_queue_match.match_ID
 		
 		var match_data = ClientEnet.player_queue_match
 		
@@ -39,7 +43,6 @@ func go_to_the_player_loading():
 		PlayerGlobalScript.current_modal_open = true
 		
 		location_label.text = "Vs\nLocation: %s" % match_data.game_scene
-		PlayerGlobalScript.game_scene_name = match_data.game_scene
 		
 		#for player list
 		if max_players <= 0:
@@ -97,7 +100,7 @@ func load_game_scene_resource(progress_bar: ProgressBar, delta: float):
 			PlayerGlobalScript.isModalOpen = false
 			PlayerGlobalScript.current_modal_open = false
 			
-			#get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
+			get_tree().change_scene_to_file("res://Scenes/game_scene.tscn")
 
 func player_loading_progress():
 	for key in ClientEnet.player_progress_bar_val.keys():

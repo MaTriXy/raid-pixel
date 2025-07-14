@@ -37,14 +37,9 @@ var player_UUID: String
 var isLobby = false
 
 #for player game stuff
-var current_scene: String
 var spawn_player_code: String
 var player_health: float
 var player_max_health: int
 var isMainPlayerDead: bool
 var isPlayerAttack: bool
-
-#for player match stuff
-var match_roomID: String
 var player_class_game_type: String
-var game_scene_name: String

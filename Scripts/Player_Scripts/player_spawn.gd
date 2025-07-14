@@ -8,7 +8,7 @@ var prev_data: Dictionary
 var prev_player_mov_data: Dictionary
 var prev_player_atk_data: Dictionary
 var prev_death_status = false
-var isRespawn = false
+var isScene_loaded = false
 
 #for player spawn
 @onready var death_panel = $"UI/Death Screen Panel"
@@ -16,23 +16,51 @@ var isRespawn = false
 @export var spawn_coords: Vector2
 @onready var spawn_timer = $"UI/Death Screen Panel/Spawn Timer"
 
+var main_player_scene = preload("res://Sprite_Nodes/main_player.tscn")
+var main_player = main_player_scene.instantiate()
+
 var game_scene_spawn_coords = { 
-	"Grassy Land": { 
-		"allied_spawn_coords": Vector2(5733.66, 440.33), 
-		"enemy_spawn_coords": Vector2(-879.60, 267.33)
+	"Grassy Land": {
+		"allied_spawn_coords": Vector2(3368.63, 791.32), 
+		"enemy_spawn_coords": Vector2(-937.99, 764.66)
 	} 
 }
 
-func _ready() -> void:
+func spawn_player_on_scene():
+	if not is_instance_valid(main_player):
+		main_player = main_player_scene.instantiate()
+		
+	var spawn_coordinates = spawn_coords
+	var scene_name = get_tree().current_scene.name
+	
+	if scene_name.to_upper() == "GAME SCENE" and PlayerGlobalScript.player_class_game_type:
+		var game_dic = game_scene_spawn_coords.get(GameClientEnet.game_tilemap_name)
+		spawn_coordinates = game_dic.allied_spawn_coords if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER" else game_dic.enemy_spawn_coords
+
+	main_player.position = spawn_coordinates
+
+	if is_instance_valid(ySort) and main_player.get_parent() != ySort:
+		ySort.call_deferred("add_child", main_player)
+		spawner_animation.play("spawner_spawn")
+
+func _ready():
+	call_deferred("_init_ui")
+	call_deferred("spawn_player_on_scene")
+
+func _init_ui():
+	if not is_instance_valid(death_panel) or not is_instance_valid(respawn_button):
+		push_warning("UI nodes not ready yet.")
+		return
+
 	death_panel.visible = false
-	spawner_animation.play("spawner_spawn")
 	respawn_button.connect("pressed", respawn)
+	isScene_loaded = true
 	
 func respawn():
 	PlayerGlobalScript.isModalOpen = false
 	PlayerGlobalScript.current_modal_open = false
 	
-	isRespawn = true
+	spawn_player_on_scene()
 	
 func start_timer():
 	spawn_timer.wait_time = 1.0
@@ -96,6 +124,12 @@ func player_attack_receive(player_data: Dictionary):
 			joined_player.isAttacking = player_data.isAttacking
 	
 func _process(_delta: float) -> void:
+	var scene_parent = get_tree().get_current_scene()
+
+	if isScene_loaded and scene_parent.tileMap and scene_parent.tileMap.tile_set and main_player and main_player.get_parent() == ySort:
+		scene_parent.wrap_around(main_player)
+		scene_parent.adjust_player_camera_limit(main_player)
+		
 	#spawn
 	for key in ClientEnet.rpc_player_spawn_dic.keys():
 		var player_data = ClientEnet.rpc_player_spawn_dic[key]

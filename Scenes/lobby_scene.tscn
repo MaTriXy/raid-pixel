@@ -4833,7 +4833,6 @@ corner_radius_bottom_left = 10
 script = ExtResource("1_3q4fp")
 ySort = NodePath("Y Sort")
 tileMap = NodePath("Y Sort/Lobby Tile map")
-scene_name = "lobby"
 
 [node name="Background" type="CanvasModulate" parent="."]
 z_index = 6
