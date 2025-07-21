@@ -175,7 +175,7 @@ func _ready() -> void:
 		
 	send_clients_notify_connection("Connected", PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id())
 	
-	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "ign": PlayerGlobalScript.player_in_game_name })
+	ClientEnet.send_to_server("player_connected", multiplayer.get_unique_id(), { "ign": PlayerGlobalScript.player_in_game_name, "spawn_code": PlayerGlobalScript.spawn_player_code })
 	
 func log_out_action():
 	validation_modal.visible = true

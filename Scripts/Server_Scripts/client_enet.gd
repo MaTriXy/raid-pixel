@@ -17,7 +17,6 @@ var match_player_dic: Dictionary
 var player_progress_bar_val: Dictionary
 var is_matching = false
 var player_match_count = 0
-var matchID: String
 
 #collection for player spawn
 var stored_players: Dictionary
@@ -71,7 +70,9 @@ func _on_peer_disconnected(id: int):
 		
 		if ui_nodes_grp.size() > 0:
 			var node_grp = ui_nodes_grp[0]
-			node_grp.send_clients_notify_connection("Disconnected", player_connected_dic[id].ign, id)
+			
+			if player_connected_dic[id].spawn_code == PlayerGlobalScript.spawn_player_code:
+				node_grp.append_status_notify(player_connected_dic[id].ign, id, "disconnected", Color("#ff0000"))
 		
 		player_connected_dic.erase(id)
 	
@@ -148,7 +149,7 @@ func list_active_player(peerID: int, data: Dictionary):
 	
 @rpc("any_peer", "reliable")
 func player_connected(id: int, data: Dictionary):
-	player_connected_dic[id] = { "ign": data.ign }
+	player_connected_dic[id] = { "ign": data.ign, "spawn_code": data.spawn_code }
 	rpc("player_count", client_player_count)
 	
 @rpc("any_peer", "reliable")
@@ -171,7 +172,9 @@ func player_left(peerID: int, _data: Dictionary):
 		
 		if ui_nodes_grp.size() > 0:
 			var node_grp = ui_nodes_grp[0]
-			node_grp.send_clients_notify_connection("Disconnected", player_connected_dic[peerID].ign, peerID)
+			
+			if player_connected_dic[peerID].has("spawn_code") and player_connected_dic[peerID]["spawn_code"] == PlayerGlobalScript.spawn_player_code:
+				node_grp.append_status_notify(player_connected_dic.ign, peerID, "disconnected", Color("#ff0000"))
 		
 		player_connected_dic.erase(peerID)
 		
@@ -187,6 +190,7 @@ func player_progress_bar(peerID: int, data: Dictionary):
 	player_progress_bar_val[peerID] = data
 
 func queue_match(peerID: int, data: Dictionary):
+	var matchID: String
 	var match_max_player = 2
 	
 	if not match_player_dic.has(peerID):
@@ -234,8 +238,6 @@ func start_match(_peerID: int, data: Dictionary):
 	match_player_dic.clear()
 	
 	if is_matching:
-		matchID = data.match_ID
-		
 		var game_scene = ["Grassy Land"]
 
 		player_queue_match = {

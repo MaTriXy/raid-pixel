@@ -24,8 +24,10 @@ func send_clients_notify_connection(status: String, ign: String, peerID: int):
 		"ign": ign,
 		"status": status
 	}
+	var notify_status_color = Color("#ffff00") if status == "Connected" else Color("#ff0000")
+	
 	ClientEnet.send_to_server("connection_notify", multiplayer.get_unique_id(), info)
-	append_connection_notify(info.ign, peerID, info.status)
+	append_status_notify(ign, peerID, status.to_lower(), notify_status_color)
 	
 func connection_notify_main_player():
 	for peerID in ClientEnet.rpc_player_connection_status.keys():
@@ -35,7 +37,10 @@ func connection_notify_main_player():
 		var status = dic.status
 		
 		if PlayerGlobalScript.spawn_player_code == spawn_code and dic != prev_data:
-			append_connection_notify(ign, peerID, status)
+			if dic.spawn_code == PlayerGlobalScript.spawn_player_code:
+				var notify_status_color = Color("#ffff00") if status == "Connected" else Color("#ff0000")
+				append_status_notify(ign, peerID, status.to_lower(), notify_status_color)
+			
 			prev_data = dic
 			
 		ClientEnet.rpc_player_connection_status.erase(peerID)
@@ -80,7 +85,7 @@ func append_msg_on_msg_container(receiver: String, peerID: int, msg: String, col
 	var display_msg = message_clone.duplicate()
 	display_message_panel.add_child(display_msg)
 				
-func append_connection_notify(ign, peerID, status):
+func append_status_notify(ign: String, peerID: int, message: String, color: Color):
 	#remove old messages
 	if display_message_panel.get_child_count() >= 5:
 		var oldest = display_message_panel.get_child(0)
@@ -90,8 +95,6 @@ func append_connection_notify(ign, peerID, status):
 	var display_msg = message_label.duplicate()
 	display_msg.visible = true
 	
-	var notify =  "connected" if status == "Connected" else "disconnected"
-	
-	display_msg.text = "%s (%s) %s" % [ign, peerID, notify]
-	display_msg.add_theme_color_override("default_color", Color("#ffff00") if status == "Connected" else Color("#ff0000"))
+	display_msg.text = "%s (%s) %s" % [ign, peerID, message]
+	display_msg.add_theme_color_override("default_color", color)
 	display_message_panel.add_child(display_msg)
