@@ -158,6 +158,8 @@ func player_health_bar_status():
 	
 	player_health_bar.value = PlayerGlobalScript.player_health
 	player_health_label.text = str(PlayerGlobalScript.player_health) + "/" + str(PlayerGlobalScript.player_max_health)
+	
+	GameClientEnet.game_send_to_server("update_player_hp", multiplayer.get_unique_id(), { "player_health": PlayerGlobalScript.player_health, "spawn_code": PlayerGlobalScript.spawn_player_code })
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
@@ -165,7 +167,7 @@ func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 		
 		if ui_nodes_grp.size() > 0:
 			var message_append = ui_nodes_grp[0]
-			message_append.append_msg_on_msg_container("System", "You have been killed", Color("#004a04"))
+			message_append.append_msg_on_msg_container("System", multiplayer.get_unique_id(), "You have been killed", Color("#004a04"))
 		
 		await get_tree().process_frame
 		queue_free()

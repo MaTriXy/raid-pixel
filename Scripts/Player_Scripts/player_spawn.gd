@@ -7,6 +7,7 @@ var joined_player_scene = preload("res://Sprite_Nodes/joined_player.tscn")
 var prev_data: Dictionary
 var prev_player_mov_data: Dictionary
 var prev_player_atk_data: Dictionary
+var prev_player_hp_data: Dictionary
 var prev_death_status = false
 var isScene_loaded = false
 
@@ -123,6 +124,25 @@ func player_attack_receive(player_data: Dictionary):
 		if is_instance_valid(joined_player):
 			joined_player.isAttacking = player_data.isAttacking
 	
+func player_hp_receive(player_data: Dictionary, peerID: int):
+	if ClientEnet.stored_players.has(peerID):
+		var joined_player_data = ClientEnet.stored_players[peerID]
+		var joined_player = joined_player_data["Player"]
+		
+		if is_instance_valid(joined_player):
+			joined_player.player_health = player_data.player_health
+			
+			if joined_player.player_health <= 0:
+				joined_player.player_anim.play("death_anim")
+				
+				var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
+			
+				if ui_nodes_grp.size() > 0:
+					var message_append = ui_nodes_grp[0]
+					message_append.append_msg_on_msg_container("System", peerID, "%s is killed by %s" % [joined_player.playerIGN, PlayerGlobalScript.player_in_game_name], Color("#004a04"))
+				
+				joined_player.queue_free()
+	
 func _process(_delta: float) -> void:
 	var scene_parent = get_tree().get_current_scene()
 
@@ -150,6 +170,15 @@ func _process(_delta: float) -> void:
 		
 		ClientEnet.rpc_player_attack_dic.erase(key)
 	
+	#health update
+	for key in GameClientEnet.player_health_dictionary.keys():
+		if GameClientEnet.player_health_dictionary.has(key):
+			var data = GameClientEnet.player_health_dictionary[key]
+			
+			if data != prev_player_hp_data and data.spawn_code == PlayerGlobalScript.spawn_player_code:
+				player_hp_receive(data, key)
+				prev_player_hp_data = data
+				
 	#if player dead
 	if prev_death_status != PlayerGlobalScript.isMainPlayerDead:
 		if PlayerGlobalScript.isMainPlayerDead:
