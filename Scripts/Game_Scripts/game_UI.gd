@@ -20,17 +20,13 @@ var enemy_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Enemy
 @export var battle_info_defender_container: VBoxContainer
 @export var battle_info_attacker_container: VBoxContainer
 var no_profile_texture = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
+var instance_score_panel_dic: Dictionary
 
 var prev_data = {}
+var prev_score_data = {}
 var prev_hp = 0
 
 func _ready() -> void:
-	await get_tree().process_frame
-	print(GameClientEnet.game_client_dic_data)
-	print(PlayerGlobalScript.spawn_player_code)
-	print(GameClientEnet.game_tilemap_name)
-	print("\n\n")
-	
 	if GameClientEnet.game_tilemap_name == "Grassy Land":
 		core_object.core_hp = 500
 		core_object.core_max_hp = 500
@@ -85,6 +81,20 @@ func _process(_delta: float) -> void:
 	
 		prev_hp = int(core_object.core_hp)
 		
+func update_battle_score_board():
+	for key in GameClientEnet.player_score_board_dictionary.keys():
+		if GameClientEnet.player_score_board_dictionary.has(key):
+			var data = GameClientEnet.player_score_board_dictionary[key]
+			
+			if data != prev_score_data:
+				var kill_score = data.kill_score
+				var death_score = data.death_score
+				
+				instance_score_panel_dic[key].text = "Kill/s: %s		Death/s: %s" % [kill_score, death_score]
+				prev_score_data = data
+				
+			GameClientEnet.player_score_board_dictionary.erase(key)
+		
 func player_populate_battle_info():
 	var player_list = GameClientEnet.game_client_dic_data.player_list
 	
@@ -95,8 +105,11 @@ func player_populate_battle_info():
 		player_panel_instance.name = str(key)
 		player_panel_instance.visible = true
 						
-		var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
+		var player_panel_instance_profile = player_panel_instance.get_node("Player Profile")
 		var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
+		var player_panel_instance_status = player_panel_instance.get_node("Player status")
+		
+		instance_score_panel_dic[key] = player_panel_instance_status
 						
 		player_panel_instance_ign.text = player.ign
 						
@@ -112,9 +125,9 @@ func player_populate_battle_info():
 		var player_profile_texture = await load_player_profile_battle_info(player.ign, player.profile)
 		
 		if player_profile_texture:
-			player_panel_instantce_profile.texture = player_profile_texture
+			player_panel_instance_profile.texture = player_profile_texture
 		else:
-			player_panel_instantce_profile.texture = no_profile_texture
+			player_panel_instance_profile.texture = no_profile_texture
 	
 func sync_damage_in_server():
 	for key in GameClientEnet.core_health_dictionary.keys():

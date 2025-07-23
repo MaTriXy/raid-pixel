@@ -134,6 +134,9 @@ func player_hp_receive(player_data: Dictionary, peerID: int):
 			
 			if joined_player.player_health <= 0:
 				joined_player.player_anim.play("death_anim")
+
+				GameClientEnet.player_score_board_dictionary[peerID].death_score += 1
+				GameClientEnet.player_score_board_dictionary[multiplayer.get_unique_id()].kill_score += 1
 				
 				var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 			

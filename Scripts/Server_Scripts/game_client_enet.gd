@@ -7,6 +7,7 @@ var game_tilemap_name: String
 #game receive dictionary
 var core_health_dictionary: Dictionary
 var player_health_dictionary: Dictionary
+var player_score_board_dictionary: Dictionary
 
 @rpc("any_peer")
 func game_send_to_server(rpc_name: String, peerID: int, data: Dictionary):
@@ -20,3 +21,6 @@ func core_health_update(peerID: int, data: Dictionary):
 @rpc("any_peer", "reliable")
 func update_player_hp(peerID: int, data: Dictionary):
 	player_health_dictionary[peerID] = data
+
+func update_game_score_board(peerID: int, data: Dictionary):
+	player_score_board_dictionary[peerID] = data

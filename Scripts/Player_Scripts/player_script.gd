@@ -163,6 +163,8 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
+		GameClientEnet.player_score_board_dictionary[multiplayer.get_unique_id()].death_score += 1
+	
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		
 		if ui_nodes_grp.size() > 0:

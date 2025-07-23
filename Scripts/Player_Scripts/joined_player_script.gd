@@ -107,8 +107,6 @@ func play_anim(anim_name):
 
 func player_health_bar_status():
 	if player_health <= 0.0:
-		#GameBattleInfo.update_score_board(player_game_id, player_class)
-
 		isDead = true
 		player_health = 0.0
 							
