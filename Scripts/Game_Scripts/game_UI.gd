@@ -24,13 +24,11 @@ var no_profile_texture = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 var prev_data = {}
 var prev_hp = 0
 
-var player_populate_size = 0
-
-var isPlayerScore_populate = false
-
 func _ready() -> void:
+	await get_tree().process_frame
 	print(GameClientEnet.game_client_dic_data)
 	print(PlayerGlobalScript.spawn_player_code)
+	print(GameClientEnet.game_tilemap_name)
 	print("\n\n")
 	
 	if GameClientEnet.game_tilemap_name == "Grassy Land":
@@ -56,15 +54,8 @@ func _ready() -> void:
 	game_info_panel.visible = true
 	game_info_button.connect("pressed", func(): game_info_panel.visible = false)
 	
-	var start_game_notify = Timer.new()
-	start_game_notify.name = "start game timer"
-	
-	if not start_game_notify.is_inside_tree():
-		add_child(start_game_notify)
-	
-	start_game_notify.wait_time = 1.0
-	start_game_notify.timeout.connect(start_game)
-	start_game_notify.start()
+	if not GameClientEnet.game_client_dic_data.is_empty():
+		player_populate_battle_info()
 	
 	#this is for the timer at battle game timer
 	var battle_timer = Timer.new()
@@ -76,10 +67,6 @@ func _ready() -> void:
 	battle_timer.wait_time = 1.0
 	battle_timer.timeout.connect(start_timer)
 	battle_timer.start()
-	
-func start_game():
-	if not isPlayerScore_populate:
-		player_populate_battle_info()
 	
 func start_timer():
 	pass
@@ -99,40 +86,35 @@ func _process(_delta: float) -> void:
 		prev_hp = int(core_object.core_hp)
 		
 func player_populate_battle_info():
-	"""
-	if player_populate_size < GameBattleInfo.player_populate_size:
-		for key in GameBattleInfo.player_populate_dic:
-			var player = GameBattleInfo.player_populate_dic[key]
-			
-			var player_panel_instance = battle_info_player_panel.duplicate()
-			player_panel_instance.name = key
-			player_panel_instance.visible = true
+	var player_list = GameClientEnet.game_client_dic_data.player_list
+	
+	for key in player_list.keys():
+		var player = player_list[key]
+		
+		var player_panel_instance = battle_info_player_panel.duplicate()
+		player_panel_instance.name = str(key)
+		player_panel_instance.visible = true
 						
-			var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
-			var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
+		var player_panel_instantce_profile = player_panel_instance.get_node("Player Profile")
+		var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
 						
-			player_panel_instance_ign.text = player.ign
+		player_panel_instance_ign.text = player.ign
 						
-			if player.ign == PlayerGlobalScript.player_in_game_name:
-				player_panel_instance_ign.text = "%s (You)" % player.ign
-						
-			if not player_panel_instance.is_inside_tree():
-				if player.class == "Defender":
-					battle_info_defender_container.add_child(player_panel_instance)
-				else:
-					battle_info_attacker_container.add_child(player_panel_instance)
-				player_populate_size+=1
-			
-			var player_profile_texture = await load_player_profile_battle_info(player.ign, player.profile)
-			
-			if player_profile_texture:
-				player_panel_instantce_profile.texture = player_profile_texture
+		if player.ign == PlayerGlobalScript.player_in_game_name:
+			player_panel_instance_ign.text = "%s (You)" % player.ign
+					
+		if not player_panel_instance.is_inside_tree():
+			if player.class == "Defender":
+				battle_info_defender_container.add_child(player_panel_instance)
 			else:
-				player_panel_instantce_profile.texture = no_profile_texture		
-	else:
-		isPlayerScore_populate = true
-	"""
-	pass
+				battle_info_attacker_container.add_child(player_panel_instance)
+		
+		var player_profile_texture = await load_player_profile_battle_info(player.ign, player.profile)
+		
+		if player_profile_texture:
+			player_panel_instantce_profile.texture = player_profile_texture
+		else:
+			player_panel_instantce_profile.texture = no_profile_texture
 	
 func sync_damage_in_server():
 	for key in GameClientEnet.core_health_dictionary.keys():

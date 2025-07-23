@@ -21,20 +21,18 @@ func _ready() -> void:
 
 func go_to_the_player_loading():
 	if ClientEnet.is_matching and not ClientEnet.player_queue_match.is_empty():
-		GameClientEnet.game_client_dic_data = ClientEnet.player_queue_match
-		GameClientEnet.game_tilemap_name = ClientEnet.player_queue_match.game_scene
-		
-		PlayerGlobalScript.spawn_player_code = "game_scene_%s" % ClientEnet.player_queue_match.match_ID
-		
-		var match_data = ClientEnet.player_queue_match
+		var match_data = ClientEnet.player_queue_match.duplicate(true)
 		
 		if not match_data.has("player_list"):
 			return
 			
+		GameClientEnet.game_client_dic_data = match_data
+		GameClientEnet.game_tilemap_name = match_data.game_scene
+		PlayerGlobalScript.spawn_player_code = "game_scene_%s" % match_data.match_ID
+			
 		var player_list = match_data.player_list
 		
 		if not player_list.has(multiplayer.get_unique_id()):
-			print("This player isn't on the player loading screen: %s %s" % [PlayerGlobalScript.player_in_game_name, multiplayer.get_unique_id()])
 			return
 			
 		player_loading_panel.visible = true

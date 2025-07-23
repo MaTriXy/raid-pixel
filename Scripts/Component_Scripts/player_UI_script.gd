@@ -103,14 +103,10 @@ func _ready() -> void:
 	loading_modal.visible = false
 	guest_warning_text.visible = false
 	
-	if get_tree().current_scene.name.to_upper() == "LOBBY SCENE" and PlayerGlobalScript.player_account_type == "Guest":
-		guest_warning_panel.visible = true
-		guestAccountButton.visible =  true
-	else:
-		guest_warning_panel.visible = false
-		guestAccountButton.visible = false
+	guest_warning_panel.visible = get_tree().current_scene.name.to_upper() == "LOBBY SCENE" and PlayerGlobalScript.player_account_type == "Guest"
+	guestAccountButton.visible = get_tree().current_scene.name.to_upper() == "LOBBY SCENE" and PlayerGlobalScript.player_account_type == "Guest"
 		
-	view_profile_btn.visible = get_tree().current_scene.name == "LOBBY SCENE"
+	view_profile_btn.visible = get_tree().current_scene.name.to_upper() == "LOBBY SCENE"
 	
 	guestAccountButton.focus_mode = Control.FOCUS_NONE
 	guestAccountButton.connect("pressed", func(): status_panel(true, guest_connect_account_panel))
