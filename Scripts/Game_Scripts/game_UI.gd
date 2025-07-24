@@ -21,9 +21,12 @@ var enemy_core_hp_render = preload("res://Assets/UI_Components/Core_Health_Enemy
 @export var battle_info_attacker_container: VBoxContainer
 var no_profile_texture = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 var instance_score_panel_dic: Dictionary
+var player_score_panel: RichTextLabel
 
 var prev_data = {}
 var prev_score_data = {}
+var prev_kill_score = 0
+var prev_death_score = 0
 var prev_hp = 0
 
 func _ready() -> void:
@@ -72,6 +75,7 @@ func game_end():
 
 func _process(_delta: float) -> void:
 	sync_damage_in_server()
+	update_battle_score_board()
 	
 	if prev_hp != int(core_object.core_hp):
 		sprite_core.value = int(core_object.core_hp)
@@ -82,21 +86,26 @@ func _process(_delta: float) -> void:
 		prev_hp = int(core_object.core_hp)
 		
 func update_battle_score_board():
+	if prev_kill_score != PlayerGlobalScript.kill_count or prev_death_score != PlayerGlobalScript.death_count and player_score_panel:
+		player_score_panel.text = "Kill/s: %s		Death/s: %s" % [PlayerGlobalScript.kill_count, PlayerGlobalScript.death_count]
+		
 	for key in GameClientEnet.player_score_board_dictionary.keys():
 		if GameClientEnet.player_score_board_dictionary.has(key):
 			var data = GameClientEnet.player_score_board_dictionary[key]
 			
-			if data != prev_score_data:
+			if data != prev_score_data and data.spawn_code == PlayerGlobalScript.spawn_player_code:
 				var kill_score = data.kill_score
 				var death_score = data.death_score
 				
 				instance_score_panel_dic[key].text = "Kill/s: %s		Death/s: %s" % [kill_score, death_score]
+				
 				prev_score_data = data
 				
 			GameClientEnet.player_score_board_dictionary.erase(key)
 		
 func player_populate_battle_info():
 	var player_list = GameClientEnet.game_client_dic_data.player_list
+	var spawn_code = "game_scene_%s" % GameClientEnet.game_client_dic_data.match_ID
 	
 	for key in player_list.keys():
 		var player = player_list[key]
@@ -113,7 +122,8 @@ func player_populate_battle_info():
 						
 		player_panel_instance_ign.text = player.ign
 						
-		if player.ign == PlayerGlobalScript.player_in_game_name:
+		if key == multiplayer.get_unique_id():
+			player_score_panel = player_panel_instance_status
 			player_panel_instance_ign.text = "%s (You)" % player.ign
 					
 		if not player_panel_instance.is_inside_tree():

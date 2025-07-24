@@ -43,3 +43,5 @@ var player_max_health: int
 var isMainPlayerDead: bool
 var isPlayerAttack: bool
 var player_class_game_type: String
+var death_count: int
+var kill_count: int

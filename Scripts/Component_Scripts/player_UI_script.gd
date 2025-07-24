@@ -142,6 +142,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var current_scene = get_tree().current_scene.name
 	
+	playerCount.visible = current_scene.to_upper() == "LOBBY SCENE"
 	logout_btn.connect("pressed", log_out_action)
 	logout_btn.visible = current_scene.to_upper() == "LOBBY SCENE"
 	surrender_btn.visible = not current_scene.to_upper() == "LOBBY SCENE"

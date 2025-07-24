@@ -21,6 +21,8 @@ func player_logout(loading_modal: Control):
 	PlayerGlobalScript.player_max_health = 100
 	PlayerGlobalScript.isPlayerAttack = false
 	PlayerGlobalScript.player_class_game_type = ""
+	PlayerGlobalScript.death_count = 0
+	PlayerGlobalScript.kill_count = 0
 	
 	ClientEnet.is_player_full = false
 	ClientEnet.stored_players.clear()
@@ -29,6 +31,7 @@ func player_logout(loading_modal: Control):
 	ClientEnet.player_queue_match.clear()
 	ClientEnet.matchID = ""
 	GameClientEnet.game_client_dic_data.clear()
+	GameClientEnet.game_tilemap_name = ""
 	
 	loading_modal.visible = true
 	loading_modal.load("res://Scenes/main_menu.tscn")

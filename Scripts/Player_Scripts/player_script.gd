@@ -163,7 +163,8 @@ func player_health_bar_status():
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
-		GameClientEnet.player_score_board_dictionary[multiplayer.get_unique_id()].death_score += 1
+		PlayerGlobalScript.death_count += 1
+		GameClientEnet.game_send_to_server("update_player_score_board", multiplayer.get_unique_id(), { "death_score": PlayerGlobalScript.death_count, "kill_score": PlayerGlobalScript.kill_count, "spawn_code": PlayerGlobalScript.spawn_player_code })
 	
 		var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 		

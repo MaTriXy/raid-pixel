@@ -21,6 +21,7 @@ func core_health_update(peerID: int, data: Dictionary):
 @rpc("any_peer", "reliable")
 func update_player_hp(peerID: int, data: Dictionary):
 	player_health_dictionary[peerID] = data
-
-func update_game_score_board(peerID: int, data: Dictionary):
+	
+@rpc("any_peer", "reliable")
+func update_player_score_board(peerID: int, data: Dictionary):
 	player_score_board_dictionary[peerID] = data
