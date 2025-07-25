@@ -4,7 +4,8 @@
   "description": "A 2D game for desktop and mobiles (Android) built with Godot and Express.",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon Server/index.js"
+    "start": "nodemon Server/index.js",
+    "build": "npx @tailwindcss/cli -i ./Public/CSS/input.css -o ./Public/CSS/style.css --watch"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/JohnRendell/raid-pixel#readme",
   "dependencies": {
+    "@tailwindcss/cli": "^4.1.11",
     "bcryptjs": "^3.0.2",
     "body-parser": "^2.2.0",
     "cloudinary": "^2.6.1",
@@ -28,6 +30,7 @@
     "nodemon": "^3.1.10",
     "pg": "^8.16.0",
     "sanitize-html": "^2.16.0",
+    "tailwindcss": "^4.1.11",
     "uuid": "^11.1.0",
     "ws": "^8.18.1"
   }

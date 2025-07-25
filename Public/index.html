@@ -4,13 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raid Pixel</title>
+    <link rel="icon" type="image/x-icon" href="/images/web_icon.png" />
+
+    <link rel="stylesheet" href="/style/style.css">
 </head>
-<body>
-    <input id="username_input" type="text" placeholder="username">
-    <input id="password_input" type="password" placeholder="password">
-    <input id="confirm_pass_input" type="password" placeholder="confirm password">
-    <button onclick="createAccount()">Create Account</button>
+<body class="w-screen h-screen bg-[url('/background/Welcome_Background.png')] bg-cover bg-no-repeat bg-center overflow-hidden flex justify-center items-center">
+    <!--Sign up-->
+    <div class="absolute z-10 w-full h-full justify-center items-center bg-black/50 hidden" id="sign_in_div">
+        <div class="bg-white w-fit h-fit p-2 rounded-md">
+            <div class="flex justify-between items-center">
+                <div class="w-full"><h1 class="text-black text-md font-Pixelify-Sans text-center">Create Account</h1></div>
+                <button class="w-fit h-fit p-2 cursor-pointer active:opacity-50 transition" onclick="modal_status('sign_in_div', 'none')"><img src="/images/close_button.png" alt="close button" class="w-5 h-5"></button>
+            </div>
+
+            <input id="username_input" type="text" placeholder="username">
+            <input id="password_input" type="password" placeholder="password">
+            <input id="confirm_pass_input" type="password" placeholder="confirm password">
+            <button onclick="createAccount()">Create Account</button>
+        </div>
+    </div>
+
+    <div class="w-fit h-fit space-y-4 row-2">
+        <div>
+            <h1 class="text-white text-2xl text-center font-Pixelify-Sans">Raid Pixel</h1>
+            <h3 class="text-white text-lg text-center font-Pixelify-Sans">Defend or Destroy</h3>
+        </div>
+
+        <button class=" text-white text-sm font-Pixelify-Sans cursor-pointer active:underline transition" onclick="modal_status('sign_in_div', 'flex')">Create Account</button>
+    </div>
 </body>
 </html>
 
-<script src="function.js"></script>
+<script src="/scripts/function.js"></script>

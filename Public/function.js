@@ -40,3 +40,7 @@ async function createAccount(){
         }
     }
 }
+
+function modal_status(id, status){
+    document.getElementById(id).style.display = status
+}

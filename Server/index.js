@@ -36,7 +36,11 @@ app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
 //middle ware to serve static files
-app.use(express.static(path.join(__dirname, '../Public')));
+app.use("/scripts", express.static(path.join(__dirname, '../Public')));
+app.use("/style", express.static(path.join(__dirname, '../Public/CSS')));
+app.use("/images", express.static(path.join(__dirname, '../Assets/Web_UI_Components')));
+app.use("/font", express.static(path.join(__dirname, '../Assets/Fonts')));
+app.use("/background", express.static(path.join(__dirname, '../Assets/Background_Images')));
 
 // Serve the root folder and html
 app.get('/', (req, res) => {
@@ -46,6 +50,11 @@ app.get('/', (req, res) => {
 //Routers
 app.use("/accountRoute", require("./accountRoutes")(pool));
 app.use("/playerInformation", require("./playerInformationRoute")(pool));
+
+//for 404 pages
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, "../Public/404.html"));
+});
 
 //listen to port
 const PORT = process.env.PORT;
