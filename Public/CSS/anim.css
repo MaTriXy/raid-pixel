@@ -1,0 +1,21 @@
+@keyframes pop_in {
+    0%{
+        opacity: 0;
+        top: -10rem;
+    }
+    100%{
+        opacity: 100;
+        top: 1rem
+    }
+}
+
+@keyframes pop_out {
+    0%{
+        opacity: 100;
+        top: 1rem;
+    }
+    100%{
+        opacity: 0;
+        top: -10rem
+    }
+}

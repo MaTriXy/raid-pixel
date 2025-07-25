@@ -129,6 +129,8 @@ module.exports = function(pool){
                 await pool.query("INSERT INTO account (username, password_hash, account_type, login_token, isonline, date_active) VALUES ($1, $2, $3, $4, $5, $6)", [sanitize(req.body.username), hash_pass(sanitize(req.body.password)), "Player", uuidv4(), true, new Date()])
 
                 await pool.query("INSERT INTO player_infos (username, in_game_name, diamond, profile, description, profile_hash, account_type, ign_change_date, desc_change_date, profile_change_date) VALUES ($1, $2, $3, $4, $5, $6, 'Player', NOW(), NOW(), NOW())", [sanitize(req.body.username), inGameName[Math.floor(Math.random() * inGameName.length)], 1000, "https://res.cloudinary.com/drksqyii9/image/upload/v1749372872/default_profile_vw2q2o.png", "No description yet", "default_profile_vw2q2o"])
+
+                status = "Success"
             }
             res.status(200).json({ status: status })
         }

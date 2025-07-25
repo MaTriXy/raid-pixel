@@ -5,34 +5,65 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Raid Pixel</title>
     <link rel="icon" type="image/x-icon" href="/images/web_icon.png" />
-
+    <link rel="stylesheet" href="/style/anim.css">
     <link rel="stylesheet" href="/style/style.css">
 </head>
-<body class="w-screen h-screen bg-[url('/background/Welcome_Background.png')] bg-cover bg-no-repeat bg-center overflow-hidden flex justify-center items-center">
-    <!--Sign up-->
+<body
+    class="relative w-screen h-screen bg-[url('/background/Welcome_Background.png')] bg-cover bg-no-repeat bg-center overflow-hidden flex items-center justify-center">
+
+    <!-- Sign up modal -->
     <div class="absolute z-10 w-full h-full justify-center items-center bg-black/50 hidden" id="sign_in_div">
-        <div class="bg-white w-fit h-fit p-2 rounded-md">
+        <div class="bg-white w-fit h-fit p-4 rounded-md space-y-2">
             <div class="flex justify-between items-center">
-                <div class="w-full"><h1 class="text-black text-md font-Pixelify-Sans text-center">Create Account</h1></div>
-                <button class="w-fit h-fit p-2 cursor-pointer active:opacity-50 transition" onclick="modal_status('sign_in_div', 'none')"><img src="/images/close_button.png" alt="close button" class="w-5 h-5"></button>
+                <div class="w-full">
+                    <h1 class="text-black text-md font-Pixelify-Sans text-center">Create Account</h1>
+                </div>
+                <button class="p-2 cursor-pointer active:opacity-50 transition"
+                    onclick="modal_status('sign_in_div', 'none')">
+                    <img src="/images/close_button.png" alt="close button" class="w-5 h-5">
+                </button>
             </div>
 
-            <input id="username_input" type="text" placeholder="username">
-            <input id="password_input" type="password" placeholder="password">
-            <input id="confirm_pass_input" type="password" placeholder="confirm password">
-            <button onclick="createAccount()">Create Account</button>
+            <input id="username_input" type="text" placeholder="Username" class="font-Pixelify-Sans text-sm text-center w-full p-2 border rounded" maxlength="20">
+            <input id="password_input" type="password" placeholder="Password" class="font-Pixelify-Sans text-sm text-center w-full p-2 border rounded" maxlength="20">
+            <input id="confirm_pass_input" type="password" placeholder="Confirm Password"
+                class="font-Pixelify-Sans text-sm text-center w-full p-2 border rounded" maxlength="20">
+            <button onclick="createAccount()" class="w-full h-full bg-green-500 border-b-4 border-b-green-700 px-4 py-2 rounded-lg text-white text-md font-Pixelify-Sans cursor-pointer active:bg-green-700 active:border-b-0 transition">Create Account</button>
         </div>
     </div>
 
-    <div class="w-fit h-fit space-y-4 row-2">
-        <div>
-            <h1 class="text-white text-2xl text-center font-Pixelify-Sans">Raid Pixel</h1>
-            <h3 class="text-white text-lg text-center font-Pixelify-Sans">Defend or Destroy</h3>
+    <!-- Main content -->
+    <div class="flex flex-col items-center gap-4">
+        <div class="text-center">
+            <h1 class="text-white text-2xl font-Pixelify-Sans">Raid Pixel</h1>
+            <h3 class="text-white text-lg font-Pixelify-Sans">Defend or Destroy</h3>
         </div>
 
-        <button class=" text-white text-sm font-Pixelify-Sans cursor-pointer active:underline transition" onclick="modal_status('sign_in_div', 'flex')">Create Account</button>
+        <div class="flex flex-col items-center gap-2">
+            <div class="flex gap-4">
+                <button
+                    class="bg-yellow-500 border-b-4 border-b-yellow-700 px-4 py-2 rounded-lg text-white text-sm font-Pixelify-Sans cursor-pointer active:bg-yellow-700 active:border-b-0 transition">
+                    Play Online
+                </button>
+                <button
+                    class="bg-orange-500 border-b-4 border-b-orange-700 px-4 py-2 rounded-lg text-white text-sm font-Pixelify-Sans cursor-pointer active:bg-orange-700 active:border-b-0 transition">
+                    Download APK
+                </button>
+                <button
+                    class="bg-purple-500 border-b-4 border-b-purple-700 px-4 py-2 rounded-lg text-white text-sm font-Pixelify-Sans cursor-pointer active:bg-purple-700 active:border-b-0 transition">
+                    Download EXE
+                </button>
+            </div>
+
+            <button
+                class="bg-green-500 border-b-4 border-b-green-700 px-4 py-2 rounded-lg text-white text-sm font-Pixelify-Sans cursor-pointer active:bg-green-700 active:border-b-0 transition"
+                onclick="modal_status('sign_in_div', 'flex')">
+                Create Account
+            </button>
+        </div>
     </div>
 </body>
+
 </html>
 
 <script src="/scripts/function.js"></script>

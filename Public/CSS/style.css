@@ -7,7 +7,15 @@
       "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
       "Courier New", monospace;
+    --color-red-500: oklch(63.7% 0.237 25.331);
+    --color-orange-500: oklch(70.5% 0.213 47.604);
+    --color-orange-700: oklch(55.3% 0.195 38.402);
+    --color-yellow-500: oklch(79.5% 0.184 86.047);
+    --color-yellow-700: oklch(55.4% 0.135 66.442);
+    --color-green-500: oklch(72.3% 0.219 149.579);
     --color-green-700: oklch(52.7% 0.154 150.069);
+    --color-purple-500: oklch(62.7% 0.265 303.9);
+    --color-purple-700: oklch(49.6% 0.265 301.924);
     --color-black: #000;
     --color-white: #fff;
     --spacing: 0.25rem;
@@ -18,6 +26,7 @@
     --text-2xl: 1.5rem;
     --text-2xl--line-height: calc(2 / 1.5);
     --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
     --default-transition-duration: 150ms;
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
@@ -183,14 +192,14 @@
   .static {
     position: static;
   }
-  .z-1 {
-    z-index: 1;
+  .-top-10 {
+    top: calc(var(--spacing) * -10);
   }
   .z-10 {
     z-index: 10;
   }
-  .row-2 {
-    grid-row: 2;
+  .z-11 {
+    z-index: 11;
   }
   .container {
     width: 100%;
@@ -225,9 +234,6 @@
   .h-5 {
     height: calc(var(--spacing) * 5);
   }
-  .h-20 {
-    height: calc(var(--spacing) * 20);
-  }
   .h-fit {
     height: fit-content;
   }
@@ -239,9 +245,6 @@
   }
   .w-5 {
     width: calc(var(--spacing) * 5);
-  }
-  .w-20 {
-    width: calc(var(--spacing) * 20);
   }
   .w-fit {
     width: fit-content;
@@ -264,11 +267,11 @@
   .resize {
     resize: both;
   }
+  .flex-col {
+    flex-direction: column;
+  }
   .items-center {
     align-items: center;
-  }
-  .justify-baseline {
-    justify-content: baseline;
   }
   .justify-between {
     justify-content: space-between;
@@ -276,8 +279,11 @@
   .justify-center {
     justify-content: center;
   }
-  .justify-end {
-    justify-content: flex-end;
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
+  }
+  .gap-4 {
+    gap: calc(var(--spacing) * 4);
   }
   .space-y-2 {
     :where(& > :not(:last-child)) {
@@ -286,24 +292,14 @@
       margin-block-end: calc(calc(var(--spacing) * 2) * calc(1 - var(--tw-space-y-reverse)));
     }
   }
-  .space-y-4 {
-    :where(& > :not(:last-child)) {
-      --tw-space-y-reverse: 0;
-      margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
-      margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
-    }
-  }
-  .self-center {
-    align-self: center;
-  }
-  .self-end {
-    align-self: flex-end;
-  }
   .overflow-hidden {
     overflow: hidden;
   }
   .rounded {
     border-radius: 0.25rem;
+  }
+  .rounded-lg {
+    border-radius: var(--radius-lg);
   }
   .rounded-md {
     border-radius: var(--radius-md);
@@ -312,12 +308,21 @@
     border-style: var(--tw-border-style);
     border-width: 1px;
   }
-  .border-2 {
-    border-style: var(--tw-border-style);
-    border-width: 2px;
+  .border-b-4 {
+    border-bottom-style: var(--tw-border-style);
+    border-bottom-width: 4px;
   }
-  .border-white {
-    border-color: var(--color-white);
+  .border-b-green-700 {
+    border-bottom-color: var(--color-green-700);
+  }
+  .border-b-orange-700 {
+    border-bottom-color: var(--color-orange-700);
+  }
+  .border-b-purple-700 {
+    border-bottom-color: var(--color-purple-700);
+  }
+  .border-b-yellow-700 {
+    border-bottom-color: var(--color-yellow-700);
   }
   .bg-black {
     background-color: var(--color-black);
@@ -328,8 +333,20 @@
       background-color: color-mix(in oklab, var(--color-black) 50%, transparent);
     }
   }
+  .bg-green-500 {
+    background-color: var(--color-green-500);
+  }
+  .bg-orange-500 {
+    background-color: var(--color-orange-500);
+  }
+  .bg-purple-500 {
+    background-color: var(--color-purple-500);
+  }
   .bg-white {
     background-color: var(--color-white);
+  }
+  .bg-yellow-500 {
+    background-color: var(--color-yellow-500);
   }
   .bg-\[url\(\'\/background\/Welcome_Background\.png\'\)\] {
     background-image: url('/background/Welcome_Background.png');
@@ -348,6 +365,12 @@
   }
   .p-4 {
     padding: calc(var(--spacing) * 4);
+  }
+  .px-4 {
+    padding-inline: calc(var(--spacing) * 4);
+  }
+  .py-2 {
+    padding-block: calc(var(--spacing) * 2);
   }
   .text-center {
     text-align: center;
@@ -370,20 +393,17 @@
   .text-black {
     color: var(--color-black);
   }
+  .text-red-500 {
+    color: var(--color-red-500);
+  }
   .text-white {
     color: var(--color-white);
   }
   .underline {
     text-decoration-line: underline;
   }
-  .opacity-1 {
-    opacity: 1%;
-  }
-  .opacity-50 {
-    opacity: 50%;
-  }
-  .opacity-100 {
-    opacity: 100%;
+  .opacity-0 {
+    opacity: 0%;
   }
   .outline {
     outline-style: var(--tw-outline-style);
@@ -394,23 +414,30 @@
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
     transition-duration: var(--tw-duration, var(--default-transition-duration));
   }
-  .transition-opacity {
-    transition-property: opacity;
-    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-    transition-duration: var(--tw-duration, var(--default-transition-duration));
-  }
-  .duration-200 {
-    --tw-duration: 200ms;
-    transition-duration: 200ms;
+  .active\:border-b-0 {
+    &:active {
+      border-bottom-style: var(--tw-border-style);
+      border-bottom-width: 0px;
+    }
   }
   .active\:bg-green-700 {
     &:active {
       background-color: var(--color-green-700);
     }
   }
-  .active\:underline {
+  .active\:bg-orange-700 {
     &:active {
-      text-decoration-line: underline;
+      background-color: var(--color-orange-700);
+    }
+  }
+  .active\:bg-purple-700 {
+    &:active {
+      background-color: var(--color-purple-700);
+    }
+  }
+  .active\:bg-yellow-700 {
+    &:active {
+      background-color: var(--color-yellow-700);
     }
   }
   .active\:opacity-50 {
@@ -460,10 +487,6 @@
   inherits: false;
   initial-value: solid;
 }
-@property --tw-duration {
-  syntax: "*";
-  inherits: false;
-}
 @layer properties {
   @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color:rgb(from red r g b)))) {
     *, ::before, ::after, ::backdrop {
@@ -475,7 +498,6 @@
       --tw-space-y-reverse: 0;
       --tw-border-style: solid;
       --tw-outline-style: solid;
-      --tw-duration: initial;
     }
   }
 }
