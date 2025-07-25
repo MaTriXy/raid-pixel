@@ -1,11 +1,13 @@
 extends Node
 
-@onready var game_label = $"Game Timer Label"
+@onready var game_time_label = $"Game Timer Label"
+@onready var game_timer = $"Game Timer"
 @onready var game_info_panel = $"Game Info Mechanics Panel"
 @onready var game_info_anim = $"Game Info Mechanics Panel/AnimationPlayer"
 @onready var game_info_button = $"Game Info Mechanics Panel/Panel/Lets go button"
 @onready var game_instruction_label = $"Game Info Mechanics Panel/Panel/Player Label instruction"
 @onready var core_hp_status_label = $"Core HP name status"
+@onready var loading_interface = $"Loading Interface"
 
 @onready var sprite_core = $"Core HP"
 @onready var core_hp_label = $"Core HP/Core HP Label"
@@ -23,15 +25,30 @@ var no_profile_texture = preload("res://Assets/Sprite_Static/Bob_No_Img.png")
 var instance_score_panel_dic: Dictionary
 var player_score_panel: RichTextLabel
 
+#for game win lose condition
+@onready var win_lose_panel = $"Win Lose Panel"
+@onready var win_lose_panel_battle_time_left = $"Win Lose Panel/Panel/Game time ended"
+@onready var win_lose_panel_condition_label = $"Win Lose Panel/Panel/Condition Label"
+@onready var win_lose_panel_mvp_label = $"Win Lose Panel/Panel/MVP In Game Name"
+@onready var win_lose_panel_mvp_profile = $"Win Lose Panel/Panel/MVP Profile"
+@onready var win_lose_panel_back_to_lobby = $"Win Lose Panel/Panel/Back to lobby Button"
+var mvp_player_dic: Dictionary
+
 var prev_data = {}
 var prev_score_data = {}
+var prev_time = 0
 var prev_kill_score = 0
 var prev_death_score = 0
 var prev_hp = 0
 
 func _ready() -> void:
+	#for win lose contents
+	win_lose_panel_back_to_lobby.connect("pressed", back_to_lobby)
+	win_lose_panel.visible = false
+	mvp_player_dic = { "ign": "tie in kill score", "kills": 0 }
+	
 	if GameClientEnet.game_tilemap_name == "Grassy Land":
-		core_object.core_hp = 500
+		core_object.core_hp = 50
 		core_object.core_max_hp = 500
 	
 	sprite_core.value = int(core_object.core_hp)
@@ -57,25 +74,46 @@ func _ready() -> void:
 		player_populate_battle_info()
 	
 	#this is for the timer at battle game timer
-	var battle_timer = Timer.new()
-	battle_timer.name = "Battle Timer"
-	
-	if not battle_timer.is_inside_tree():
-		add_child(battle_timer)
-	
-	battle_timer.wait_time = 1.0
-	battle_timer.timeout.connect(start_timer)
-	battle_timer.start()
-	
-func start_timer():
-	pass
+	game_timer.one_shot = true
+	game_timer.wait_time = 30.0
+	game_timer.timeout.connect(game_end)
+	game_timer.start()
+
+func back_to_lobby():
+	PlayerGlobalScript.kill_count = 0
+	PlayerGlobalScript.death_count = 0
+	loading_interface.load("res://Scenes/lobby_scene.tscn")
 
 func game_end():
-	print("Game ended")
+	win_lose_condition()
+	
+func win_lose_condition():
+	if sprite_core.value <= 0:
+		win_lose_panel.visible = true
+		game_timer.stop()
+		win_lose_panel_battle_time_left.text = game_time_label.text
+		win_lose_panel_mvp_label.text = "%s with %s kills" % [mvp_player_dic.ign, mvp_player_dic.kills]
+		
+		if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER":
+			win_lose_panel_condition_label.text = "Defender Lose"
+		else:
+			win_lose_panel_condition_label.text = "Attacker Win"
+	
+	elif game_timer.time_left <= 0 and sprite_core.value >= 0:
+		win_lose_panel.visible = true
+		game_timer.stop()
+		win_lose_panel_battle_time_left.text = game_time_label.text
+		win_lose_panel_mvp_label.text = "%s with %s kills" % [mvp_player_dic.ign, mvp_player_dic.kills]
+		
+		if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER":
+			win_lose_panel_condition_label.text = "Defender Win"
+		else:
+			win_lose_panel_condition_label.text = "Attacker Lose"
 
 func _process(_delta: float) -> void:
 	sync_damage_in_server()
 	update_battle_score_board()
+	win_lose_condition()
 	
 	if prev_hp != int(core_object.core_hp):
 		sprite_core.value = int(core_object.core_hp)
@@ -84,6 +122,9 @@ func _process(_delta: float) -> void:
 		core_hp_label.text = "%s/%s" % [sprite_core.value, sprite_core.max_value]
 	
 		prev_hp = int(core_object.core_hp)
+	
+	if prev_time != game_timer.time_left:
+		game_time_label.text = "Battle time: %03d" % int(game_timer.time_left)
 		
 func update_battle_score_board():
 	if prev_kill_score != PlayerGlobalScript.kill_count or prev_death_score != PlayerGlobalScript.death_count and player_score_panel:
@@ -99,6 +140,13 @@ func update_battle_score_board():
 				
 				instance_score_panel_dic[key].text = "Kill/s: %s		Death/s: %s" % [kill_score, death_score]
 				
+				if kill_score > PlayerGlobalScript.kill_count:
+					mvp_player_dic = { "ign": data.ign, "kills": kill_score }
+				elif kill_score == PlayerGlobalScript.kill_count:
+					mvp_player_dic = { "ign": PlayerGlobalScript.player_in_game_name, "kills": PlayerGlobalScript.kill_count }
+				else:
+					mvp_player_dic = { "ign": "tie in kill score", "kills": kill_score }
+					
 				prev_score_data = data
 				
 			GameClientEnet.player_score_board_dictionary.erase(key)

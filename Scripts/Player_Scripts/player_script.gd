@@ -159,7 +159,7 @@ func player_health_bar_status():
 	player_health_bar.value = PlayerGlobalScript.player_health
 	player_health_label.text = str(PlayerGlobalScript.player_health) + "/" + str(PlayerGlobalScript.player_max_health)
 	
-	GameClientEnet.game_send_to_server("update_player_hp", multiplayer.get_unique_id(), { "player_health": PlayerGlobalScript.player_health, "spawn_code": PlayerGlobalScript.spawn_player_code })
+	GameClientEnet.game_send_to_server("update_player_hp", multiplayer.get_unique_id(), { "player_health": PlayerGlobalScript.player_health, "spawn_code": PlayerGlobalScript.spawn_player_code, "ign": PlayerGlobalScript.player_in_game_name })
 
 func _on_animation_player_animation_finished(anim_name: StringName) -> void:
 	if anim_name == "death_anim":
