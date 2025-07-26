@@ -136,7 +136,7 @@ func player_hp_receive(player_data: Dictionary, peerID: int):
 				joined_player.player_anim.play("death_anim")
 
 				PlayerGlobalScript.kill_count += 1
-				GameClientEnet.game_send_to_server("update_player_score_board", multiplayer.get_unique_id(), { "death_score": PlayerGlobalScript.death_count, "kill_score": PlayerGlobalScript.kill_count, "spawn_code": PlayerGlobalScript.spawn_player_code, "ign": joined_player.playerIGN })
+				GameClientEnet.game_send_to_server("update_player_score_board", multiplayer.get_unique_id(), { "death_score": PlayerGlobalScript.death_count, "kill_score": PlayerGlobalScript.kill_count, "spawn_code": PlayerGlobalScript.spawn_player_code })
 				
 				var ui_nodes_grp = get_tree().get_nodes_in_group("player_UI")
 			

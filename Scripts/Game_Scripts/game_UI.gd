@@ -29,10 +29,10 @@ var player_score_panel: RichTextLabel
 @onready var win_lose_panel = $"Win Lose Panel"
 @onready var win_lose_panel_battle_time_left = $"Win Lose Panel/Panel/Game time ended"
 @onready var win_lose_panel_condition_label = $"Win Lose Panel/Panel/Condition Label"
-@onready var win_lose_panel_mvp_label = $"Win Lose Panel/Panel/MVP In Game Name"
-@onready var win_lose_panel_mvp_profile = $"Win Lose Panel/Panel/MVP Profile"
+@onready var win_lose_panel_score_result = $"Win Lose Panel/Panel/Score result"
 @onready var win_lose_panel_back_to_lobby = $"Win Lose Panel/Panel/Back to lobby Button"
-var mvp_player_dic: Dictionary
+var defender_total_score = 0
+var attacker_total_score = 0
 
 var prev_data = {}
 var prev_score_data = {}
@@ -45,7 +45,6 @@ func _ready() -> void:
 	#for win lose contents
 	win_lose_panel_back_to_lobby.connect("pressed", back_to_lobby)
 	win_lose_panel.visible = false
-	mvp_player_dic = { "ign": "tie in kill score", "kills": 0 }
 	
 	if GameClientEnet.game_tilemap_name == "Grassy Land":
 		core_object.core_hp = 50
@@ -75,7 +74,7 @@ func _ready() -> void:
 	
 	#this is for the timer at battle game timer
 	game_timer.one_shot = true
-	game_timer.wait_time = 30.0
+	game_timer.wait_time = 500.0
 	game_timer.timeout.connect(game_end)
 	game_timer.start()
 
@@ -92,7 +91,7 @@ func win_lose_condition():
 		win_lose_panel.visible = true
 		game_timer.stop()
 		win_lose_panel_battle_time_left.text = game_time_label.text
-		win_lose_panel_mvp_label.text = "%s with %s kills" % [mvp_player_dic.ign, mvp_player_dic.kills]
+		win_lose_panel_score_result.text = "Defender: %s		Attacker: %s" % [defender_total_score, attacker_total_score]
 		
 		if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER":
 			win_lose_panel_condition_label.text = "Defender Lose"
@@ -103,7 +102,7 @@ func win_lose_condition():
 		win_lose_panel.visible = true
 		game_timer.stop()
 		win_lose_panel_battle_time_left.text = game_time_label.text
-		win_lose_panel_mvp_label.text = "%s with %s kills" % [mvp_player_dic.ign, mvp_player_dic.kills]
+		win_lose_panel_score_result.text = "Defender: %s		Attacker: %s" % [defender_total_score, attacker_total_score]
 		
 		if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER":
 			win_lose_panel_condition_label.text = "Defender Win"
@@ -130,6 +129,11 @@ func update_battle_score_board():
 	if prev_kill_score != PlayerGlobalScript.kill_count or prev_death_score != PlayerGlobalScript.death_count and player_score_panel:
 		player_score_panel.text = "Kill/s: %s		Death/s: %s" % [PlayerGlobalScript.kill_count, PlayerGlobalScript.death_count]
 		
+		if PlayerGlobalScript.player_class_game_type.to_upper() == "DEFENDER":
+			defender_total_score = PlayerGlobalScript.kill_count
+		else:
+			attacker_total_score = PlayerGlobalScript.kill_count
+		
 	for key in GameClientEnet.player_score_board_dictionary.keys():
 		if GameClientEnet.player_score_board_dictionary.has(key):
 			var data = GameClientEnet.player_score_board_dictionary[key]
@@ -138,14 +142,12 @@ func update_battle_score_board():
 				var kill_score = data.kill_score
 				var death_score = data.death_score
 				
-				instance_score_panel_dic[key].text = "Kill/s: %s		Death/s: %s" % [kill_score, death_score]
+				instance_score_panel_dic[key]["status_panel"].text = "Kill/s: %s		Death/s: %s" % [kill_score, death_score]
 				
-				if kill_score > PlayerGlobalScript.kill_count:
-					mvp_player_dic = { "ign": data.ign, "kills": kill_score }
-				elif kill_score == PlayerGlobalScript.kill_count:
-					mvp_player_dic = { "ign": PlayerGlobalScript.player_in_game_name, "kills": PlayerGlobalScript.kill_count }
+				if instance_score_panel_dic[key]["class"].to_upper() == "DEFENDER":
+					defender_total_score = kill_score
 				else:
-					mvp_player_dic = { "ign": "tie in kill score", "kills": kill_score }
+					attacker_total_score = kill_score
 					
 				prev_score_data = data
 				
@@ -166,7 +168,7 @@ func player_populate_battle_info():
 		var player_panel_instance_ign = player_panel_instance.get_node("Player IGN")
 		var player_panel_instance_status = player_panel_instance.get_node("Player status")
 		
-		instance_score_panel_dic[key] = player_panel_instance_status
+		instance_score_panel_dic[key] = { "status_panel": player_panel_instance_status, "class": player.class }
 						
 		player_panel_instance_ign.text = player.ign
 						
